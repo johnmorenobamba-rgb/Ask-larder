@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --color-ink: #1f1b16;
+  --color-parchment: #f2e9d8;
+  --color-preserve-red: #b23a2c;
+  --color-saffron: #e8a93b;
+  --color-bay-green: #55603c;
+  --color-clay-brown: #7a5c43;
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-parchment: var(--color-parchment);
+  --color-preserve-red: var(--color-preserve-red);
+  --color-saffron: var(--color-saffron);
+  --color-bay-green: var(--color-bay-green);
+  --color-clay-brown: var(--color-clay-brown);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+body {
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
