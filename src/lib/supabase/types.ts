@@ -573,6 +573,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_owner: {
+        Args: {
+          p_auth_id: string
+          p_owner_email: string
+          p_owner_name: string
+          p_venue_name: string
+          p_venue_slug: string
+        }
+        Returns: Json
+      }
       venue_roster: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
