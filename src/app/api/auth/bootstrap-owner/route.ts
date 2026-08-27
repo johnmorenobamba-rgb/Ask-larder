@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     if (err instanceof BootstrapOwnerError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
+    console.error("bootstrap-owner unexpected error:", err);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }
 }

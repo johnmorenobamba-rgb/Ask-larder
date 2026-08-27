@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     if (err instanceof PinAuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
+    console.error("login-pin unexpected error:", err);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }
 }
