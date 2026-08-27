@@ -806,6 +806,10 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_onboarding_signature: {
+        Args: { p_device: string; p_ip: string; p_typed_name: string }
+        Returns: Json
+      }
       venue_roster: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {

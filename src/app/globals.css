@@ -70,3 +70,28 @@ body {
 .animate-pass-slide-light {
   animation: pass-slide-in 200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
+
+/* Ask Larder Explainer, Beat 1/3: the bubble icon's one-off "alive" motion
+   — a single settle-and-breathe pulse, not a looping idle animation, so it
+   reads as a deliberate greeting rather than a busy/pending indicator. */
+@keyframes bubble-idle {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bubble-idle {
+  animation: bubble-idle 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
