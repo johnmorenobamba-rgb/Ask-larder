@@ -26,3 +26,47 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* Locked motion language, New-Hire Flow spec: two timing families used
+   everywhere so the app doesn't feel like ten different animation styles.
+   Pass Slide's outgoing-screen half needs two mounted screens at once,
+   which plain server-rendered navigation doesn't give us without a routing
+   transition library — this covers the incoming-screen half only. */
+
+@keyframes stamp-settle {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-stamp {
+  animation: stamp-settle 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pass-slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-pass-slide {
+  animation: pass-slide-in 320ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.animate-pass-slide-light {
+  animation: pass-slide-in 200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
