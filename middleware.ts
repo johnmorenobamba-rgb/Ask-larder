@@ -33,5 +33,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Supabase's client chain needs Node globals (__dirname etc.) that the
+  // default edge runtime doesn't provide — Vercel's own docs point to
+  // this exact config for middleware that touches a database.
+  runtime: "nodejs",
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
