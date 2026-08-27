@@ -125,10 +125,15 @@ export async function loginWithStaffPin({
     .eq("id", staffUserId);
 
   let authId = staff.auth_id;
-  let authEmail = staff.email;
+  // Resolved once here (not just inside the !authId branch) so a returning
+  // staff member's second login also has a real email to pass to
+  // generateLink() below — previously this stayed null after the first
+  // login, since the synthetic email was used to create the auth user but
+  // never persisted back to app_users.email, breaking every login after
+  // the first for any staff member without a real email on file.
+  const authEmail = staff.email ?? `staff-${staffUserId}@venue.internal`;
 
   if (!authId) {
-    authEmail = staff.email ?? `staff-${staffUserId}@venue.internal`;
     const { data: newAuthUser, error: createError } = await admin.auth.admin.createUser({
       email: authEmail,
       email_confirm: true,
@@ -137,7 +142,10 @@ export async function loginWithStaffPin({
       throw new PinAuthError(500, createError?.message ?? "Failed to provision staff auth account.");
     }
     authId = newAuthUser.user.id;
-    await admin.from("app_users").update({ auth_id: authId }).eq("id", staffUserId);
+    await admin
+      .from("app_users")
+      .update({ auth_id: authId, email: authEmail })
+      .eq("id", staffUserId);
   }
 
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
