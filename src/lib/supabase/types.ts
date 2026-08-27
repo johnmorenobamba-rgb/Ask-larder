@@ -20,6 +20,7 @@ export type Database = {
           auth_id: string | null
           created_at: string | null
           email: string | null
+          has_seen_ask_larder_intro: boolean
           id: string
           name: string
           phone: string | null
@@ -35,6 +36,7 @@ export type Database = {
           auth_id?: string | null
           created_at?: string | null
           email?: string | null
+          has_seen_ask_larder_intro?: boolean
           id?: string
           name: string
           phone?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           auth_id?: string | null
           created_at?: string | null
           email?: string | null
+          has_seen_ask_larder_intro?: boolean
           id?: string
           name?: string
           phone?: string | null
@@ -108,31 +111,44 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_escalation: boolean | null
           message: string
           retrieved_chunk_ids: string[] | null
           role: string
+          station_id: string | null
           user_id: string | null
           venue_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
+          is_escalation?: boolean | null
           message: string
           retrieved_chunk_ids?: string[] | null
           role: string
+          station_id?: string | null
           user_id?: string | null
           venue_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          is_escalation?: boolean | null
           message?: string
           retrieved_chunk_ids?: string[] | null
           role?: string
+          station_id?: string | null
           user_id?: string | null
           venue_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_user_id_fkey"
             columns: ["user_id"]
@@ -151,21 +167,27 @@ export type Database = {
       }
       check_questions: {
         Row: {
+          correct_option_index: number | null
           expected_answer_context: string | null
           id: string
           module_id: string | null
+          options: Json
           question: string
         }
         Insert: {
+          correct_option_index?: number | null
           expected_answer_context?: string | null
           id?: string
           module_id?: string | null
+          options?: Json
           question: string
         }
         Update: {
+          correct_option_index?: number | null
           expected_answer_context?: string | null
           id?: string
           module_id?: string | null
+          options?: Json
           question?: string
         }
         Relationships: [
@@ -304,6 +326,39 @@ export type Database = {
           },
         ]
       }
+      module_roles: {
+        Row: {
+          id: string
+          module_id: string | null
+          role_id: string | null
+        }
+        Insert: {
+          id?: string
+          module_id?: string | null
+          role_id?: string | null
+        }
+        Update: {
+          id?: string
+          module_id?: string | null
+          role_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_roles_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "staff_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_sections: {
         Row: {
           content: string | null
@@ -339,12 +394,43 @@ export type Database = {
           },
         ]
       }
+      module_versions: {
+        Row: {
+          changelog: string | null
+          id: string
+          module_id: string | null
+          published_at: string | null
+          version: number
+        }
+        Insert: {
+          changelog?: string | null
+          id?: string
+          module_id?: string | null
+          published_at?: string | null
+          version: number
+        }
+        Update: {
+          changelog?: string | null
+          id?: string
+          module_id?: string | null
+          published_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_versions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           created_at: string | null
           created_from_sop_ids: string[] | null
           id: string
-          role_id: string | null
           status: string | null
           title: string
           venue_id: string | null
@@ -354,7 +440,6 @@ export type Database = {
           created_at?: string | null
           created_from_sop_ids?: string[] | null
           id?: string
-          role_id?: string | null
           status?: string | null
           title: string
           venue_id?: string | null
@@ -364,7 +449,6 @@ export type Database = {
           created_at?: string | null
           created_from_sop_ids?: string[] | null
           id?: string
-          role_id?: string | null
           status?: string | null
           title?: string
           venue_id?: string | null
@@ -372,14 +456,65 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "modules_role_id_fkey"
-            columns: ["role_id"]
+            foreignKeyName: "modules_venue_id_fkey"
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "staff_roles"
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      near_miss_reports: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_anonymous: boolean | null
+          photo_ref: string | null
+          reported_by: string | null
+          station_id: string | null
+          status: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          photo_ref?: string | null
+          reported_by?: string | null
+          station_id?: string | null
+          status?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          photo_ref?: string | null
+          reported_by?: string | null
+          station_id?: string | null
+          status?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "near_miss_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "modules_venue_id_fkey"
+            foreignKeyName: "near_miss_reports_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "near_miss_reports_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
@@ -467,6 +602,42 @@ export type Database = {
           },
         ]
       }
+      staff_module_acknowledgements: {
+        Row: {
+          acknowledged_at: string | null
+          id: string
+          module_version_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          id?: string
+          module_version_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          id?: string
+          module_version_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_module_acknowledgements_module_version_id_fkey"
+            columns: ["module_version_id"]
+            isOneToOne: false
+            referencedRelation: "module_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_module_acknowledgements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_module_progress: {
         Row: {
           completed_at: string | null
@@ -493,6 +664,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_module_progress_esignature_id_fkey"
+            columns: ["esignature_id"]
+            isOneToOne: false
+            referencedRelation: "esignatures"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_module_progress_module_id_fkey"
             columns: ["module_id"]
@@ -535,6 +713,48 @@ export type Database = {
           },
         ]
       }
+      stations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          primary_module_id: string | null
+          qr_code_slug: string
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          primary_module_id?: string | null
+          qr_code_slug: string
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          primary_module_id?: string | null
+          qr_code_slug?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stations_primary_module_id_fkey"
+            columns: ["primary_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           branding: Json | null
@@ -544,6 +764,7 @@ export type Database = {
           monthly_tier: string | null
           multi_venue_group_id: string | null
           name: string
+          shift_windows: Json | null
           slug: string | null
         }
         Insert: {
@@ -554,6 +775,7 @@ export type Database = {
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name: string
+          shift_windows?: Json | null
           slug?: string | null
         }
         Update: {
@@ -564,6 +786,7 @@ export type Database = {
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name?: string
+          shift_windows?: Json | null
           slug?: string | null
         }
         Relationships: []
