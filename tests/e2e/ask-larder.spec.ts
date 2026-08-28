@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { test, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
