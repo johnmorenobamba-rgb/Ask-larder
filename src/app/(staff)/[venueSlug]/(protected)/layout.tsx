@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
+import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
-// never hits this redirect itself.
+// never hits this redirect itself. Same for `module-updates` (the
+// re-acknowledgement interstitial below) — it does its own session check,
+// so redirecting to it here can't loop.
 export default async function ProtectedStaffLayout({
   children,
   params,
@@ -18,5 +22,20 @@ export default async function ProtectedStaffLayout({
     redirect(`/${venueSlug}/login`);
   }
 
-  return <>{children}</>;
+  const outstanding = await getOutstandingAcknowledgements(staff.id);
+  if (outstanding.length > 0) {
+    redirect(`/${venueSlug}/module-updates`);
+  }
+
+  return (
+    <>
+      {children}
+      {/* Interim placement until a real Ask Larder/dashboard shell exists
+          per the PRD's "persistent... general Ask Larder view" entry point —
+          revisit once that's built. */}
+      {staff.venue_id && (
+        <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id} />
+      )}
+    </>
+  );
 }

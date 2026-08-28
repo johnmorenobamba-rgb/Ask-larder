@@ -18,9 +18,18 @@ export default async function CertsPage({
 
   const { data: certTypes } = await supabase
     .from("certificate_types")
-    .select("id, name")
+    .select("id, name, certificate_type_roles(role_id)")
     .eq("venue_id", staff.venue_id!)
     .order("name");
+
+  // Same "zero rows = unrestricted" convention as module_roles (see
+  // modules/page.tsx) — a cert type with no certificate_type_roles rows
+  // applies to every role, otherwise only to the roles explicitly listed.
+  const visibleCertTypes = (certTypes ?? []).filter(
+    (ct) =>
+      ct.certificate_type_roles.length === 0 ||
+      ct.certificate_type_roles.some((r) => r.role_id === staff.staff_role_id),
+  );
 
   const { data: certs } = await supabase
     .from("staff_certificates")
@@ -34,14 +43,14 @@ export default async function CertsPage({
       <PassSlide>
         <div className="mx-auto w-full max-w-lg space-y-6">
           <h1 className="font-display text-3xl font-bold text-ink">Your certificates</h1>
-          {(certTypes ?? []).length === 0 ? (
+          {visibleCertTypes.length === 0 ? (
             <p className="font-sans text-ink">
               No certificates required for your venue yet — ask your supervisor if you think
               that&apos;s wrong.
             </p>
           ) : (
             <ul className="space-y-2">
-              {certTypes!.map((certType) => {
+              {visibleCertTypes.map((certType) => {
                 const expiry = certByType.get(certType.id);
                 return (
                   <li key={certType.id}>

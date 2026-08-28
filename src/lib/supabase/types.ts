@@ -1,4 +1,3 @@
-// Generated from the live larder-dev schema via the Supabase MCP. Regenerate after schema changes.
 export type Json =
   | string
   | number
@@ -77,6 +76,36 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificate_type_roles: {
+        Row: {
+          certificate_type_id: string
+          role_id: string
+        }
+        Insert: {
+          certificate_type_id: string
+          role_id: string
+        }
+        Update: {
+          certificate_type_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_type_roles_certificate_type_id_fkey"
+            columns: ["certificate_type_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_type_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "staff_roles"
             referencedColumns: ["id"]
           },
         ]
@@ -689,16 +718,19 @@ export type Database = {
       }
       staff_roles: {
         Row: {
+          department: string | null
           id: string
           name: string
           venue_id: string | null
         }
         Insert: {
+          department?: string | null
           id?: string
           name: string
           venue_id?: string | null
         }
         Update: {
+          department?: string | null
           id?: string
           name?: string
           venue_id?: string | null
@@ -809,6 +841,10 @@ export type Database = {
       complete_onboarding_signature: {
         Args: { p_device: string; p_ip: string; p_typed_name: string }
         Returns: Json
+      }
+      publish_module_version: {
+        Args: { p_changelog?: string; p_module_id: string }
+        Returns: string
       }
       venue_roster: { Args: { p_slug: string }; Returns: Json }
     }

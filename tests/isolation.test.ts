@@ -33,6 +33,10 @@ let venueAId: string;
 let venueBId: string;
 let moduleAId: string;
 let moduleBId: string;
+let stationAId: string;
+let stationBId: string;
+let moduleVersionAId: string;
+let moduleVersionBId: string;
 let clientA: SupabaseClient<Database>;
 let clientB: SupabaseClient<Database>;
 
@@ -75,6 +79,41 @@ beforeAll(async () => {
   await admin.from("module_sections").insert({ module_id: moduleBId, section_order: 1, content: "B section" });
   await admin.from("check_questions").insert({ module_id: moduleAId, question: "A question" });
   await admin.from("check_questions").insert({ module_id: moduleBId, question: "B question" });
+
+  // Seed Phase 4a's new tables too (C8/C9/C10), so their RLS policies get
+  // exercised by this suite, not just assumed correct because they follow
+  // the same pattern as tables already covered above.
+  const { data: stationA } = await admin
+    .from("stations")
+    .insert({ venue_id: venueAId, name: "A Station", qr_code_slug: `a-${suffix}`, primary_module_id: moduleAId })
+    .select("id")
+    .single();
+  const { data: stationB } = await admin
+    .from("stations")
+    .insert({ venue_id: venueBId, name: "B Station", qr_code_slug: `b-${suffix}`, primary_module_id: moduleBId })
+    .select("id")
+    .single();
+  stationAId = stationA!.id;
+  stationBId = stationB!.id;
+
+  const { data: mvA } = await admin
+    .from("module_versions")
+    .insert({ module_id: moduleAId, version: 2, changelog: "A change" })
+    .select("id")
+    .single();
+  const { data: mvB } = await admin
+    .from("module_versions")
+    .insert({ module_id: moduleBId, version: 2, changelog: "B change" })
+    .select("id")
+    .single();
+  moduleVersionAId = mvA!.id;
+  moduleVersionBId = mvB!.id;
+
+  await admin.from("near_miss_reports").insert({ venue_id: venueAId, description: "A hazard" });
+  await admin.from("near_miss_reports").insert({ venue_id: venueBId, description: "B hazard" });
+
+  await admin.from("staff_module_acknowledgements").insert({ user_id: resultA.ownerId, module_version_id: moduleVersionAId });
+  await admin.from("staff_module_acknowledgements").insert({ user_id: resultB.ownerId, module_version_id: moduleVersionBId });
 
   clientA = anonClient();
   clientB = anonClient();
@@ -155,6 +194,64 @@ describe("multi-tenant isolation", () => {
 
   it("venue B is equally isolated from venue A (symmetry check)", async () => {
     const { data, error } = await clientB.from("venues").select("id").eq("id", venueAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  // --- Phase 4a additions: stations, near_miss_reports (direct venue_id
+  // policy), module_versions, staff_module_acknowledgements (FK-subquery
+  // policy) ---
+
+  it("venue A CAN read its own stations (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("stations").select("id").eq("id", stationAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's stations (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("stations").select("id").eq("id", stationBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own near_miss_reports (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("near_miss_reports").select("id").eq("venue_id", venueAId);
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+  });
+
+  it("venue A cannot read venue B's near_miss_reports (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("near_miss_reports").select("id").eq("venue_id", venueBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own module_versions (FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("module_versions").select("id").eq("id", moduleVersionAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's module_versions (FK-subquery policy)", async () => {
+    const { data, error } = await clientA.from("module_versions").select("id").eq("id", moduleVersionBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own staff_module_acknowledgements (FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA
+      .from("staff_module_acknowledgements")
+      .select("id")
+      .eq("module_version_id", moduleVersionAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's staff_module_acknowledgements (FK-subquery policy)", async () => {
+    const { data, error } = await clientA
+      .from("staff_module_acknowledgements")
+      .select("id")
+      .eq("module_version_id", moduleVersionBId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });

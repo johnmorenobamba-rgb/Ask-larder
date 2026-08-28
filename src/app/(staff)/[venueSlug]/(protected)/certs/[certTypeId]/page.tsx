@@ -18,10 +18,17 @@ export default async function CertUploadPage({
 
   const { data: certType } = await supabase
     .from("certificate_types")
-    .select("id, name")
+    .select("id, name, certificate_type_roles(role_id)")
     .eq("id", certTypeId)
     .single();
   if (!certType) notFound();
+
+  // Same "zero rows = unrestricted" convention as the certs checklist —
+  // block direct-URL access to a cert type restricted to other roles.
+  const isVisible =
+    certType.certificate_type_roles.length === 0 ||
+    certType.certificate_type_roles.some((r) => r.role_id === staff.staff_role_id);
+  if (!isVisible) notFound();
 
   const { data: existing } = await supabase
     .from("staff_certificates")

@@ -29,16 +29,21 @@ export function ModuleRunner({
   moduleTitle,
   sections,
   questions,
+  backHref,
+  backLabel = "Back to modules",
 }: {
   venueSlug: string;
   moduleId: string;
   moduleTitle: string;
   sections: Section[];
   questions: Question[];
+  backHref?: string;
+  backLabel?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0); // 0..sections.length-1: sections, then questions, then done
   const [done, setDone] = useState(false);
+  const resolvedBackHref = backHref ?? `/${venueSlug}/modules`;
 
   const inSections = step < sections.length;
   const questionIndex = step - sections.length;
@@ -68,10 +73,10 @@ export function ModuleRunner({
           <Stamp label={`${moduleTitle} completed`} />
           <button
             type="button"
-            onClick={() => router.push(`/${venueSlug}/modules`)}
+            onClick={() => router.push(resolvedBackHref)}
             className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
           >
-            Back to modules
+            {backLabel}
           </button>
         </div>
       </main>

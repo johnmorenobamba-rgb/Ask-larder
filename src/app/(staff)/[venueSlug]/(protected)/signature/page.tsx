@@ -48,8 +48,17 @@ export default async function SignaturePage({
 
   const { data: certTypes } = await supabase
     .from("certificate_types")
-    .select("id")
+    .select("id, certificate_type_roles(role_id)")
     .eq("venue_id", staff.venue_id!);
+
+  // Same role-visibility filter as the certs checklist (certs/page.tsx) —
+  // this gate must only require certs actually relevant to this role, not
+  // every cert type the venue has ever defined.
+  const visibleCertTypes = (certTypes ?? []).filter(
+    (ct) =>
+      ct.certificate_type_roles.length === 0 ||
+      ct.certificate_type_roles.some((r) => r.role_id === staff.staff_role_id),
+  );
 
   const { data: certs } = await supabase
     .from("staff_certificates")
@@ -57,7 +66,7 @@ export default async function SignaturePage({
     .eq("user_id", staff.id);
 
   const certifiedTypeIds = new Set((certs ?? []).map((c) => c.certificate_type_id));
-  const allCertsDone = (certTypes ?? []).every((ct) => certifiedTypeIds.has(ct.id));
+  const allCertsDone = visibleCertTypes.every((ct) => certifiedTypeIds.has(ct.id));
 
   if (!allModulesDone || !allCertsDone) {
     redirect(`/${venueSlug}/modules`);
