@@ -18,15 +18,18 @@ export class PinAuthError extends Error {
 export interface SetPinInput {
   staffUserId: string;
   pin: string;
+  callerVenueId: string;
 }
 
 /**
  * Owner/manager-initiated: sets or resets a staff member's PIN and clears
- * any lockout. No caller-session check yet — Block A doesn't build the
- * owner dashboard this route will eventually sit behind. Flagged as a
- * known gap, not a silent assumption of security that isn't there.
+ * any lockout. Scoped to callerVenueId -- the caller-session + role check
+ * happens in the route (Block E's owner dashboard now exists to sit
+ * behind), this is the last line of defense: a cross-venue reset attempt
+ * fails the same way as a nonexistent staffUserId (404), not a distinct
+ * error that would leak whether the id exists in another venue.
  */
-export async function setStaffPin({ staffUserId, pin }: SetPinInput): Promise<void> {
+export async function setStaffPin({ staffUserId, pin, callerVenueId }: SetPinInput): Promise<void> {
   if (!PIN_PATTERN.test(pin)) {
     throw new PinAuthError(400, "pin must be 4-6 digits.");
   }
@@ -43,6 +46,7 @@ export async function setStaffPin({ staffUserId, pin }: SetPinInput): Promise<vo
       pin_locked_until: null,
     })
     .eq("id", staffUserId)
+    .eq("venue_id", callerVenueId)
     .select("id")
     .maybeSingle();
 
