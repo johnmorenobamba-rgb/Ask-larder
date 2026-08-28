@@ -89,7 +89,7 @@ async function ingestModule(moduleId: string): Promise<void> {
       venue_id: moduleRow.venue_id,
       source_module_id: moduleId,
       content_chunk,
-      embedding: JSON.stringify(embeddings[i]),
+      embedding: embeddings[i] as unknown as string,
     })),
   );
   if (insertError) throw new Error(insertError.message);
