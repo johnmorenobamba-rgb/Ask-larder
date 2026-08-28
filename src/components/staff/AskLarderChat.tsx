@@ -84,6 +84,8 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
             ) : (
               <div
                 key={i}
+                data-testid="ask-larder-answer"
+                data-escalation={m.isEscalation ? "true" : "false"}
                 className={`rounded-2xl border-2 px-4 py-3 ${
                   m.isEscalation ? "border-preserve-red" : "border-bay-green"
                 }`}
