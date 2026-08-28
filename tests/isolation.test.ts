@@ -37,6 +37,10 @@ let stationAId: string;
 let stationBId: string;
 let moduleVersionAId: string;
 let moduleVersionBId: string;
+let certNudgeLogAId: string;
+let certNudgeLogBId: string;
+let certTypeAId: string;
+let certTypeBId: string;
 let clientA: SupabaseClient<Database>;
 let clientB: SupabaseClient<Database>;
 
@@ -114,6 +118,60 @@ beforeAll(async () => {
 
   await admin.from("staff_module_acknowledgements").insert({ user_id: resultA.ownerId, module_version_id: moduleVersionAId });
   await admin.from("staff_module_acknowledgements").insert({ user_id: resultB.ownerId, module_version_id: moduleVersionBId });
+
+  // Reconciled/Block-E-foundation tables: certificate_type_roles (FK-subquery
+  // via certificate_types) and cert_nudge_log (FK-subquery two hops, via
+  // staff_certificates -> app_users) -- both newly policied, neither
+  // previously exercised by this suite.
+  const { data: certTypeA } = await admin
+    .from("certificate_types")
+    .insert({ venue_id: venueAId, name: "A Cert" })
+    .select("id")
+    .single();
+  const { data: certTypeB } = await admin
+    .from("certificate_types")
+    .insert({ venue_id: venueBId, name: "B Cert" })
+    .select("id")
+    .single();
+  const { data: roleA } = await admin
+    .from("staff_roles")
+    .insert({ venue_id: venueAId, name: "A Role" })
+    .select("id")
+    .single();
+  const { data: roleB } = await admin
+    .from("staff_roles")
+    .insert({ venue_id: venueBId, name: "B Role" })
+    .select("id")
+    .single();
+  certTypeAId = certTypeA!.id;
+  certTypeBId = certTypeB!.id;
+  await admin.from("certificate_type_roles").insert({ certificate_type_id: certTypeA!.id, role_id: roleA!.id });
+  await admin
+    .from("certificate_type_roles")
+    .insert({ certificate_type_id: certTypeB!.id, role_id: roleB!.id });
+
+  const { data: certA } = await admin
+    .from("staff_certificates")
+    .insert({ user_id: resultA.ownerId, certificate_type_id: certTypeA!.id, expiry_date: "2027-01-01" })
+    .select("id")
+    .single();
+  const { data: certB } = await admin
+    .from("staff_certificates")
+    .insert({ user_id: resultB.ownerId, certificate_type_id: certTypeB!.id, expiry_date: "2027-01-01" })
+    .select("id")
+    .single();
+  const { data: nudgeA } = await admin
+    .from("cert_nudge_log")
+    .insert({ staff_certificate_id: certA!.id, cadence_days: 30 })
+    .select("id")
+    .single();
+  const { data: nudgeB } = await admin
+    .from("cert_nudge_log")
+    .insert({ staff_certificate_id: certB!.id, cadence_days: 30 })
+    .select("id")
+    .single();
+  certNudgeLogAId = nudgeA!.id;
+  certNudgeLogBId = nudgeB!.id;
 
   clientA = anonClient();
   clientB = anonClient();
@@ -252,6 +310,40 @@ describe("multi-tenant isolation", () => {
       .from("staff_module_acknowledgements")
       .select("id")
       .eq("module_version_id", moduleVersionBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  // --- Reconciliation + Block E foundation additions: certificate_type_roles
+  // (FK-subquery via certificate_types), cert_nudge_log (FK-subquery two
+  // hops, via staff_certificates -> app_users) ---
+
+  it("venue A CAN read its own certificate_type_roles (FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA
+      .from("certificate_type_roles")
+      .select("certificate_type_id")
+      .eq("certificate_type_id", certTypeAId);
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+  });
+
+  it("venue A cannot read venue B's certificate_type_roles (FK-subquery policy)", async () => {
+    const { data, error } = await clientA
+      .from("certificate_type_roles")
+      .select("certificate_type_id")
+      .eq("certificate_type_id", certTypeBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own cert_nudge_log (FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("cert_nudge_log").select("id").eq("id", certNudgeLogAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's cert_nudge_log (FK-subquery policy)", async () => {
+    const { data, error } = await clientA.from("cert_nudge_log").select("id").eq("id", certNudgeLogBId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });

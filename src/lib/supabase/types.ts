@@ -80,6 +80,35 @@ export type Database = {
           },
         ]
       }
+      cert_nudge_log: {
+        Row: {
+          cadence_days: number
+          id: string
+          sent_at: string | null
+          staff_certificate_id: string | null
+        }
+        Insert: {
+          cadence_days: number
+          id?: string
+          sent_at?: string | null
+          staff_certificate_id?: string | null
+        }
+        Update: {
+          cadence_days?: number
+          id?: string
+          sent_at?: string | null
+          staff_certificate_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cert_nudge_log_staff_certificate_id_fkey"
+            columns: ["staff_certificate_id"]
+            isOneToOne: false
+            referencedRelation: "staff_certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_type_roles: {
         Row: {
           certificate_type_id: string
@@ -139,6 +168,7 @@ export type Database = {
       chat_messages: {
         Row: {
           created_at: string | null
+          escalation_status: string | null
           id: string
           is_escalation: boolean | null
           message: string
@@ -150,6 +180,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          escalation_status?: string | null
           id?: string
           is_escalation?: boolean | null
           message: string
@@ -161,6 +192,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          escalation_status?: string | null
           id?: string
           is_escalation?: boolean | null
           message?: string
