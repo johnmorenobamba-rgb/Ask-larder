@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
+import { AskLarderChat } from "@/components/staff/AskLarderChat";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
@@ -30,11 +31,11 @@ export default async function ProtectedStaffLayout({
   return (
     <>
       {children}
-      {/* Interim placement until a real Ask Larder/dashboard shell exists
-          per the PRD's "persistent... general Ask Larder view" entry point —
-          revisit once that's built. */}
       {staff.venue_id && (
-        <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id} />
+        <>
+          <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id} />
+          <AskLarderChat venueSlug={venueSlug} />
+        </>
       )}
     </>
   );

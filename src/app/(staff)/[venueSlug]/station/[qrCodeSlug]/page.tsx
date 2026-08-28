@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
 import { ModuleRunner } from "@/components/staff/ModuleRunner";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
+import { AskLarderChat } from "@/components/staff/AskLarderChat";
 
 function stripAnswerPrefix(context: string | null): string | null {
   if (!context) return null;
@@ -83,16 +84,8 @@ export default async function StationPage({
         backHref={currentPath}
         backLabel="Back to station"
       />
-      <div className="mx-auto w-full max-w-lg space-y-3 pt-6 text-center">
-        <button
-          type="button"
-          disabled
-          className="rounded-full border-2 border-clay-brown/40 px-6 py-2 font-sans text-sm text-clay-brown opacity-60"
-        >
-          Ask Larder — coming soon
-        </button>
-      </div>
       <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id!} stationId={station.id} />
+      <AskLarderChat venueSlug={venueSlug} stationId={station.id} />
     </main>
   );
 }
