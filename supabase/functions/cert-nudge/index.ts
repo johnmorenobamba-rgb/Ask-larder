@@ -9,9 +9,10 @@
 // is explicitly the owner dashboard's job per the product description.
 //
 // FROM_EMAIL below is a placeholder -- update it once a real domain is
-// verified in Resend (create-domain / verify-domain), and RESEND_API_KEY
-// must be set as a function secret (`supabase secrets set`) before this
-// can actually send.
+// verified in Resend (create-domain / verify-domain). RESEND_API_KEY is
+// now set as a function secret and the send pipeline is confirmed working
+// end-to-end (verified 2026-08-28 via Resend's onboarding@resend.dev
+// sandbox sender) -- domain verification is the only remaining blocker.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -24,9 +25,21 @@ interface StaffCertificateRow {
   app_users: { name: string } | null;
 }
 
+// Calendar-day difference, not a raw time delta -- truncating both sides to
+// UTC midnight before subtracting keeps this stable regardless of what time
+// of day the cron actually fires. A raw (targetMs - Date.now()) / 86400000
+// with Math.round is time-of-day-dependent: at 22:00 UTC (this function's
+// actual cron time), a cert expiring exactly 7 calendar days out reads as
+// 6.08 days and rounds to 6, silently missing the cadence=7 nudge every
+// single day. Confirmed live during Block D/E testing (2026-08-28,
+// 12:26 UTC): a cert set to current_date + 7 computed as 6 days under the
+// old logic and was skipped.
 function daysUntil(dateStr: string): number {
-  const ms = new Date(dateStr).getTime() - Date.now();
-  return Math.round(ms / (1000 * 60 * 60 * 24));
+  const target = new Date(`${dateStr}T00:00:00Z`);
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const targetUTC = Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate());
+  return Math.round((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
 }
 
 async function sendNudgeEmail(to: string[], staffName: string, certName: string, days: number): Promise<void> {
