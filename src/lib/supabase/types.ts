@@ -842,6 +842,15 @@ export type Database = {
         Args: { p_device: string; p_ip: string; p_typed_name: string }
         Returns: Json
       }
+      match_knowledge_chunks: {
+        Args: { p_match_count?: number; p_query_embedding: string }
+        Returns: {
+          content_chunk: string
+          id: string
+          similarity: number
+          source_module_id: string
+        }[]
+      }
       publish_module_version: {
         Args: { p_changelog?: string; p_module_id: string }
         Returns: string
