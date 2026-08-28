@@ -10,3 +10,5 @@ playwright-report/
 blob-report/
 playwright/.cache/
 supabase/.temp/
+.dev-server.log
+.dev-server-err.log
