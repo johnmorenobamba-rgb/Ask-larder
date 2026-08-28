@@ -45,7 +45,8 @@ test("module update interstitial -> QR station entry -> near-miss report", async
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/station\/smoke-station-01$/, { timeout: 10_000 });
   await expect(page.getByText("Smoke Station")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ask Larder — coming soon" })).toBeVisible();
+  // Block D replaced the disabled placeholder with the real chat entry point.
+  await expect(page.getByRole("button", { name: "Ask Larder" })).toBeVisible();
 
   // --- C10: near-miss quick-report, station-scoped, non-anonymous ---
   await page.getByRole("button", { name: "Something felt unsafe?" }).click();
