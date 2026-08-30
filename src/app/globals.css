@@ -177,20 +177,42 @@ body {
    cell wrapped in ElevatedCell (Block J1) drives `transform` itself for
    pointer tilt, and an animation's fill-forwards end state would otherwise
    permanently pin `transform`, blocking the tilt from ever taking effect. */
+/* Falls in from above with a slight rotation and a small settle-past-rest
+   wobble (60% keyframe overshoots slightly, per feedback wanting this to
+   read as "leaves falling into place" rather than a flat slide-up) --
+   `rotate`/`translate` as standalone properties, not `transform:
+   translateY() rotate()`, for the same reason as the comment above:
+   ElevatedCell's own JS-driven `transform` lives on a nested element, not
+   this wrapper, so there's nothing to conflict with either way, but
+   staying consistent with the established convention here. */
 @keyframes bento-cell-in {
-  from {
+  0% {
     opacity: 0;
-    translate: 0 12px;
+    translate: 0 -28px;
+    rotate: -4deg;
   }
-  to {
+  60% {
+    opacity: 1;
+    translate: 0 4px;
+    rotate: 1deg;
+  }
+  100% {
     opacity: 1;
     translate: 0 0;
+    rotate: 0deg;
   }
 }
 
 .animate-bento-cell-in {
   opacity: 0;
-  animation: bento-cell-in 220ms ease-out forwards;
+  animation: bento-cell-in 520ms cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bento-cell-in {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* Block J1 — Bento elevation system (Decision Log, 29 Aug 2026 direction

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
+import { onAskLarderOverlayStateChange } from "@/lib/askLarderBus";
 
 /**
  * Persistent, low-friction "something felt unsafe" report — fire-and-forget,
@@ -25,7 +26,14 @@ export function NearMissReportButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [askLarderOpen, setAskLarderOpen] = useState(false);
   const magneticRef = useMagneticPull<HTMLButtonElement>();
+
+  // Hides while the Ask Larder overlay is open -- two competing floating
+  // actions both visible/tappable with a modal already up read as clutter,
+  // and it also removes any question of this button showing through/over
+  // that overlay regardless of z-index specifics.
+  useEffect(() => onAskLarderOverlayStateChange(setAskLarderOpen), []);
 
   function reset() {
     setOpen(false);
@@ -74,6 +82,7 @@ export function NearMissReportButton({
   }
 
   if (!open) {
+    if (askLarderOpen) return null;
     return (
       <button
         ref={magneticRef}

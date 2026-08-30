@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const SECTIONS = [
+  { href: "dashboard", label: "Dashboard" },
   { href: "staff", label: "Staff" },
   { href: "completions", label: "Completions" },
   { href: "certs", label: "Certificates" },

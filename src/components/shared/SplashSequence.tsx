@@ -68,17 +68,31 @@ export function SplashSequence({
       onComplete: () => setSettled(true),
     });
 
+    // Beats after "wordmark" are positioned relative to the wordmark
+    // tween's OWN end (not a guessed hold duration) so unsettle can never
+    // cut in before every character has actually finished staggering in --
+    // that overlap (fixed here) was why the wordmark barely read before
+    // the mark started settling back down. "legible" adds a real still
+    // beat where the full wordmark sits static before unsettling.
+    const wordmarkCharCount = split.chars.length;
+    const wordmarkDuration = 0.55;
+    const wordmarkStagger = 0.055;
+    const wordmarkSpan = wordmarkDuration + wordmarkStagger * Math.max(0, wordmarkCharCount - 1);
+
     tl.addLabel("draw")
       .to(trace, { drawSVG: "100%", duration: 0.5, ease: "power2.out" }, "draw")
       .addLabel("settle")
       .to(trace, { morphSVG: LARDER_MARK_PATH_BOLD, strokeWidth: 5, duration: 0.2, ease: "power2.out" }, "settle")
       .to(fillEl, { opacity: 1, duration: 0.2 }, "settle")
-      .addLabel("hold", "settle+=0.2")
-      .addLabel("wordmark", "hold+=0.15")
-      .to(split.chars, { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.9)", stagger: 0.04 }, "wordmark")
-      .addLabel("unsettle", "hold+=0.45")
-      .to(trace, { morphSVG: LARDER_MARK_PATH, strokeWidth: 3, duration: 0.2, ease: "power2.inOut" }, "unsettle")
-      .to(fillEl, { opacity: 0, duration: 0.2 }, "unsettle");
+      .addLabel("wordmark", "settle+=0.35")
+      .to(
+        split.chars,
+        { opacity: 1, y: 0, duration: wordmarkDuration, ease: "back.out(1.9)", stagger: wordmarkStagger },
+        "wordmark",
+      )
+      .addLabel("legible", `wordmark+=${wordmarkSpan + 0.25}`)
+      .to(trace, { morphSVG: LARDER_MARK_PATH, strokeWidth: 3, duration: 0.2, ease: "power2.inOut" }, "legible")
+      .to(fillEl, { opacity: 0, duration: 0.2 }, "legible");
 
     return () => {
       tl.kill();

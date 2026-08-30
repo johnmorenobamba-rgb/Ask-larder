@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import { SPRING_PRESS } from "@/lib/motion/springPress";
+import { ElevatedCell } from "@/components/shared/ElevatedCell";
 
 type RosterStaff = { id: string; name: string };
 
@@ -55,18 +54,23 @@ export function PinLoginForm({
       <div className="space-y-3">
         <p className="font-mono text-sm text-clay-brown">Who&apos;s this?</p>
         <div className="grid grid-cols-2 gap-3">
-          {staff.map((member) => (
-            <motion.button
+          {staff.map((member, i) => (
+            <button
               key={member.id}
               type="button"
               onClick={() => setSelectedStaffId(member.id)}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              transition={SPRING_PRESS}
-              className="rounded-2xl border-2 border-clay-brown/40 px-4 py-4 text-left font-display text-ink hover:border-preserve-red"
+              className="block w-full text-left"
             >
-              {member.name}
-            </motion.button>
+              <ElevatedCell
+                glowColor="var(--color-clay-brown)"
+                floatDurationS={5.6 + (i % 4) * 0.15}
+                floatDelayS={(i % 4) * 0.15}
+                depth="secondary"
+                className="rounded-2xl bg-parchment px-4 py-4"
+              >
+                <span className="font-display text-ink">{member.name}</span>
+              </ElevatedCell>
+            </button>
           ))}
         </div>
       </div>

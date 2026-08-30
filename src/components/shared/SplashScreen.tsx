@@ -14,8 +14,14 @@ import { EmberGlowBackground } from "./EmberGlowBackground";
 const SplashSequence = dynamic(() => import("./SplashSequence").then((m) => m.SplashSequence), { ssr: false });
 
 const STORAGE_KEY = "larder-splash-shown-date";
-const MIN_DISPLAY_MS = 1300;
-const MAX_WAIT_MS = 3000;
+// SplashSequence's own GSAP timeline (draw + settle + wordmark stagger +
+// a legible hold + unsettle) now runs ~2.3s end to end -- MIN_DISPLAY_MS
+// must clear that comfortably, or the fade-out (driven independently by
+// page-load timing, not by the sequence's own onComplete) can start
+// mid-wordmark-reveal, which is exactly what made the wordmark barely
+// readable before this was raised from 1300ms.
+const MIN_DISPLAY_MS = 2500;
+const MAX_WAIT_MS = 3500;
 const FADE_MS = 300;
 
 function todayKey() {

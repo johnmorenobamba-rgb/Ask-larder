@@ -13,3 +13,18 @@ export function onAskLarderOpenRequest(handler: () => void) {
   window.addEventListener(EVENT_NAME, handler);
   return () => window.removeEventListener(EVENT_NAME, handler);
 }
+
+// Lets other floating chrome (the near-miss report button) hide itself
+// while the Ask Larder overlay is open, rather than two competing floating
+// actions both being visible/tappable at once with a modal up.
+const STATE_EVENT_NAME = "ask-larder:overlay-state";
+
+export function broadcastAskLarderOverlayState(open: boolean) {
+  window.dispatchEvent(new CustomEvent<boolean>(STATE_EVENT_NAME, { detail: open }));
+}
+
+export function onAskLarderOverlayStateChange(handler: (open: boolean) => void) {
+  const listener = (e: Event) => handler((e as CustomEvent<boolean>).detail);
+  window.addEventListener(STATE_EVENT_NAME, listener);
+  return () => window.removeEventListener(STATE_EVENT_NAME, listener);
+}

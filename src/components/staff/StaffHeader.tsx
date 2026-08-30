@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LarderMark } from "@/components/shared/LarderMark";
 import { NavDrawer } from "@/components/staff/NavDrawer";
@@ -39,10 +40,10 @@ export function StaffHeader({ venueSlug, venueName }: { venueSlug: string; venue
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-ink px-4 py-3 md:px-6">
-        <div className="flex items-center gap-2">
+        <Link href={`/${venueSlug}/home`} className="flex items-center gap-2">
           <LarderMark size={22} color="var(--color-parchment)" />
           <span className="font-display text-base font-bold text-parchment">Larder</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-4">
           <span className="font-sans text-sm text-parchment/80">{venueName}</span>
           <button

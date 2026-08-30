@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { OwnerLoginForm } from "@/components/owner/OwnerLoginForm";
+import { LoginBackdrop } from "@/components/shared/LoginBackdrop";
 
 type VenueRoster = {
   venue: { id: string; name: string; branding: Record<string, unknown> } | null;
@@ -30,8 +31,9 @@ export default async function OwnerLoginPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-parchment px-6">
-      <div className="w-full max-w-sm space-y-6">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-parchment px-6">
+      <LoginBackdrop />
+      <div className="relative z-10 w-full max-w-sm space-y-6">
         <div>
           <p className="font-mono text-xs text-clay-brown">Owner dashboard</p>
           <h1 className="font-display text-3xl font-bold text-ink">{roster.venue.name}</h1>

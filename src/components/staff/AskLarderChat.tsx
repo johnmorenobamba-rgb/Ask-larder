@@ -5,7 +5,7 @@ import { AskLarderTriggerIcon, type AskLarderIconState } from "@/components/staf
 import type { ChitMarkHandle } from "@/components/shared/ChitMark";
 import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
 import { track } from "@/lib/analytics/track";
-import { onAskLarderOpenRequest } from "@/lib/askLarderBus";
+import { onAskLarderOpenRequest, broadcastAskLarderOverlayState } from "@/lib/askLarderBus";
 
 type IconState = AskLarderIconState;
 type OverlayView = "text" | "voice-coming-soon";
@@ -41,6 +41,12 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [overlayView, setOverlayView] = useState<OverlayView>("text");
+
+  // Lets other floating chrome (the near-miss report button) hide itself
+  // while this overlay is open -- see askLarderBus.ts.
+  useEffect(() => {
+    broadcastAskLarderOverlayState(overlayOpen);
+  }, [overlayOpen]);
 
   const [question, setQuestion] = useState("");
   const [askedQuestion, setAskedQuestion] = useState<string | null>(null);
@@ -277,18 +283,29 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
       </button>
 
       {overlayOpen && (
-        <div
-          className={`fixed inset-0 z-50 flex items-end justify-center bg-ink transition-opacity duration-220 ${
-            closing ? "opacity-0" : "opacity-45"
-          }`}
-          onClick={closeOverlay}
-        >
+        <>
+          {/* Scrim and sheet are separate layers, deliberately -- CSS
+              `opacity` on a parent cascades to every descendant as one
+              compositing unit, so a single div carrying both the dark
+              scrim tint AND the parchment sheet made the sheet itself
+              45% translucent too (bleeding whatever was behind it, and
+              anything else at a lower z-index, straight through). The
+              scrim uses `bg-ink/45` (an alpha background color, not an
+              opacity) so only IT is translucent; the sheet stays a fully
+              solid, fully legible parchment surface. */}
           <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md rounded-t-3xl bg-parchment p-6 pb-8 ${
-              closing ? "animate-ask-larder-sheet-down" : "animate-ask-larder-sheet-up"
+            className={`fixed inset-0 z-50 bg-ink/45 transition-opacity duration-220 ${
+              closing ? "opacity-0" : "opacity-100"
             }`}
-          >
+            onClick={closeOverlay}
+          />
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`pointer-events-auto w-full max-w-md rounded-t-3xl bg-parchment p-6 pb-8 ${
+                closing ? "animate-ask-larder-sheet-down" : "animate-ask-larder-sheet-up"
+              }`}
+            >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-xl font-bold text-ink">Ask Larder</h2>
               <button type="button" onClick={closeOverlay} className="font-mono text-xs text-clay-brown">
@@ -364,7 +381,8 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </>
       )}
     </>
   );
