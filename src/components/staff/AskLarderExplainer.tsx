@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AskLarderTriggerIcon, type AskLarderIconState } from "@/components/staff/AskLarderTriggerIcon";
+import { LARDER_MARK_PATH } from "@/components/shared/LarderMark";
 
 type Beat = {
   durationMs: number | null; // null = waits for the final button, no auto-advance
@@ -37,7 +39,7 @@ const BEATS: Beat[] = [
     ink: false,
     render: () => (
       <div className="text-center space-y-4">
-        <BubbleIcon className="mx-auto animate-bubble-idle" />
+        <TapHoldDemo />
         <h2 className="font-display text-3xl font-bold text-ink">Type, or hold to talk.</h2>
       </div>
     ),
@@ -89,12 +91,35 @@ const BEATS: Beat[] = [
 function BubbleIcon({ className = "" }: { className?: string }) {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" role="img" aria-label="Ask Larder">
-      <path
-        d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z"
-        className={className}
-        fill="var(--color-preserve-red)"
-      />
+      <path d={LARDER_MARK_PATH} className={className} fill="var(--color-preserve-red)" />
     </svg>
+  );
+}
+
+// Beat 3 demo: cycles through the real Ask Larder icon states (Ask Larder
+// spec's table) so the explainer shows the actual bubble a new hire will
+// see later, not a one-off animation that only looks similar.
+const TAP_HOLD_SEQUENCE: { state: AskLarderIconState; ms: number }[] = [
+  { state: "idle", ms: 1200 },
+  { state: "listening", ms: 2000 },
+  { state: "thinking", ms: 700 },
+  { state: "answer-ready", ms: 1500 },
+];
+
+function TapHoldDemo() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIndex((i) => (i + 1) % TAP_HOLD_SEQUENCE.length);
+    }, TAP_HOLD_SEQUENCE[index].ms);
+    return () => window.clearTimeout(timer);
+  }, [index]);
+
+  return (
+    <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center">
+      <AskLarderTriggerIcon state={TAP_HOLD_SEQUENCE[index].state} size={72} />
+    </div>
   );
 }
 
@@ -106,9 +131,11 @@ function reducer(state: number, action: "NEXT"): number {
 export function AskLarderExplainer({
   venueSlug,
   venueName,
+  redirectTo,
 }: {
   venueSlug: string;
   venueName: string;
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [beatIndex, dispatch] = useReducer(reducer, 0);
@@ -123,7 +150,7 @@ export function AskLarderExplainer({
 
   async function finish() {
     await fetch("/api/staff/mark-intro-seen", { method: "POST" });
-    router.push(`/${venueSlug}/modules`);
+    router.push(redirectTo ?? `/${venueSlug}/home`);
   }
 
   return (

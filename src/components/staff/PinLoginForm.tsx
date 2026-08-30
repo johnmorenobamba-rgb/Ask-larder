@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { SPRING_PRESS } from "@/lib/motion/springPress";
 
 type RosterStaff = { id: string; name: string };
 
@@ -54,14 +56,17 @@ export function PinLoginForm({
         <p className="font-mono text-sm text-clay-brown">Who&apos;s this?</p>
         <div className="grid grid-cols-2 gap-3">
           {staff.map((member) => (
-            <button
+            <motion.button
               key={member.id}
               type="button"
               onClick={() => setSelectedStaffId(member.id)}
-              className="rounded-2xl border-2 border-clay-brown/40 px-4 py-4 text-left font-display text-ink transition-transform duration-150 hover:scale-[1.03] hover:border-preserve-red"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_PRESS}
+              className="rounded-2xl border-2 border-clay-brown/40 px-4 py-4 text-left font-display text-ink hover:border-preserve-red"
             >
               {member.name}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

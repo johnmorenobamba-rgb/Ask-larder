@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
+import { ScrollStackList } from "@/components/shared/ScrollStackList";
 
 function daysUntil(dateStr: string): number {
   const ms = new Date(dateStr).getTime() - Date.now();
@@ -25,32 +27,38 @@ export default async function OwnerCertsPage() {
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-6">
         <h1 className="font-display text-3xl font-bold text-ink">Certificates</h1>
-        <div className="space-y-3">
+        <ScrollStackList className="space-y-3">
           {(certs ?? []).map((c) => {
             const days = c.expiry_date ? daysUntil(c.expiry_date) : null;
             const state = days === null ? "unknown" : days < 0 ? "expired" : days <= soonestThreshold ? "expiring" : "valid";
             const color =
               state === "expired" ? "border-preserve-red" : state === "expiring" ? "border-saffron" : "border-bay-green";
-            const label =
-              state === "expired"
-                ? `Expired ${Math.abs(days!)} day(s) ago`
-                : state === "expiring"
-                  ? `Expires in ${days} day(s)`
-                  : state === "valid"
-                    ? `Expires ${c.expiry_date}`
-                    : "No expiry date on file";
             return (
-              <div key={c.id} className={`rounded-2xl border-2 ${color} px-4 py-4`}>
+              <div key={c.id} className={`rounded-2xl border-2 bg-parchment ${color} px-4 py-4`}>
                 <p className="font-display text-ink">{c.app_users?.name ?? "Unknown staff"}</p>
                 <p className="font-mono text-xs text-clay-brown">{c.certificate_types?.name ?? "Unknown cert"}</p>
-                <p className="font-sans text-sm text-ink">{label}</p>
+                <p className="font-sans text-sm text-ink">
+                  {state === "expired" ? (
+                    <>
+                      Expired <AnimatedNumber value={Math.abs(days!)} animate /> day(s) ago
+                    </>
+                  ) : state === "expiring" ? (
+                    <>
+                      Expires in <AnimatedNumber value={days!} animate /> day(s)
+                    </>
+                  ) : state === "valid" ? (
+                    `Expires ${c.expiry_date}`
+                  ) : (
+                    "No expiry date on file"
+                  )}
+                </p>
               </div>
             );
           })}
           {(certs ?? []).length === 0 && (
             <p className="font-sans text-sm text-clay-brown">No certificates uploaded yet.</p>
           )}
-        </div>
+        </ScrollStackList>
       </div>
     </main>
   );

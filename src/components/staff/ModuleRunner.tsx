@@ -27,6 +27,8 @@ export function ModuleRunner({
   venueSlug,
   moduleId,
   moduleTitle,
+  moduleIndex,
+  totalModules,
   sections,
   questions,
   backHref,
@@ -35,6 +37,8 @@ export function ModuleRunner({
   venueSlug: string;
   moduleId: string;
   moduleTitle: string;
+  moduleIndex?: number;
+  totalModules?: number;
   sections: Section[];
   questions: Question[];
   backHref?: string;
@@ -84,8 +88,13 @@ export function ModuleRunner({
   }
 
   return (
-    <main className="min-h-screen bg-parchment px-6 py-10">
+    <main className="min-h-screen bg-parchment px-6 pb-10 pt-24">
       <div className="mx-auto w-full max-w-lg space-y-6">
+        {moduleIndex !== undefined && totalModules !== undefined && (
+          <p className="text-right font-mono text-xs text-clay-brown">
+            Module {moduleIndex} of {totalModules}
+          </p>
+        )}
         <div className="h-1.5 w-full rounded-full bg-clay-brown/20">
           <div
             className="h-1.5 rounded-full bg-bay-green transition-[width] duration-250 ease-out"

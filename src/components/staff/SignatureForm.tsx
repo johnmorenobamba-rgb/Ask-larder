@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PassSlide } from "./PassSlide";
+import { useHasMounted } from "@/lib/hooks/useHasMounted";
 
 export function SignatureForm({ venueSlug }: { venueSlug: string }) {
   const router = useRouter();
@@ -11,15 +12,16 @@ export function SignatureForm({ venueSlug }: { venueSlug: string }) {
   const [error, setError] = useState<string | null>(null);
 
   // Both the timestamp and device label depend on the client's clock/UA,
-  // which never matches what the server rendered — computed after mount,
-  // not during render, so hydration doesn't diff a server/client mismatch.
-  const [signedLabel, setSignedLabel] = useState<string | null>(null);
+  // which never matches what the server rendered — useHasMounted only
+  // returns true post-hydration, so this never diffs a server/client
+  // mismatch and the value is still only ever computed client-side.
+  const hasMounted = useHasMounted();
 
-  useEffect(() => {
-    const now = new Date();
-    const deviceLabel = /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "tablet/desktop";
-    setSignedLabel(`Signed ${now.toLocaleDateString()} at ${now.toLocaleTimeString()} on ${deviceLabel}.`);
-  }, []);
+  const signedLabel = hasMounted
+    ? `Signed ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()} on ${
+        /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "tablet/desktop"
+      }.`
+    : null;
 
   async function submit() {
     if (typedName.trim().length < 2) return;
@@ -56,7 +58,7 @@ export function SignatureForm({ venueSlug }: { venueSlug: string }) {
             onChange={(e) => setTypedName(e.target.value)}
             placeholder="Full name"
             autoFocus
-            className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-4 font-display text-2xl text-ink focus:border-preserve-red outline-none"
+            className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-5 font-display text-4xl text-ink focus:border-preserve-red outline-none"
           />
           {signedLabel && <p className="font-mono text-xs text-clay-brown">{signedLabel}</p>}
           {error && <p className="text-preserve-red font-sans text-sm">{error}</p>}

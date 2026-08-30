@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { ModuleStateChip } from "@/components/staff/ModuleStateChip";
+import { PressableLink } from "@/components/shared/PressableLink";
 
 export default async function ModulesPage({
   params,
@@ -44,7 +44,7 @@ export default async function ModulesPage({
   const progressByModule = new Map((progress ?? []).map((p) => [p.module_id, p.status]));
 
   return (
-    <main className="min-h-screen bg-parchment px-6 py-10">
+    <main className="min-h-screen bg-parchment px-6 pb-10 pt-24">
       <PassSlide>
         <div className="mx-auto w-full max-w-lg space-y-6">
           <div className="flex items-center justify-between">
@@ -63,15 +63,15 @@ export default async function ModulesPage({
             <ul className="space-y-2">
               {visibleModules.map((module) => (
                 <li key={module.id}>
-                  <Link
+                  <PressableLink
                     href={`/${venueSlug}/modules/${module.id}`}
-                    className="flex items-center gap-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-4 transition-transform duration-150 hover:scale-[1.01] hover:border-preserve-red"
+                    className="flex items-center gap-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-4 hover:border-preserve-red"
                   >
                     <ModuleStateChip
                       state={(progressByModule.get(module.id) as "not_started" | "in_progress" | "completed") ?? "not_started"}
                     />
                     <span className="font-sans text-ink">{module.title}</span>
-                  </Link>
+                  </PressableLink>
                 </li>
               ))}
             </ul>

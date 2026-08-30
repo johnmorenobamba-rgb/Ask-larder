@@ -27,6 +27,22 @@ export default async function ModulePage({
     .single();
   if (!module) notFound();
 
+  // Same role-visibility filter as the checklist (modules/page.tsx) — needed
+  // here only to compute this module's "X of Y" position, per the New-Hire
+  // Flow spec's global-chrome progress chit.
+  const { data: allModules } = await supabase
+    .from("modules")
+    .select("id, module_roles(role_id)")
+    .eq("venue_id", staff.venue_id!)
+    .in("status", ["approved", "live"]);
+  const visibleModuleIds = (allModules ?? [])
+    .filter(
+      (m) =>
+        m.module_roles.length === 0 || m.module_roles.some((mr) => mr.role_id === staff.staff_role_id),
+    )
+    .map((m) => m.id);
+  const moduleIndex = visibleModuleIds.indexOf(moduleId);
+
   const { data: sections } = await supabase
     .from("module_sections")
     .select("id, section_order, content")
@@ -43,6 +59,8 @@ export default async function ModulePage({
       venueSlug={venueSlug}
       moduleId={module.id}
       moduleTitle={module.title}
+      moduleIndex={moduleIndex >= 0 ? moduleIndex + 1 : undefined}
+      totalModules={visibleModuleIds.length}
       sections={sections ?? []}
       questions={(questions ?? []).map((q) => ({
         id: q.id,

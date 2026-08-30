@@ -1,19 +1,37 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ResolveEscalationButton } from "@/components/owner/ResolveEscalationButton";
 
-export default async function OwnerEscalationsPage() {
+export default async function OwnerEscalationsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ venueSlug: string }>;
+  searchParams: Promise<{ station?: string }>;
+}) {
+  const { venueSlug } = await params;
+  const { station } = await searchParams;
   const supabase = await createClient();
 
-  const { data: escalations } = await supabase
+  let query = supabase
     .from("chat_messages")
     .select("id, message, created_at, escalation_status, app_users(name), stations(name)")
     .eq("is_escalation", true)
     .order("created_at", { ascending: false });
+  if (station) query = query.eq("station_id", station);
+  const { data: escalations } = await query;
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-6">
-        <h1 className="font-display text-3xl font-bold text-ink">Escalations</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-3xl font-bold text-ink">Escalations</h1>
+          {station && (
+            <Link href={`/${venueSlug}/owner/escalations`} className="font-mono text-xs text-clay-brown underline">
+              Clear filter
+            </Link>
+          )}
+        </div>
         <div className="space-y-3">
           {(escalations ?? []).map((e) => (
             <div

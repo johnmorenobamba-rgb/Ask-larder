@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored scripts from installed Claude Code skills (Impeccable, Taste
+    // Skill, UI/UX Pro Max, Emil Kowalski's skills) -- third-party tooling,
+    // not this project's code. Without this, installing a skill silently
+    // drowns the real lint signal in the vendor's own script warnings.
+    ".claude/skills/**",
+    ".agents/skills/**",
   ]),
 ]);
 

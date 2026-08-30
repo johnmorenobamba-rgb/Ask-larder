@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { OwnerNav } from "@/components/owner/OwnerNav";
 
 // Mirrors (staff)/[venueSlug]/(protected)/layout.tsx's per-page session gate
 // -- no middleware, it was removed project-wide and stays removed. Checks
@@ -24,10 +25,19 @@ export default async function OwnerProtectedLayout({
   }
 
   const supabase = await createClient();
-  const { data: venue } = await supabase.from("venues").select("id, slug").eq("id", staff.venue_id!).maybeSingle();
+  const { data: venue } = await supabase
+    .from("venues")
+    .select("id, slug, name")
+    .eq("id", staff.venue_id!)
+    .maybeSingle();
   if (!venue || venue.slug !== venueSlug) {
     redirect(`/${venueSlug}/owner/login`);
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <OwnerNav venueSlug={venueSlug} venueName={venue.name} />
+      {children}
+    </>
+  );
 }

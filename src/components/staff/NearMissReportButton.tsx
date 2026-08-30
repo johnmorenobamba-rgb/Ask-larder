@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
 
 /**
  * Persistent, low-friction "something felt unsafe" report — fire-and-forget,
@@ -24,6 +25,7 @@ export function NearMissReportButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const magneticRef = useMagneticPull<HTMLButtonElement>();
 
   function reset() {
     setOpen(false);
@@ -74,6 +76,7 @@ export function NearMissReportButton({
   if (!open) {
     return (
       <button
+        ref={magneticRef}
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-40 rounded-full bg-ink px-5 py-3 font-sans text-sm font-medium text-parchment shadow-lg"

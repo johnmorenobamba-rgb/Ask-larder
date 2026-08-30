@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
+import { StaffTopBar } from "@/components/staff/StaffTopBar";
+import { StaffHeader } from "@/components/staff/StaffHeader";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
@@ -28,8 +31,17 @@ export default async function ProtectedStaffLayout({
     redirect(`/${venueSlug}/module-updates`);
   }
 
+  let venueName = "";
+  if (staff.venue_id) {
+    const supabase = await createClient();
+    const { data: venue } = await supabase.from("venues").select("name").eq("id", staff.venue_id).maybeSingle();
+    venueName = venue?.name ?? "";
+  }
+
   return (
     <>
+      {venueName && <StaffTopBar venueName={venueName} />}
+      <StaffHeader venueSlug={venueSlug} venueName={venueName} />
       {children}
       {staff.venue_id && (
         <>

@@ -119,7 +119,7 @@ async function ask(page: Page, question: string): Promise<{ text: string; escala
   }
   const answersBefore = await page.locator('[data-testid="ask-larder-answer"]').count();
   await page.getByPlaceholder("Type your question").fill(question);
-  await page.getByRole("button", { name: "Ask" }).click();
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
 
   const answers = page.locator('[data-testid="ask-larder-answer"]');
   await expect(answers).toHaveCount(answersBefore + 1, { timeout: 20000 });

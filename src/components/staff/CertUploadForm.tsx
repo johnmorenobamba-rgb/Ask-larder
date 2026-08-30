@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Stamp } from "./Stamp";
 import { PassSlide } from "./PassSlide";
+import { SyncingIndicator } from "./SyncingIndicator";
 
 export function CertUploadForm({
   venueSlug,
@@ -87,20 +88,24 @@ export function CertUploadForm({
   }
 
   return (
-    <main className="min-h-screen bg-parchment px-6 py-10">
+    <main className="min-h-screen bg-parchment px-6 pb-10 pt-24">
       <PassSlide>
         <div className="mx-auto w-full max-w-md space-y-6">
           <h1 className="font-display text-3xl font-bold text-ink">{certTypeName}</h1>
 
           <div className="space-y-2">
             <label className="font-mono text-xs text-clay-brown">Photo of certificate</label>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full font-sans text-sm text-ink"
-            />
+            <label className="flex w-full cursor-pointer items-center justify-between rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-sans text-ink transition-colors hover:border-preserve-red">
+              <span>{file ? file.name : "Choose a photo"}</span>
+              <span className="font-mono text-xs text-clay-brown">Browse</span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="sr-only"
+              />
+            </label>
             {existingPhotoUrl && !file && (
               <p className="font-mono text-xs text-clay-brown">
                 A photo is already on file — choose a new one to replace it.
@@ -134,9 +139,10 @@ export function CertUploadForm({
             type="button"
             onClick={submit}
             disabled={loading || !issuedDate || !expiryDate || (!file && !existingPhotoRef)}
-            className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Saving…" : "Save certificate"}
+            {loading && <SyncingIndicator />}
+            {loading ? "Verifying…" : "Save certificate"}
           </button>
         </div>
       </PassSlide>

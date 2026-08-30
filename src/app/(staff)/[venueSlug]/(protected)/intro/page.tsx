@@ -5,19 +5,21 @@ import { AskLarderExplainer } from "@/components/staff/AskLarderExplainer";
 
 export default async function IntroPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ venueSlug: string }>;
+  searchParams: Promise<{ replay?: string }>;
 }) {
   const { venueSlug } = await params;
+  const { replay } = await searchParams;
   const staff = await getCurrentStaff();
   if (!staff) redirect(`/${venueSlug}/login`);
 
-  // Shown once per user, ever. There's no replay entry point yet (that's
-  // the personal dashboard's job, Block E territory) so a direct hit on
-  // this route after the flag is already set just returns to the app
-  // rather than replaying an unskippable sequence a second time.
-  if (staff.has_seen_ask_larder_intro) {
-    redirect(`/${venueSlug}/modules`);
+  // Shown once per user, ever, unless explicitly replayed from Settings'
+  // "How Ask Larder works" link (?replay=1) — replaying doesn't touch the
+  // has_seen_ask_larder_intro flag, it's just a rewatch.
+  if (staff.has_seen_ask_larder_intro && !replay) {
+    redirect(`/${venueSlug}/home`);
   }
 
   const supabase = await createClient();
@@ -27,5 +29,11 @@ export default async function IntroPage({
     .eq("id", staff.venue_id!)
     .single();
 
-  return <AskLarderExplainer venueSlug={venueSlug} venueName={venue?.name ?? "this kitchen"} />;
+  return (
+    <AskLarderExplainer
+      venueSlug={venueSlug}
+      venueName={venue?.name ?? "this kitchen"}
+      redirectTo={replay ? `/${venueSlug}/settings` : `/${venueSlug}/home`}
+    />
+  );
 }

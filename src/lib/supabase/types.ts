@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -30,6 +30,7 @@ export type Database = {
           role: string
           staff_role_id: string | null
           venue_id: string | null
+          voice_output_enabled: boolean
         }
         Insert: {
           auth_id?: string | null
@@ -46,6 +47,7 @@ export type Database = {
           role: string
           staff_role_id?: string | null
           venue_id?: string | null
+          voice_output_enabled?: boolean
         }
         Update: {
           auth_id?: string | null
@@ -62,6 +64,7 @@ export type Database = {
           role?: string
           staff_role_id?: string | null
           venue_id?: string | null
+          voice_output_enabled?: boolean
         }
         Relationships: [
           {
@@ -576,6 +579,68 @@ export type Database = {
           },
           {
             foreignKeyName: "near_miss_reports_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_library: {
+        Row: {
+          created_at: string | null
+          id: string
+          module_id: string | null
+          station_id: string | null
+          storage_path: string
+          tag: string
+          uploaded_by: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          station_id?: string | null
+          storage_path: string
+          tag: string
+          uploaded_by?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          station_id?: string | null
+          storage_path?: string
+          tag?: string
+          uploaded_by?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_library_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_library_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_library_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_library_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"

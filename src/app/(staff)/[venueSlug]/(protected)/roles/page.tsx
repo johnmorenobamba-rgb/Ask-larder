@@ -15,12 +15,12 @@ export default async function RolesPage({
 
   // Role determines everything downstream — once set, never show this
   // screen again.
-  if (staff.staff_role_id) redirect(`/${venueSlug}/modules`);
+  if (staff.staff_role_id) redirect(`/${venueSlug}/home`);
 
   const supabase = await createClient();
   const { data: roles } = await supabase
     .from("staff_roles")
-    .select("id, name")
+    .select("id, name, department")
     .eq("venue_id", staff.venue_id!)
     .order("name");
 

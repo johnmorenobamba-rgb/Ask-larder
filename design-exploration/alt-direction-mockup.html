@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Larder — Alt Direction Exploration (staff home)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     EXPLORATION NOTE — this file is a standalone comparison mock,
+     not a change to the shipped app. It intentionally sets aside
+     Larder's locked Branding Kit to show what the four installed
+     design skills (Impeccable, Taste Skill, UI/UX Pro Max, Emil
+     Kowalski's skills) would recommend cold, per the prior
+     recommendation pass. Every token below maps to a specific
+     finding from that pass -- see inline comments.
+     ============================================================ */
+
+  :root {
+    /* PALETTE — "Black and Tan" direction (Taste Skill's alternative
+       to the banned warm-cream/espresso/clay family). True off-black,
+       a real tan (not cream), one saturated accent instead of a
+       four-color rotating system, status colors kept purely
+       functional/desaturated rather than personality-carrying. */
+    --ink: #0e0e0f;          /* true off-black, not warm-tinted like the current Ink */
+    --paper: #f4f3ef;        /* cooler, less yellow than Parchment #F2E9D8 */
+    --tan: #c9a876;          /* real tan surface/accent, not cream */
+    --accent: #ff4b3e;       /* single saturated pop, replaces the 3-hue accent rotation */
+    --status-valid: #2fa84f;
+    --status-warn: #f5b700;
+
+    /* TYPOGRAPHY — sans-only system. Space Grotesk stands in for the
+       recommended Cabinet Grotesk Display / Geist Display family
+       (bold geometric sans, real character, no serif). Inter stays
+       for body, same legibility reasoning CLAUDE.md already uses.
+       Plex Mono stays for data/labels -- that role is function-
+       justified regardless of direction. */
+    --font-display: "Space Grotesk", sans-serif;
+    --font-body: "Inter", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header — flat, functional. No decorative motion on chrome you see every load. */
+  .header {
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .venue-name { font-family: var(--font-body); font-size: 13px; color: rgba(244,243,239,0.6); }
+  .hamburger { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+  .hamburger span { width: 20px; height: 2px; background: var(--paper); display: block; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 20px; }
+
+  /* Greeting — set directly on the page, no separate flat card needed;
+     Space Grotesk carries the "hero" weight instead of a serif display. */
+  .greeting { margin: 8px 0 20px; }
+  .greeting h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+  .greeting p { margin: 0; font-size: 14px; color: rgba(14,14,15,0.55); }
+
+  /* Grid — packed, no empty cells (Taste Skill's bento-cell-count rule).
+     Two hero cells side by side, two supporting cells below, all real
+     content, none idle. */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+  .cell {
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    /* Motion: ONE crisp entrance, no idle float, no infinite ambient
+       shimmer. Emil Kowalski's framework: dashboards seen many times a
+       day should be "crisp and fast," not decorated at rest. */
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 260ms cubic-bezier(0.16, 1, 0.3, 1), transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cell.in { opacity: 1; transform: translateY(0); }
+  .cell:active { transform: scale(0.98); } /* press feedback per Emil's component principle */
+
+  .cell-light { background: #fff; border: 1px solid rgba(14,14,15,0.08); color: var(--ink); }
+  .cell-dark { background: var(--ink); color: var(--paper); }
+
+  .cell-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.55;
+    margin: 0 0 10px;
+  }
+
+  /* Hero progress ring — the one animation that fires meaningfully
+     (fills to the real value once per load), not decoration. */
+  .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 6px 0; }
+  .ring-wrap svg { width: 128px; height: 128px; transform: rotate(-90deg); }
+  .ring-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .ring-sub { font-size: 13px; color: rgba(14,14,15,0.55); }
+
+  .glyph { width: 26px; height: 26px; }
+
+  .continue-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 10px 0 2px; letter-spacing: -0.01em; }
+  .continue-status { font-size: 13px; color: rgba(14,14,15,0.55); margin: 0 0 10px; }
+  .segments { display: flex; gap: 4px; }
+  .segments span { height: 5px; flex: 1; border-radius: 3px; background: rgba(14,14,15,0.1); }
+  .segments span.done { background: var(--status-valid); }
+
+  .cert-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(14,14,15,0.08); }
+  .cert-row:last-child { border-bottom: none; }
+  .cert-name { font-size: 14px; }
+  .cert-tag { font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+  .cert-tag.valid { background: rgba(47,168,79,0.14); color: #1d7a37; }
+  .cert-tag.warn { background: rgba(245,183,0,0.18); color: #8a6200; }
+
+  .ask-cell { display: flex; align-items: center; gap: 12px; }
+  .ask-copy { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+
+  /* Stations strip — compact, packed, real content in view, no dead
+     grid space (contrast with the current desktop layout's empty cell
+     next to Near-miss). */
+  .stations-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(14,14,15,0.55); margin: 24px 0 10px; }
+  .stations-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .station-card {
+    flex: 0 0 132px;
+    height: 84px;
+    border-radius: 12px;
+    background: var(--tan);
+    color: var(--ink);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 260ms cubic-bezier(0.16, 1, 0.3, 1), transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .station-card.in { opacity: 1; transform: translateY(0); }
+  .station-card .n { font-family: var(--font-mono); font-size: 10px; opacity: 0.7; }
+  .station-card .name { font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <!-- MARK — a verification/stamp seal, replacing the chat-bubble
+         mark. Ties to the compliance/completion value proposition
+         (already the meaning of the existing Stamp component) rather
+         than to a single feature (Ask Larder). Function-justified,
+         not theme-justified, so it survives regardless of palette. -->
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <circle cx="16" cy="16" r="13" stroke="var(--paper)" stroke-width="1.6"/>
+      <circle cx="16" cy="16" r="9" stroke="var(--paper)" stroke-width="1.2" stroke-dasharray="2 3"/>
+      <path d="M11.5 16.2l3 3 6-6.4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="wordmark">Larder</span>
+  </div>
+  <div class="header-left">
+    <span class="venue-name">Metropolis Events</span>
+    <div class="hamburger"><span></span><span></span></div>
+  </div>
+</div>
+
+<main>
+  <div class="greeting">
+    <h1>Morning, Amelia.</h1>
+    <p>Metropolis Events</p>
+  </div>
+
+  <div class="grid">
+    <div class="cell cell-light" data-stagger="0">
+      <p class="cell-label">Overall progress</p>
+      <div class="ring-wrap" style="position:relative;">
+        <svg viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(14,14,15,0.1)" stroke-width="8"/>
+          <circle id="ring" cx="64" cy="64" r="54" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3" style="transition: stroke-dashoffset 700ms cubic-bezier(0.16,1,0.3,1) 200ms;"/>
+        </svg>
+        <span class="ring-num">6 of 8</span>
+      </div>
+      <p class="ring-sub" style="text-align:center;">modules complete</p>
+    </div>
+
+    <div class="cell cell-light" data-stagger="1">
+      <p class="cell-label">Continue</p>
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="8" width="18" height="3" rx="1" stroke="var(--ink)" stroke-width="1.5"/>
+        <line x1="6.5" y1="11" x2="6.5" y2="18" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="17.5" y1="11" x2="17.5" y2="18" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <p class="continue-title">Allergen Handling</p>
+      <p class="continue-status">3 of 5 sections done</p>
+      <div class="segments">
+        <span class="done"></span><span class="done"></span><span class="done"></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="cell cell-light" data-stagger="2">
+      <p class="cell-label">Certificates</p>
+      <div class="cert-row">
+        <span class="cert-name">Food Handling</span>
+        <span class="cert-tag valid">Valid</span>
+      </div>
+      <div class="cert-row">
+        <span class="cert-name">RSA</span>
+        <span class="cert-tag warn">12d left</span>
+      </div>
+    </div>
+
+    <div class="cell cell-dark ask-cell" data-stagger="3">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="13" stroke="var(--paper)" stroke-width="1.6"/>
+        <path d="M11.5 16.2l3 3 6-6.4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="ask-copy">Ask something.</span>
+    </div>
+  </div>
+
+  <p class="stations-label">Stations</p>
+  <div class="stations-row">
+    <div class="station-card" data-stagger="4"><span class="n">01 · Bar</span><span class="name">Espresso Bar</span></div>
+    <div class="station-card" data-stagger="5"><span class="n">02 · Kitchen</span><span class="name">Walk-in Fridge</span></div>
+    <div class="station-card" data-stagger="6"><span class="n">03 · Kitchen</span><span class="name">Pass</span></div>
+  </div>
+</main>
+
+<script>
+  // Crisp, one-time staggered entrance only -- no infinite/idle motion
+  // anywhere on this screen, per Emil Kowalski's frequency guidance for
+  // surfaces seen many times a day.
+  document.querySelectorAll('[data-stagger]').forEach(el => {
+    const delay = parseInt(el.getAttribute('data-stagger'), 10) * 45;
+    setTimeout(() => el.classList.add('in'), 30 + delay);
+  });
+  setTimeout(() => {
+    document.getElementById('ring').style.strokeDashoffset = String(339.3 * (1 - 6/8));
+  }, 120);
+</script>
+
+</body>
+</html>

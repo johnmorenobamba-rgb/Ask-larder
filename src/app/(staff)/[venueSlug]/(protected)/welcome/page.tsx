@@ -12,6 +12,9 @@ export default async function WelcomePage({
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   if (!staff) redirect(`/${venueSlug}/login`);
+  // Returning staff (already picked a role, i.e. already been through
+  // onboarding before) land on their personal dashboard, not Welcome again.
+  if (staff.staff_role_id) redirect(`/${venueSlug}/home`);
 
   const supabase = await createClient();
   const { data: venue } = await supabase

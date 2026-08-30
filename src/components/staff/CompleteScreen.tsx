@@ -48,13 +48,6 @@ export function CompleteScreen({
           Everything you just went through stays available — come back any time to check it
           again.
         </p>
-        <button
-          type="button"
-          disabled
-          className="rounded-full border-2 border-clay-brown/40 px-6 py-2 font-sans text-sm text-clay-brown opacity-60"
-        >
-          Ask Larder — coming soon
-        </button>
         {!hasSeenIntro && (
           <p className="font-mono text-xs text-clay-brown">One more thing before you start…</p>
         )}

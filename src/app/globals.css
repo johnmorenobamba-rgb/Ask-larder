@@ -16,7 +16,7 @@
   --color-saffron: var(--color-saffron);
   --color-bay-green: var(--color-bay-green);
   --color-clay-brown: var(--color-clay-brown);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-ibm-plex-mono);
 }
@@ -50,6 +50,14 @@ body {
 
 .animate-stamp {
   animation: stamp-settle 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-stamp {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes pass-slide-in {
@@ -94,4 +102,265 @@ body {
 
 .animate-bubble-idle {
   animation: bubble-idle 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Block L9 -- listening state's waveform ripple, genuinely audio-reactive:
+   `--mic-level` is a reach *multiplier* (1 = quiet/baseline, up to ~1.6 =
+   loud), computed in JS from a real Web Audio AnalyserNode reading the
+   live mic stream (see AskLarderChat's startListening()) and set directly
+   on the ripple's DOM wrapper -- so a louder voice visibly pushes the
+   ripple further out each cycle instead of it playing the same fixed
+   reach regardless of whether anyone is even speaking. The multiplier is
+   computed already-floored at 1 in JS, not clamped here, so this stays a
+   plain scale rather than embedding that policy in CSS. */
+@keyframes ask-larder-ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(calc(1.8 * var(--mic-level, 1)));
+    opacity: 0;
+  }
+}
+
+.animate-ask-larder-ripple {
+  animation: ask-larder-ripple 600ms ease-out infinite;
+}
+
+/* Ask Larder spec: thinking state — a gentle pulse, deliberately not a
+   spinner (spinners read as generic/templated). */
+@keyframes ask-larder-thinking-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-ask-larder-thinking {
+  animation: ask-larder-thinking-pulse 800ms ease-in-out infinite;
+}
+
+/* Ask Larder spec: answer overlay bottom-sheet entrance/dismiss. */
+@keyframes ask-larder-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ask-larder-sheet-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.animate-ask-larder-sheet-up {
+  animation: ask-larder-sheet-up 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-ask-larder-sheet-down {
+  animation: ask-larder-sheet-down 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Personal Dashboard spec: bento cells reveal in a staggered sequence on
+   first load rather than dumping the whole grid on screen at once. Uses
+   the standalone `translate` property, not `transform: translateY()` — a
+   cell wrapped in ElevatedCell (Block J1) drives `transform` itself for
+   pointer tilt, and an animation's fill-forwards end state would otherwise
+   permanently pin `transform`, blocking the tilt from ever taking effect. */
+@keyframes bento-cell-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.animate-bento-cell-in {
+  opacity: 0;
+  animation: bento-cell-in 220ms ease-out forwards;
+}
+
+/* Block J1 — Bento elevation system (Decision Log, 29 Aug 2026 direction
+   pivot: "genuinely impressive, not utility"). Layered shadow (near + far
+   + a colored ambient glow matched to the cell's own fill/accent color),
+   staggered idle float, pointer/touch tilt + spotlight (JS sets
+   --tilt-transform/--spotlight-* via useTiltSpotlight). Shared foundation
+   for J2 (all four staff dashboard cells) and J6 (owner dashboard). */
+.elevated-cell {
+  position: relative;
+  transform: var(--tilt-transform, perspective(700px) rotateX(0deg) rotateY(0deg));
+  box-shadow:
+    0 var(--depth-contact-y, 2px) var(--depth-contact-blur, 4px) rgba(31, 27, 22, var(--depth-contact-opacity, 0.1)),
+    0 var(--depth-ambient-y, 16px) var(--depth-ambient-blur, 32px) rgba(31, 27, 22, var(--depth-ambient-opacity, 0.14)),
+    0 10px var(--depth-glow-blur, 44px) -6px
+      color-mix(in srgb, var(--elevated-glow-color, var(--color-ink)) var(--depth-glow-strength, 45%), transparent);
+  transition:
+    transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 300ms ease-out;
+  will-change: transform;
+}
+
+/* Block L3 -- real 3D depth (translateZ lives in the JS-driven
+   --tilt-transform itself, see useTiltSpotlight.ts). These overrides are
+   the "closer = sharper contact + stronger glow, further = flatter +
+   dimmer" half of the effect -- a static shadow/glow read, not motion, so
+   it applies the same under prefers-reduced-motion. */
+.elevated-cell[data-depth="hero"] {
+  --depth-contact-y: 3px;
+  --depth-contact-blur: 6px;
+  --depth-contact-opacity: 0.16;
+  --depth-ambient-y: 20px;
+  --depth-ambient-blur: 40px;
+  --depth-ambient-opacity: 0.2;
+  --depth-glow-blur: 56px;
+  --depth-glow-strength: 60%;
+}
+
+.elevated-cell[data-depth="secondary"] {
+  --depth-contact-y: 1px;
+  --depth-contact-blur: 3px;
+  --depth-contact-opacity: 0.06;
+  --depth-ambient-y: 10px;
+  --depth-ambient-blur: 26px;
+  --depth-ambient-opacity: 0.08;
+  --depth-glow-blur: 30px;
+  --depth-glow-strength: 26%;
+}
+
+/* Block L7 -- whole-viewport parallax wrapper. A plain 2D translate on a
+   non-rotated outer element -- see ElevatedCell.tsx's doc comment for why
+   this deliberately never merges into the inner cell's own 3D tilt
+   transform. */
+.elevated-cell-parallax {
+  display: block;
+  height: 100%;
+  transform: translate(
+    calc(var(--viewport-parallax-x, 0) * var(--parallax-weight, 0px)),
+    calc(var(--viewport-parallax-y, 0) * var(--parallax-weight, 0px))
+  );
+  transition: transform 120ms linear;
+}
+
+@keyframes elevated-cell-idle-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+.elevated-cell-float {
+  animation: elevated-cell-idle-float var(--elevated-float-duration, 6s) ease-in-out infinite;
+  animation-delay: var(--elevated-float-delay, 0s);
+}
+
+.elevated-cell-spotlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--spotlight-opacity, 0);
+  transition: opacity 300ms ease-out;
+  /* Pure white, not Parchment -- a Parchment-on-Parchment highlight has
+     near-zero contrast against the cell's own fill and effectively
+     doesn't read. White creates a genuine catching-the-light sheen. */
+  background: radial-gradient(
+    circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    rgba(255, 255, 255, 0.55),
+    transparent 55%
+  );
+  z-index: 1;
+}
+
+.elevated-cell-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  /* Clips inner content (e.g. a Continue-card photo) to the card's rounded
+     corners without touching .elevated-cell itself, whose box-shadow needs
+     to extend beyond the box -- overflow:hidden there would clip the glow. */
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elevated-cell {
+    transition: none;
+  }
+  .elevated-cell-float {
+    animation: none;
+  }
+}
+
+/* Block J3 — ChitMark's idle traveling-glow trace is driven by the Web
+   Animations API (element.animate()) directly in the component, not a CSS
+   @keyframes rule — see ChitMark.tsx's doc comment for why a
+   calc()-over-custom-property keyframe didn't reliably interpolate. */
+
+/* Block J5 (redo) — stations cylinder carousel's click-to-focus overlay.
+   A separate animation from .animate-stamp, deliberately -- the Branding
+   Kit reserves the Stamp treatment for the three trust moments (module
+   completion, cert verification, e-signature), not general UI chrome. */
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-focus-in {
+  animation: focus-in 220ms cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-focus-in {
+    animation: none;
+  }
+}
+
+/* Block L4 -- frosted-glass surface, to the stated bar of a real 1px inner
+   border + inset highlight for actual edge-refraction, not backdrop-blur
+   alone (a blur with no border/highlight just looks like a blurry flat
+   panel, not glass). Used on floating overlay panels (NeedsAttentionModal,
+   StationFocusOverlay) where a physical "pane of glass over the elevated
+   grid behind it" reads correctly -- not applied to the bento tiles
+   themselves, which keep their flat Ink/Parchment identity per the
+   Branding Kit. `prefers-reduced-transparency` (a real, standardized media
+   feature -- iOS Safari's own "Reduce Transparency" accessibility toggle,
+   directly relevant on this app's iPad target) falls back to a solid fill. */
+.glass-surface {
+  background: color-mix(in srgb, var(--color-parchment) 72%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--color-parchment) 45%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface {
+    background: var(--color-parchment);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

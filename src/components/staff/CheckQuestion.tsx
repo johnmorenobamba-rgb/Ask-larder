@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { SPRING_PRESS } from "@/lib/motion/springPress";
 
 export function CheckQuestion({
   question,
@@ -38,14 +40,15 @@ export function CheckQuestion({
           }
 
           return (
-            <button
+            <motion.button
               key={index}
               type="button"
               onClick={() => selectOption(index)}
               disabled={selected !== null}
-              className={`w-full text-left px-4 py-3 rounded-2xl border-2 font-sans text-ink transition-transform duration-150 ${borderClass} ${
-                selected === null ? "hover:scale-[1.01]" : ""
-              }`}
+              whileHover={selected === null ? { scale: 1.01 } : undefined}
+              whileTap={selected === null ? { scale: 0.97 } : undefined}
+              transition={SPRING_PRESS}
+              className={`w-full text-left px-4 py-3 rounded-2xl border-2 font-sans text-ink ${borderClass}`}
             >
               {option}
               {showState && isCorrectOption && (
@@ -54,7 +57,7 @@ export function CheckQuestion({
               {showState && isSelected && !isCorrectOption && (
                 <span className="block mt-1 h-0.5 w-10 bg-preserve-red" />
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>

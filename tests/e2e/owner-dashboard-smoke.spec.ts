@@ -129,16 +129,18 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
   test("E0: login and dashboard hub", async ({ page }) => {
     await loginAsOwner(page);
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    for (const label of ["Staff", "Completion tracking", "Certificates", "Modules", "Escalations", "Near-miss reports", "Stations & QR codes"]) {
-      await expect(page.getByRole("link", { name: label })).toBeVisible();
+    const nav = page.getByRole("navigation");
+    for (const label of ["Staff", "Completions", "Certificates", "Modules", "Escalations", "Near-misses", "Stations"]) {
+      await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
   });
 
   test("E1: staff list shows seeded staff", async ({ page }) => {
     await loginAsOwner(page);
     await page.goto(`/${SLUG}/owner/staff`);
-    await expect(page.getByText("Smoke Staff", { exact: true })).toBeVisible();
-    await expect(page.getByText("Smoke Staff Role")).toBeVisible();
+    const row = page.getByTestId("staff-row").filter({ hasText: "Smoke Staff" });
+    await expect(row.getByText("Smoke Staff", { exact: true })).toBeVisible();
+    await expect(row.getByText("Smoke Staff Role")).toBeVisible();
   });
 
   test("E2: completions show the seeded completed module", async ({ page }) => {
