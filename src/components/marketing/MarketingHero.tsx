@@ -151,7 +151,11 @@ export function MarketingHero() {
             <p className="mb-6 font-mono text-xs tracking-[0.2em] text-clay-brown uppercase">
               For independent hospitality venues
             </p>
-            <div className="relative min-h-[3.5em] sm:min-h-[2.4em]">
+            {/* Fixed rem heights, not em -- em here would resolve against the
+                container's own inherited font-size, not each absolutely-
+                positioned phrase's much larger one. Sized generously enough
+                for the largest phrase to wrap to 2 lines at each breakpoint. */}
+            <div className="relative min-h-[8rem] sm:min-h-[10rem] md:min-h-[13rem]">
               {PHRASES.map((text, i) => {
                 const isFinal = i === PHRASES.length - 1;
                 const Tag = isFinal ? "h1" : "p";
@@ -164,12 +168,21 @@ export function MarketingHero() {
                     }}
                     className={
                       isFinal
-                        ? "font-display absolute inset-0 text-5xl leading-[1.05] font-bold text-ink sm:text-6xl"
-                        : "font-display absolute inset-0 text-4xl leading-[1.05] font-bold text-ink sm:text-5xl"
+                        ? "font-display absolute inset-0 text-6xl leading-[1.05] font-bold text-ink sm:text-7xl md:text-8xl"
+                        : "font-display absolute inset-0 text-5xl leading-[1.05] font-bold text-ink sm:text-6xl md:text-7xl"
                     }
                     style={reducedMotion ? { opacity: isFinal ? 1 : 0 } : { opacity: i === 0 ? 1 : 0 }}
                   >
-                    {text}
+                    {/* "Larder" gets the deliberate color moment on the payoff line —
+                        Preserve Red carries the brand's "bold & energetic" personality,
+                        used here, not everywhere, per the Branding Kit's own restraint rule. */}
+                    {isFinal ? (
+                      <>
+                        Ask <span className="text-preserve-red">Larder.</span>
+                      </>
+                    ) : (
+                      text
+                    )}
                   </Tag>
                 );
               })}
@@ -181,6 +194,20 @@ export function MarketingHero() {
             >
               Built from your venue&apos;s own way of doing things — training your staff can actually use on shift.
             </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <a
+                href="#contact"
+                className="rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-parchment transition-colors hover:bg-ink/90"
+              >
+                Get started
+              </a>
+              <a
+                href="#feature-guide"
+                className="rounded-full border border-ink/20 px-7 py-3 font-sans text-sm font-medium text-ink transition-colors hover:bg-ink/5"
+              >
+                Learn more
+              </a>
+            </div>
           </div>
 
           <div className="relative flex justify-center" style={{ perspective: 1400 }}>

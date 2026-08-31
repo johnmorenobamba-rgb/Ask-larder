@@ -51,7 +51,7 @@ function splashOpacities(page: Page) {
   });
 }
 
-const CARD_KEYS = ["greeting", "progress", "continue", "certificates", "ask-larder"] as const;
+const CARD_KEYS = ["ask-larder", "trained-on-sops", "certificates", "scan-station", "owner-strip"] as const;
 
 function cardStates(page: Page) {
   return page.evaluate((keys) => {

@@ -42,18 +42,19 @@ const SPLASH_START = 0.2;
 const SPLASH_HANDOFF_CROSSFADE = 0.3;
 
 // Cascade: 5 cards fall from scattered/elevated positions into their real
-// grid layout, in the array's own authored order (greeting -> progress ->
-// continue -> certificates -> ask-larder is the diagonal top-left ->
-// bottom-right read) -- GSAP's plain numeric `stagger` over that order IS
-// the diagonal feel, no grid-aware stagger config needed.
+// (now size-varied) grid layout, in the array's own authored order --
+// ask-larder (hero, lands first, anchors the composition) -> trained-on-sops
+// (wide) -> certificates -> scan-station -> owner-strip (full-width, lands
+// last, seals the layout) -- GSAP's plain numeric `stagger` over that order
+// IS the fall order, no grid-aware stagger config needed.
 const CARD_FALL_DURATION = 0.5;
 const CARD_STAGGER = 0.09;
 const CARD_SCATTER: { x: number; y: number; rotate: number; scale: number }[] = [
-  { x: -4, y: -60, rotate: -6, scale: 0.94 }, // greeting
-  { x: -16, y: -75, rotate: -12, scale: 0.9 }, // progress (falls from furthest/highest)
-  { x: 14, y: -68, rotate: 10, scale: 0.9 }, // continue
-  { x: -12, y: -58, rotate: -9, scale: 0.92 }, // certificates
-  { x: 12, y: -64, rotate: 8, scale: 0.92 }, // ask-larder
+  { x: -6, y: -70, rotate: -8, scale: 0.92 }, // ask-larder (hero cell)
+  { x: 16, y: -65, rotate: 10, scale: 0.92 }, // trained-on-sops
+  { x: -14, y: -55, rotate: -12, scale: 0.9 }, // certificates
+  { x: 14, y: -58, rotate: 9, scale: 0.9 }, // scan-station
+  { x: 0, y: -50, rotate: -4, scale: 0.94 }, // owner-strip (full-width, settles flat)
 ];
 
 export type HeroTimelineRefs = {
