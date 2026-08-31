@@ -7,7 +7,8 @@ import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { SplitText } from "gsap/SplitText";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { ChitMark } from "./ChitMark";
-import { LARDER_MARK_PATH, LARDER_MARK_PATH_BOLD } from "./LarderMark";
+import { LARDER_MARK_PATH } from "./LarderMark";
+import { buildSplashTimeline } from "./splashTimeline";
 
 gsap.registerPlugin(DrawSVGPlugin, MorphSVGPlugin, SplitText);
 
@@ -32,6 +33,13 @@ const GLOW_SIZE_RATIO = 2.6;
  * delays -- draw-in and the wordmark's character stagger both hang off the
  * same timeline, so retiming one beat can't silently desync the other the
  * way two separate CSS animations with their own delays could.
+ *
+ * Block N2 -- the actual tween construction now lives in
+ * buildSplashTimeline() (./splashTimeline.ts), extracted so the marketing
+ * hero's tablet-screen preview can scrub the exact same beats instead of
+ * autoplaying them. This component's own call site is a pure relocation --
+ * same tweens, same autoplay, same onComplete-driven hand-off to a plain
+ * idle ChitMark below.
  */
 export function SplashSequence({
   size,
@@ -60,39 +68,12 @@ export function SplashSequence({
     const wordmarkEl = wordmarkRef.current;
     if (!trace || !fillEl || !wordmarkEl) return;
 
-    const split = new SplitText(wordmarkEl, { type: "chars" });
-    gsap.set(split.chars, { opacity: 0, y: 8 });
-    gsap.set(wordmarkEl, { opacity: 1 });
-
-    const tl = gsap.timeline({
-      onComplete: () => setSettled(true),
-    });
-
-    // Beats after "wordmark" are positioned relative to the wordmark
-    // tween's OWN end (not a guessed hold duration) so unsettle can never
-    // cut in before every character has actually finished staggering in --
-    // that overlap (fixed here) was why the wordmark barely read before
-    // the mark started settling back down. "legible" adds a real still
-    // beat where the full wordmark sits static before unsettling.
-    const wordmarkCharCount = split.chars.length;
-    const wordmarkDuration = 0.55;
-    const wordmarkStagger = 0.055;
-    const wordmarkSpan = wordmarkDuration + wordmarkStagger * Math.max(0, wordmarkCharCount - 1);
-
-    tl.addLabel("draw")
-      .to(trace, { drawSVG: "100%", duration: 0.5, ease: "power2.out" }, "draw")
-      .addLabel("settle")
-      .to(trace, { morphSVG: LARDER_MARK_PATH_BOLD, strokeWidth: 5, duration: 0.2, ease: "power2.out" }, "settle")
-      .to(fillEl, { opacity: 1, duration: 0.2 }, "settle")
-      .addLabel("wordmark", "settle+=0.35")
-      .to(
-        split.chars,
-        { opacity: 1, y: 0, duration: wordmarkDuration, ease: "back.out(1.9)", stagger: wordmarkStagger },
-        "wordmark",
-      )
-      .addLabel("legible", `wordmark+=${wordmarkSpan + 0.25}`)
-      .to(trace, { morphSVG: LARDER_MARK_PATH, strokeWidth: 3, duration: 0.2, ease: "power2.inOut" }, "legible")
-      .to(fillEl, { opacity: 0, duration: 0.2 }, "legible");
+    const { timeline: tl, split } = buildSplashTimeline(
+      gsap,
+      SplitText,
+      { traceEl: trace, fillEl, wordmarkEl },
+      { onComplete: () => setSettled(true) },
+    );
 
     return () => {
       tl.kill();
