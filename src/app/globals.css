@@ -390,6 +390,23 @@ body {
   }
 }
 
+/* Route-loading overlay -- reuses the same focus-in keyframe as
+   .animate-focus-in above (not a forked duplicate), just with a short
+   delay before it starts and `backwards` so the icon stays invisible for
+   that delay rather than flashing at full opacity first. The delay is the
+   anti-flicker mechanism: most navigations resolve well under 150ms and
+   should show nothing at all -- only a genuinely slow one ever reaches the
+   point where this animation is visible. */
+.animate-loading-overlay-in {
+  animation: focus-in 220ms cubic-bezier(0.34, 1.2, 0.64, 1) 150ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-loading-overlay-in {
+    animation: none;
+  }
+}
+
 /* Block L4 -- frosted-glass surface, to the stated bar of a real 1px inner
    border + inset highlight for actual edge-refraction, not backdrop-blur
    alone (a blur with no border/highlight just looks like a blurry flat
