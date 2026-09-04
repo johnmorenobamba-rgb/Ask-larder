@@ -569,6 +569,18 @@ const modules = [
 
 const PENDING_APPROVAL_MODULE = null; // all Two Fires modules are already live from Block O
 
+// ModuleContentBlock.tsx splits on a blank line (\n\s*\n) to find separate
+// blocks. Every section above was authored as "## Heading\nBody..." with a
+// single newline, which keeps the heading fused into the same block as the
+// body instead of rendering as its own <h2> -- insert the second newline
+// the heading marker needs, without hand-editing every section string.
+function fixHeadingSpacing(content) {
+  if (!content.startsWith("## ")) return content;
+  const firstBreak = content.indexOf("\n");
+  if (firstBreak === -1) return content;
+  return content.slice(0, firstBreak) + "\n" + content.slice(firstBreak);
+}
+
 async function main() {
   for (const mod of modules) {
     const { data: existing, error: findErr } = await admin
@@ -589,7 +601,7 @@ async function main() {
       const { error: sErr } = await admin.from("module_sections").insert({
         module_id: moduleId,
         section_order: order,
-        content: section.content,
+        content: fixHeadingSpacing(section.content),
       });
       if (sErr) throw sErr;
       if (!section.noQuestion && section.question) {
