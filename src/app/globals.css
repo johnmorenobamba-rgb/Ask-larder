@@ -320,6 +320,37 @@ body {
   border-radius: inherit;
 }
 
+/* Bento variety pass — the "textured/patterned" material treatment (4th of
+   4 in the rotation, alongside solid/photo-backed/ghost-outline). Two
+   distinct concrete patterns so the two textured cells (Shift context,
+   Next cert expiring) don't read as copy-pasted despite sharing a
+   category — the spec names dot-grid vs. diagonal hatch as separate
+   examples of the same treatment, not one fixed look. Both are pure CSS
+   (no image asset), sized small enough to read as a subtle surface, not a
+   loud pattern -- keeps the Branding Kit's "no generic AI gradient look"
+   discipline while still being visually distinct from a flat fill. */
+.bento-texture-dot {
+  background-image: radial-gradient(color-mix(in srgb, var(--color-clay-brown) 22%, transparent) 1.4px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+.bento-texture-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--color-saffron) 16%, transparent),
+    color-mix(in srgb, var(--color-saffron) 16%, transparent) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+}
+
+/* Bottom scrim for the photo-backed "My Ask Larder activity" cell — text
+   sits directly on the photo (Parchment on real photography), needs real
+   contrast without a flat color block hiding the photo entirely. */
+.bento-photo-scrim {
+  background: linear-gradient(to top, rgba(31, 27, 22, 0.92) 0%, rgba(31, 27, 22, 0.6) 65%, rgba(31, 27, 22, 0.1) 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .elevated-cell {
     transition: none;

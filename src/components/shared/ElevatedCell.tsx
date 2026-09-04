@@ -54,6 +54,7 @@ export function ElevatedCell({
   floatDurationS = 6,
   floatDelayS = 0,
   depth,
+  tilt = true,
   className = "",
 }: {
   children: React.ReactNode;
@@ -64,10 +65,12 @@ export function ElevatedCell({
   floatDelayS?: number;
   /** Block L3/L7 depth tier. Omit for cells outside a graded hero/secondary composition. */
   depth?: CellDepth;
+  /** Pointer-tracked 3D tilt + spotlight. Default on; set false to keep the float/shadow/glow elevation without the interactive part. */
+  tilt?: boolean;
   className?: string;
 }) {
   const depthTranslateZPx = depth ? DEPTH_TRANSLATE_Z_PX[depth] : 0;
-  const { ref, handlers, style } = useTiltSpotlight<HTMLDivElement>(depthTranslateZPx);
+  const { ref, handlers, style } = useTiltSpotlight<HTMLDivElement>(depthTranslateZPx, tilt);
   const reducedMotion = usePrefersReducedMotion();
   const parallaxWeight = depth && !reducedMotion ? PARALLAX_WEIGHT_PX[depth] : 0;
 

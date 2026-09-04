@@ -31,8 +31,15 @@ function neutralTransform(depthTranslateZPx: number) {
  * writes, rather than living in a separate CSS property, so a hero cell's
  * "closer to camera" translateZ survives every pointermove/reset update
  * instead of only applying at rest.
+ *
+ * `enabled = false` (Bento variety pass follow-up, 2026-09-04 -- John asked
+ * for tilt/spotlight off on the staff dashboard tiles specifically) takes
+ * the same no-pointer-handlers, static-transform path as reduced motion,
+ * without touching the reduced-motion preference itself -- the float/
+ * shadow/glow elevation stays either way, only the pointer-tracked part
+ * is skipped.
  */
-export function useTiltSpotlight<T extends HTMLElement>(depthTranslateZPx = 0) {
+export function useTiltSpotlight<T extends HTMLElement>(depthTranslateZPx = 0, enabled = true) {
   const ref = useRef<T | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -79,7 +86,7 @@ export function useTiltSpotlight<T extends HTMLElement>(depthTranslateZPx = 0) {
     "--tilt-transform": neutralTransform(depthTranslateZPx),
   } as React.CSSProperties;
 
-  if (reducedMotion) {
+  if (reducedMotion || !enabled) {
     return { ref, handlers: {}, style };
   }
 
