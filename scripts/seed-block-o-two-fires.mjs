@@ -594,15 +594,22 @@ async function main() {
   console.log("Seeded roles:", Object.keys(roles).join(", "));
 
   // Accounts: owner already created via bootstrap_owner above. Two staff
-  // accounts, PIN-based per Tech Bible §6. Venue Manager gets app_users.role
-  // = 'manager' (RLS elevation, matches real-world duties); Head Chef is a
-  // regular 'staff' account (PIN-based like every other kitchen role).
+  // accounts, PIN-based per Tech Bible §6.
+  //
+  // Found live during Block O QA (O5): app_users.role = 'manager' exists in
+  // the schema for RLS write-elevation (Tech Bible §15b), but the
+  // `venue_roster` RPC that powers the staff PIN-login picker filters
+  // `role = 'staff'` only, and there is no separate manager login route.
+  // A 'manager'-role account is therefore invisible to every login path in
+  // the current build -- a real gap, not a seeding mistake. Seeding
+  // 'staff' here matches what the shipped product can actually do today;
+  // see the Block O final report for the flagged gap.
   const vmPinHash = await bcrypt.hash(VENUE_MANAGER_PIN, 10);
   const { data: vmUser, error: vmErr } = await admin
     .from("app_users")
     .insert({
       venue_id: venueId,
-      role: "manager",
+      role: "staff",
       name: VENUE_MANAGER_NAME,
       staff_role_id: roles["Venue Manager"],
       pin_hash: vmPinHash,
