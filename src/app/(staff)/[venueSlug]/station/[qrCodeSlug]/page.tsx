@@ -61,7 +61,7 @@ export default async function StationPage({
 
   const { data: questions } = await supabase
     .from("check_questions")
-    .select("id, question, options, correct_option_index, expected_answer_context")
+    .select("id, question, options, correct_option_index, expected_answer_context, section_order")
     .eq("module_id", module.id);
 
   return (
@@ -80,6 +80,7 @@ export default async function StationPage({
           options: (q.options as string[]) ?? [],
           correct_option_index: q.correct_option_index,
           correctiveText: stripAnswerPrefix(q.expected_answer_context),
+          section_order: q.section_order,
         }))}
         backHref={currentPath}
         backLabel="Back to station"

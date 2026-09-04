@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckQuestion } from "./CheckQuestion";
+import { ModuleContentBlock } from "./ModuleContentBlock";
 import { Stamp } from "./Stamp";
 import { PassSlide } from "./PassSlide";
 
@@ -13,15 +14,19 @@ type Question = {
   options: string[];
   correct_option_index: number | null;
   correctiveText: string | null;
+  section_order: number | null;
 };
 
+type Step = { type: "section"; section: Section } | { type: "question"; question: Question };
+
 /**
- * Reads through a module's sections, then its check-questions, one at a
- * time. The spec describes a question after each section, but
- * check_questions has no section_id link in the schema — modules #1's real
- * content (Block B) also doesn't map 1:1 (e.g. 3 sections / 5 questions),
- * so sections-then-all-questions is the honest reading of what the data
- * actually supports, not an invented per-section mapping.
+ * Reads through a module's sections, with each section's own check-question
+ * (or questions) shown immediately after it -- per the Module Content &
+ * Assessment Standard's "inline after each section" rule. Questions carry
+ * a `section_order` that says which section they follow; a question with
+ * no section_order (older content authored before this existed) falls back
+ * to the end of the module, so nothing breaks for content that hasn't been
+ * migrated to the per-section mapping yet.
  */
 export function ModuleRunner({
   venueSlug,
@@ -45,12 +50,25 @@ export function ModuleRunner({
   backLabel?: string;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState(0); // 0..sections.length-1: sections, then questions, then done
+  const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const resolvedBackHref = backHref ?? `/${venueSlug}/modules`;
 
-  const inSections = step < sections.length;
-  const questionIndex = step - sections.length;
+  const steps = useMemo<Step[]>(() => {
+    const sorted = [...sections].sort((a, b) => a.section_order - b.section_order);
+    const unattached = questions.filter((q) => q.section_order == null);
+    const out: Step[] = [];
+    for (const section of sorted) {
+      out.push({ type: "section", section });
+      for (const q of questions.filter((q) => q.section_order === section.section_order)) {
+        out.push({ type: "question", question: q });
+      }
+    }
+    for (const q of unattached) {
+      out.push({ type: "question", question: q });
+    }
+    return out;
+  }, [sections, questions]);
 
   async function finish() {
     await fetch("/api/staff/complete-module", {
@@ -62,8 +80,7 @@ export function ModuleRunner({
   }
 
   function advance() {
-    const totalSteps = sections.length + questions.length;
-    if (step + 1 >= totalSteps) {
+    if (step + 1 >= steps.length) {
       finish();
     } else {
       setStep(step + 1);
@@ -87,6 +104,8 @@ export function ModuleRunner({
     );
   }
 
+  const current = steps[step];
+
   return (
     <main className="min-h-screen bg-parchment px-6 pb-10 pt-24">
       <div className="mx-auto w-full max-w-lg space-y-6">
@@ -98,16 +117,14 @@ export function ModuleRunner({
         <div className="h-1.5 w-full rounded-full bg-clay-brown/20">
           <div
             className="h-1.5 rounded-full bg-bay-green transition-[width] duration-250 ease-out"
-            style={{ width: `${((step + 1) / (sections.length + questions.length)) * 100}%` }}
+            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
         </div>
 
         <PassSlide light key={step}>
-          {inSections ? (
+          {current?.type === "section" ? (
             <div className="space-y-6">
-              <p className="whitespace-pre-wrap font-sans text-ink">
-                {sections[step].content}
-              </p>
+              <ModuleContentBlock content={current.section.content ?? ""} />
               <button
                 type="button"
                 onClick={advance}
@@ -116,18 +133,16 @@ export function ModuleRunner({
                 Continue
               </button>
             </div>
-          ) : (
+          ) : current?.type === "question" ? (
             <CheckQuestion
-              key={questions[questionIndex].id}
-              question={questions[questionIndex].question}
-              options={questions[questionIndex].options}
-              correctOptionIndex={questions[questionIndex].correct_option_index ?? 0}
-              correctiveText={questions[questionIndex].correctiveText}
-              onAnswered={() => {
-                window.setTimeout(advance, 900);
-              }}
+              key={current.question.id}
+              question={current.question.question}
+              options={current.question.options}
+              correctOptionIndex={current.question.correct_option_index ?? 0}
+              correctiveText={current.question.correctiveText}
+              onContinue={advance}
             />
-          )}
+          ) : null}
         </PassSlide>
       </div>
     </main>

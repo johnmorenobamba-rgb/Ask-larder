@@ -9,21 +9,22 @@ export function CheckQuestion({
   options,
   correctOptionIndex,
   correctiveText,
-  onAnswered,
+  onContinue,
 }: {
   question: string;
   options: string[];
   correctOptionIndex: number;
   correctiveText: string | null;
-  onAnswered: (wasCorrect: boolean) => void;
+  onContinue: () => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
 
   function selectOption(index: number) {
     if (selected !== null) return;
     setSelected(index);
-    onAnswered(index === correctOptionIndex);
   }
+
+  const wasCorrect = selected === correctOptionIndex;
 
   return (
     <div className="space-y-3">
@@ -61,10 +62,23 @@ export function CheckQuestion({
           );
         })}
       </div>
-      {selected !== null && selected !== correctOptionIndex && (
+      {selected !== null && !wasCorrect && correctiveText && (
         <p className="text-preserve-red font-sans text-sm">
-          Not quite — here&apos;s the actual step: {correctiveText}
+          Not quite. {correctiveText}
         </p>
+      )}
+      {/* No auto-advance timer: a wrong answer's correction should be read,
+          not glimpsed for under a second before the screen moves on. Both
+          outcomes wait for an explicit tap, same pattern as a section's
+          Continue button. */}
+      {selected !== null && (
+        <button
+          type="button"
+          onClick={onContinue}
+          className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+        >
+          Continue
+        </button>
       )}
     </div>
   );

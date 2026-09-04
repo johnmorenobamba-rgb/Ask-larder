@@ -14,8 +14,13 @@ export default async function RolesPage({
   if (!staff) redirect(`/${venueSlug}/login`);
 
   // Role determines everything downstream — once set, never show this
-  // screen again.
-  if (staff.staff_role_id) redirect(`/${venueSlug}/home`);
+  // screen again. But "has a role" and "has finished onboarding" are two
+  // different things (a role can be assigned by the owner before day one)
+  // -- someone with a role who hasn't finished onboarding yet goes straight
+  // to their module checklist, not back to the full home dashboard.
+  if (staff.staff_role_id) {
+    redirect(staff.onboarding_completed_at ? `/${venueSlug}/home` : `/${venueSlug}/modules`);
+  }
 
   const supabase = await createClient();
   const { data: roles } = await supabase

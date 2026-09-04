@@ -5,6 +5,8 @@ import { PassSlide } from "@/components/staff/PassSlide";
 import { ModuleStateChip } from "@/components/staff/ModuleStateChip";
 import { PressableLink } from "@/components/shared/PressableLink";
 
+export const dynamic = "force-dynamic";
+
 export default async function ModulesPage({
   params,
 }: {

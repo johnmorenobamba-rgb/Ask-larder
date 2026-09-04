@@ -5,6 +5,14 @@ import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { BentoGrid } from "@/components/staff/BentoGrid";
 
+// Forces a fresh read every request. Found live during Block O roleplay QA
+// (2026-09-04): this page's module-completion count disagreed with the
+// /modules list page's count for the same account moments apart -- both
+// queries are logically identical, so the safest fix is ruling out any
+// caching layer serving a stale response, on either this page or the one
+// it's compared against.
+export const dynamic = "force-dynamic";
+
 const CERT_STATUS_COLOR: Record<string, string> = {
   valid: "var(--color-bay-green)",
   expiring: "var(--color-saffron)",
