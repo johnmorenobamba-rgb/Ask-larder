@@ -1,0 +1,32 @@
+{
+  "venueSlug": "two-fires",
+  "flags": [
+    {
+      "key": "expiring-a810a610-fcfa-429c-9f41-443c4d209750",
+      "tier": "saffron",
+      "href": "/two-fires/owner/certs",
+      "glyph": "cert",
+      "primary": "Tomas Reyes's First Aid expires soon",
+      "secondary": "9 day(s) left"
+    }
+  ],
+  "nearMissCount": 0,
+  "nearMissRecentStation": null,
+  "staff": [
+    {
+      "id": "0309b41c-dfc8-43ca-a1f5-d0eb31e82bde",
+      "name": "Aisha Farouk",
+      "roleName": "Venue Manager",
+      "completed": 0,
+      "total": 14
+    },
+    {
+      "id": "8b2f661d-fe20-4d6e-bd88-77708cbff82d",
+      "name": "Tomas Reyes",
+      "roleName": "Head Chef",
+      "completed": 2,
+      "total": 14
+    }
+  ],
+  "stations": []
+}

@@ -1,0 +1,20 @@
+/* Block N3 -- the real dashboard components have their own wall-clock CSS
+   @keyframes animations (entrance reveal, idle float) that run on real
+   browser time, not Remotion's frame clock. A rendered frame is captured
+   at whatever real-world moment the headless browser happens to reach it,
+   so these settle inconsistently (or not at all) frame to frame -- not
+   Remotion's fault, just incompatible with a deterministic frame-seek
+   render. This stylesheet holds them at their settled end-state for any
+   composition that just needs to SHOW the real dashboard (data-fidelity
+   checks, and any beat that isn't specifically building its own
+   Remotion-driven version of the "cells falling into place" choreography
+   -- see the plan for how that beat gets its own frame-driven treatment
+   instead, same pattern as ChitMark's driveFrameSeconds). */
+.animate-bento-cell-in {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.elevated-cell-float {
+  animation: none !important;
+}

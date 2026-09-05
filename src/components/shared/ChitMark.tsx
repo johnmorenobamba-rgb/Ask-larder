@@ -63,6 +63,21 @@ export type ChitMarkHandle = {
  * this one-time reveal flash does. It also skips the flat interior fill
  * entirely for the rest of its lifetime — see the `fillOpacity` comment
  * below for why.
+ *
+ * `driveFrameSeconds` (Block N3, Remotion explainer video) -- when
+ * provided, replaces the idle trace's GSAP-ticker timeline with the exact
+ * same math computed deterministically from this frame position instead.
+ * Remotion renders frame-by-frame via a real headless Chrome, not
+ * continuous wall-clock playback, so a `gsap.timeline({repeat:-1})` free-
+ * running on `gsap.ticker` doesn't reliably land in the right position for
+ * a given rendered frame -- confirmed against Remotion's own official
+ * `@remotion/gsap` bridge, which requires building the timeline inside its
+ * own controlled callback rather than seeking an existing one. Rather than
+ * fork the visual design into a second file (the actual regression risk
+ * for "never drifts out of sync"), this reproduces the identical trace
+ * fraction/loop duration/breathing-scale formula here, gated behind a prop
+ * that's undefined for every existing caller -- the live app's ticker-
+ * driven loop is completely unchanged.
  */
 export const ChitMark = forwardRef<ChitMarkHandle, {
   size?: number;
@@ -71,6 +86,7 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
   animateIn?: boolean;
   intensity?: "default" | "hero";
   className?: string;
+  driveFrameSeconds?: number;
 }>(function ChitMark(
   {
     size = 72,
@@ -79,6 +95,7 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
     animateIn = false,
     intensity = "default",
     className = "",
+    driveFrameSeconds,
   },
   forwardedRef,
 ) {
@@ -130,10 +147,12 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
 
   // Block L6 -- the idle trace+breathing-scale, one gsap.timeline(). See
   // the component doc comment above for why gsap is a dynamic import here.
+  // Skipped entirely when Remotion is driving this frame -- see
+  // `driveFrameSeconds` doc comment above.
   useEffect(() => {
     const pathEl = pathElRef.current;
     const svgEl = svgElRef.current;
-    if (stage !== "idle" || !pathEl || !svgEl || pathLength === 0) return;
+    if (stage !== "idle" || !pathEl || !svgEl || pathLength === 0 || driveFrameSeconds !== undefined) return;
 
     const segment = pathLength * TRACE_FRACTION;
     pathEl.style.strokeDasharray = `${segment} ${pathLength - segment}`;
@@ -159,7 +178,7 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
       idleTimelineRef.current?.kill();
       idleTimelineRef.current = null;
     };
-  }, [stage, pathLength, reducedMotion]);
+  }, [stage, pathLength, reducedMotion, driveFrameSeconds]);
 
   useImperativeHandle(
     forwardedRef,
@@ -220,12 +239,44 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
       strokeWidth = 5;
     } else if (stage === "idle") {
       strokeColor = traceColor;
-      glowFilter = reducedMotion ? undefined : `drop-shadow(0 0 4px ${traceColor})`;
+      // An explicit driveFrameSeconds is Remotion asking for this exact
+      // animated frame -- it overrides a simulated/forced reduced-motion
+      // setting (the render pipeline may force one globally to settle
+      // OTHER real-time-driven components, e.g. AnimatedNumber's count-up;
+      // that shouldn't also flatten the one animation the video actually
+      // wants moving on camera). A real end-user's reduced-motion
+      // preference still applies normally to every non-driven usage.
+      const isDrivenReveal = driveFrameSeconds !== undefined;
+      glowFilter = reducedMotion && !isDrivenReveal ? undefined : `drop-shadow(0 0 4px ${traceColor})`;
+      if (isDrivenReveal) {
+        // Same formula as the GSAP timeline above (segment fraction, loop
+        // duration, linear ease), just evaluated directly at this frame's
+        // time instead of read off a running ticker -- see the
+        // `driveFrameSeconds` doc comment for why.
+        const segment = pathLength * TRACE_FRACTION;
+        const t = driveFrameSeconds % TRACE_LOOP_S;
+        outlineStyle = {
+          strokeDasharray: `${segment} ${pathLength - segment}`,
+          strokeDashoffset: -pathLength * (t / TRACE_LOOP_S),
+        };
+      }
     }
-    // idle's dasharray/dashoffset are set imperatively by the GSAP timeline
-    // above (it owns dashoffset while the loop runs), so no React-driven
-    // dasharray/dashoffset style is set here for that case.
+    // Ticker-driven idle's dasharray/dashoffset are set imperatively by the
+    // GSAP timeline above (it owns dashoffset while the loop runs), so no
+    // React-driven dasharray/dashoffset style is set here for that case --
+    // the driveFrameSeconds branch above is the one exception.
   }
+
+  // Block L6's breathing scale (1 -> 1.035 -> 1 over one full TRACE_LOOP_S,
+  // yoyo + sine.inOut) as a continuous function of frame time, for the same
+  // Remotion-driven reason as the trace math above. A raised-cosine is the
+  // smooth, symmetric analogue of a yoyo'd ease-in-out tween -- not bit-for-
+  // bit identical to GSAP's easing curve, but visually indistinguishable at
+  // a 3.5% scale delta.
+  const remotionScale =
+    stage === "idle" && driveFrameSeconds !== undefined
+      ? 1 + 0.0175 * (1 - Math.cos((2 * Math.PI * driveFrameSeconds) / TRACE_LOOP_S))
+      : undefined;
 
   return (
     <svg
@@ -236,7 +287,10 @@ export const ChitMark = forwardRef<ChitMarkHandle, {
       role="img"
       aria-label="Larder"
       className={className}
-      style={{ transformOrigin: "center" }}
+      style={{
+        transformOrigin: "center",
+        transform: remotionScale !== undefined ? `scale(${remotionScale})` : undefined,
+      }}
     >
       <path
         d={LARDER_MARK_PATH}
