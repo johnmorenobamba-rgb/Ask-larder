@@ -330,7 +330,6 @@ function Beat18() {
     <AbsoluteFill className="items-center justify-center bg-clay-brown/10 p-10">
       <div className="overflow-hidden rounded-[2rem] border-[8px] border-ink bg-parchment shadow-2xl" style={{ width: 780, height: 780 }}>
         <div style={{ transform: "scale(0.72)", transformOrigin: "top left", width: `${100 / 0.72}%`, height: `${100 / 0.72}%` }}>
-          {/* @ts-expect-error -- JSON import loses certRows status union type */}
           <BentoGrid {...twoFiresHome} remotionFrame={f} />
         </div>
       </div>

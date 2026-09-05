@@ -9,7 +9,6 @@ import twoFiresHome from "../data/two-fires-home.json";
 export function BentoGridTest() {
   return (
     <AbsoluteFill className="bg-parchment">
-      {/* @ts-expect-error -- JSON import loses the certRows status union type, values are real */}
       <BentoGrid {...twoFiresHome} />
     </AbsoluteFill>
   );
