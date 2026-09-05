@@ -57,7 +57,7 @@ export function ExplainerVideoSection() {
   }, []);
 
   return (
-    <section className="bg-ink px-6 py-24 sm:px-10 md:px-16">
+    <section id="explainer-video" className="bg-ink px-6 py-24 sm:px-10 md:px-16">
       <div className="mx-auto max-w-3xl">
         <p className="mb-3 text-center font-mono text-xs tracking-[0.2em] text-saffron uppercase">See it in motion</p>
         <h2 className="mb-10 text-center font-display text-3xl font-bold text-parchment sm:text-4xl">

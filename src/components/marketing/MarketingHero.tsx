@@ -239,13 +239,13 @@ export function MarketingHero() {
             </div>
             <div className="mt-3 flex flex-wrap gap-3 sm:mt-6 sm:gap-4 md:mt-8">
               <a
-                href="#contact"
+                href="#cta"
                 className="rounded-full bg-ink px-5 py-2 font-sans text-xs font-medium text-parchment transition-colors hover:bg-ink/90 sm:px-7 sm:py-3 sm:text-sm"
               >
                 Get started
               </a>
               <a
-                href="#feature-guide"
+                href="#explainer-video"
                 className="rounded-full border border-ink/20 px-5 py-2 font-sans text-xs font-medium text-ink transition-colors hover:bg-ink/5 sm:px-7 sm:py-3 sm:text-sm"
               >
                 Learn more
