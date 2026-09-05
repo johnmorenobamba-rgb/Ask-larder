@@ -17,7 +17,7 @@ export const IpadMockup = forwardRef<
   return (
     <div
       ref={ref}
-      className={`relative w-full max-w-[240px] rounded-[28px] bg-ink p-3 shadow-[0_40px_80px_-20px_rgba(31,27,22,0.45)] sm:max-w-[420px] sm:p-4 md:max-w-[560px] ${className}`}
+      className={`relative w-full max-w-[340px] rounded-[28px] bg-ink p-3 shadow-[0_40px_80px_-20px_rgba(31,27,22,0.45)] sm:max-w-[460px] sm:p-4 md:max-w-[560px] ${className}`}
       style={{ aspectRatio: "4 / 3", transformStyle: "preserve-3d", ...style }}
     >
       <div className="absolute top-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[color-mix(in_srgb,var(--color-parchment)_35%,transparent)]" />

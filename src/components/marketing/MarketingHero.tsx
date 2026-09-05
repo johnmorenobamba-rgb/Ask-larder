@@ -20,6 +20,16 @@ const IPAD_END_ROTATE_X_DEG = 12;
 const IPAD_TRAVEL_Y_PX = 48;
 
 const PHRASES = ["Training.", "Onboarding.", "Repeat.", "Ask Larder."] as const;
+// One supporting line per phrase, crossfading in lockstep with it (5 Sep
+// 2026 feedback -- the intro phrases used to read as bare words with no
+// explanation until the final payoff line). The final phrase keeps its
+// original two-sentence subhead; the intro three are short and single-line.
+const SUBHEADS = [
+  "The same training, every hire.",
+  "Modules, certs, and questions, all in one place.",
+  "New hire twelve gets what new hire one got.",
+  "Built from your venue's own way of doing things. Training your staff can actually use on shift.",
+] as const;
 // Verification-only selector keys (scripts/verify-marketing-hero.ts) --
 // stable regardless of copy changes to PHRASES' visible text.
 const PHRASE_KEYS = ["training", "onboarding", "repeat", "ask-larder"] as const;
@@ -46,7 +56,7 @@ export function MarketingHero() {
   // exhaustive-deps lint suppression papering over a real stale-closure
   // risk. This ref's own identity is stable across renders like any other.
   const phraseElsRef = useRef<(HTMLElement | null)[]>([null, null, null, null]);
-  const subheadRef = useRef<HTMLParagraphElement | null>(null);
+  const subheadElsRef = useRef<(HTMLElement | null)[]>([null, null, null, null]);
   const ipadRef = useRef<HTMLDivElement | null>(null);
   const glowRef = useRef<HTMLDivElement | null>(null);
   const splashRef = useRef<HeroSplashPreviewHandle | null>(null);
@@ -84,7 +94,7 @@ export function MarketingHero() {
         SplitText,
         {
           phraseEls: phraseElsRef.current as [unknown, unknown, unknown, unknown],
-          subheadEl: subheadRef.current,
+          subheadEls: subheadElsRef.current as [unknown, unknown, unknown, unknown],
           ipadEl: ipadRef.current,
           glowEl: glowRef.current,
           splash: {
@@ -142,15 +152,28 @@ export function MarketingHero() {
 
   return (
     <div>
+      {/* min-h-screen only from md up (not on mobile/tablet) -- forcing a
+          full 100vh floor when the mobile-compact content naturally sits
+          around half that just relocates the same dead space around
+          (centered = split top/bottom, top-aligned = all at the bottom);
+          no amount of gap/sizing closes that gap gracefully. Since the
+          body background is parchment everywhere, a shorter natural pin
+          height on mobile reads as seamless, not broken -- the section
+          still gets pinned/scrubbed for PIN_VH_MOBILE's scroll distance,
+          just without artificially inflating its own box past what its
+          content needs (5 Sep 2026 feedback: real screenshots on a phone
+          showing large empty bands above and below the pinned content).
+          md+'s side-by-side 2-column layout already filled a full screen
+          naturally, so it keeps min-h-screen + items-center unchanged. */}
       <section
         ref={sectionRef}
-        className="relative flex min-h-screen items-center overflow-hidden bg-parchment px-6 py-6 sm:px-10 sm:py-16 md:px-16 md:py-24"
+        className="relative flex items-start overflow-hidden bg-parchment px-6 pt-10 pb-6 sm:px-10 sm:pt-16 sm:pb-16 md:min-h-screen md:items-center md:px-16 md:py-24"
       >
         {/* Row gap on mobile (stacked, single column) must clear the ipad's
             own IPAD_TRAVEL_Y_PX upward drift (48px, via GSAP's `y` tween on
             ipadEl below) or the landed tablet visually overlaps the button
             row above it once scrubbed to the end of the pin. */}
-        <div className="mx-auto grid w-full max-w-7xl items-center gap-12 sm:gap-8 md:grid-cols-2 md:gap-12">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 sm:gap-8 md:grid-cols-2 md:items-center md:gap-12">
           <div className="relative">
             <p className="mb-2 font-mono text-xs tracking-[0.2em] text-clay-brown uppercase sm:mb-4 md:mb-6">
               For independent hospitality venues
@@ -196,13 +219,24 @@ export function MarketingHero() {
                 );
               })}
             </div>
-            <p
-              ref={subheadRef}
-              className="mt-2 max-w-md text-sm text-ink/80 sm:mt-6 sm:text-lg md:mt-8"
-              style={{ opacity: reducedMotion ? 1 : 0 }}
-            >
-              Built from your venue&apos;s own way of doing things. Training your staff can actually use on shift.
-            </p>
+            {/* One subhead per phrase (min-h fits the longest -- the final
+                phrase's two-sentence line), crossfading in lockstep with its
+                phrase via buildHeroMasterTimeline's subheadEls array. */}
+            <div className="relative mt-2 min-h-[2.5rem] max-w-md sm:mt-6 sm:min-h-[3.5rem] md:mt-8">
+              {SUBHEADS.map((text, i) => (
+                <p
+                  key={text}
+                  data-hero-subhead={PHRASE_KEYS[i]}
+                  ref={(el: HTMLElement | null) => {
+                    subheadElsRef.current[i] = el;
+                  }}
+                  className="absolute inset-x-0 top-0 text-sm text-ink/80 sm:text-lg"
+                  style={reducedMotion ? { opacity: i === PHRASES.length - 1 ? 1 : 0 } : { opacity: i === 0 ? 1 : 0 }}
+                >
+                  {text}
+                </p>
+              ))}
+            </div>
             <div className="mt-3 flex flex-wrap gap-3 sm:mt-6 sm:gap-4 md:mt-8">
               <a
                 href="#contact"

@@ -58,7 +58,7 @@ const CARD_SCATTER: { x: number; y: number; rotate: number; scale: number }[] = 
 
 export type HeroTimelineRefs = {
   phraseEls: [unknown, unknown, unknown, unknown]; // Training. / Onboarding. / Repeat. / Ask Larder.
-  subheadEl: unknown;
+  subheadEls: [unknown, unknown, unknown, unknown]; // one per phrase, crossfades in lockstep with it
   ipadEl: unknown;
   glowEl: unknown;
   splash: {
@@ -99,7 +99,7 @@ export function buildHeroMasterTimeline(
   opts: HeroTimelineOptions,
 ): GsapTimeline {
   const timeline = gsap.timeline({ paused: true });
-  const { phraseEls, subheadEl, ipadEl, glowEl, splash, cardEls } = refs;
+  const { phraseEls, subheadEls, ipadEl, glowEl, splash, cardEls } = refs;
 
   timeline.set(splash.idleGroupEl, { opacity: 0 }, 0);
   timeline.addLabel("splashStart", SPLASH_START);
@@ -121,7 +121,12 @@ export function buildHeroMasterTimeline(
 
   timeline.set(phraseEls[0], { opacity: 1, y: 0 }, 0);
   timeline.set([phraseEls[1], phraseEls[2], phraseEls[3]], { opacity: 0, y: PHRASE_TRAVEL_PX }, 0);
-  timeline.set(subheadEl, { opacity: 0 }, 0);
+  // Each phrase carries its own one-line subhead, crossfading in lockstep
+  // with it -- previously only the final phrase ("Ask Larder.") had
+  // supporting copy underneath, so "Training."/"Onboarding."/"Repeat." read
+  // as bare words with nothing explaining them until the payoff line.
+  timeline.set(subheadEls[0], { opacity: 1 }, 0);
+  timeline.set([subheadEls[1], subheadEls[2], subheadEls[3]], { opacity: 0 }, 0);
 
   timeline.set(cardEls, { opacity: 0 }, 0);
 
@@ -133,14 +138,15 @@ export function buildHeroMasterTimeline(
   for (let i = 0; i < phraseEls.length - 1; i++) {
     timeline.addLabel(`cross${i + 1}`, cursor);
     timeline.to(phraseEls[i], { opacity: 0, y: -PHRASE_TRAVEL_PX, duration: CROSSFADE_OUT }, cursor);
+    timeline.to(subheadEls[i], { opacity: 0, duration: CROSSFADE_OUT }, cursor);
     cursor += CROSSFADE_OUT;
     const isFinal = i + 1 === phraseEls.length - 1;
     timeline.to(phraseEls[i + 1], { opacity: 1, y: 0, duration: CROSSFADE_IN }, cursor);
+    timeline.to(subheadEls[i + 1], { opacity: 1, duration: CROSSFADE_IN }, cursor);
     if (isFinal) {
-      // Subhead and the bento cascade both start exactly when the final
-      // phrase begins arriving -- the dashboard assembles as the payoff
-      // line lands, per the reference's own timing.
-      timeline.to(subheadEl, { opacity: 1, duration: CROSSFADE_IN }, cursor);
+      // The bento cascade starts exactly when the final phrase begins
+      // arriving -- the dashboard assembles as the payoff line lands, per
+      // the reference's own timing.
       cascadeStart = cursor;
     }
     cursor += CROSSFADE_IN;

@@ -49,7 +49,7 @@ export default function Home() {
         <p className="mt-2 text-ink/70">Book a walkthrough. We&apos;ll bring your own SOPs into it.</p>
         <a
           href="mailto:hello@asklarder.com.au?subject=Book%20a%20walkthrough"
-          className="mt-6 inline-block rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-parchment transition-colors hover:bg-ink/90"
+          className="mt-6 inline-block rounded-full bg-saffron px-7 py-3 font-sans text-sm font-medium text-ink transition-colors hover:bg-saffron/90"
         >
           Book a walkthrough
         </a>
