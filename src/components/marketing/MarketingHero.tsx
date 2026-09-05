@@ -144,18 +144,27 @@ export function MarketingHero() {
     <div>
       <section
         ref={sectionRef}
-        className="relative flex min-h-screen items-center overflow-hidden bg-parchment px-6 py-24 sm:px-10 md:px-16"
+        className="relative flex min-h-screen items-center overflow-hidden bg-parchment px-6 py-6 sm:px-10 sm:py-16 md:px-16 md:py-24"
       >
-        <div className="mx-auto grid w-full max-w-7xl items-center gap-16 md:grid-cols-2 md:gap-12">
+        {/* Row gap on mobile (stacked, single column) must clear the ipad's
+            own IPAD_TRAVEL_Y_PX upward drift (48px, via GSAP's `y` tween on
+            ipadEl below) or the landed tablet visually overlaps the button
+            row above it once scrubbed to the end of the pin. */}
+        <div className="mx-auto grid w-full max-w-7xl items-center gap-12 sm:gap-8 md:grid-cols-2 md:gap-12">
           <div className="relative">
-            <p className="mb-6 font-mono text-xs tracking-[0.2em] text-clay-brown uppercase">
+            <p className="mb-2 font-mono text-xs tracking-[0.2em] text-clay-brown uppercase sm:mb-4 md:mb-6">
               For independent hospitality venues
             </p>
             {/* Fixed rem heights, not em -- em here would resolve against the
                 container's own inherited font-size, not each absolutely-
                 positioned phrase's much larger one. Sized generously enough
-                for the largest phrase to wrap to 2 lines at each breakpoint. */}
-            <div className="relative min-h-[8rem] sm:min-h-[10rem] md:min-h-[13rem]">
+                for the largest phrase to wrap to 2 lines at each breakpoint.
+                Mobile is deliberately compact (smaller min-height + smaller
+                type) -- this whole section is pinned during its scroll-
+                scrubbed animation, so the headline/subhead/buttons/tablet all
+                need to actually fit in one screen on a phone, or the pinned
+                frame the user scrubs through never shows the tablet at all. */}
+            <div className="relative min-h-[4.5rem] sm:min-h-[10rem] md:min-h-[13rem]">
               {PHRASES.map((text, i) => {
                 const isFinal = i === PHRASES.length - 1;
                 const Tag = isFinal ? "h1" : "p";
@@ -168,8 +177,8 @@ export function MarketingHero() {
                     }}
                     className={
                       isFinal
-                        ? "font-display absolute inset-0 text-6xl leading-[1.05] font-bold text-ink sm:text-7xl md:text-8xl"
-                        : "font-display absolute inset-0 text-5xl leading-[1.05] font-bold text-ink sm:text-6xl md:text-7xl"
+                        ? "font-display absolute inset-0 text-4xl leading-[1.05] font-bold text-ink sm:text-7xl md:text-8xl"
+                        : "font-display absolute inset-0 text-3xl leading-[1.05] font-bold text-ink sm:text-6xl md:text-7xl"
                     }
                     style={reducedMotion ? { opacity: isFinal ? 1 : 0 } : { opacity: i === 0 ? 1 : 0 }}
                   >
@@ -189,21 +198,21 @@ export function MarketingHero() {
             </div>
             <p
               ref={subheadRef}
-              className="mt-8 max-w-md text-lg text-ink/80"
+              className="mt-2 max-w-md text-sm text-ink/80 sm:mt-6 sm:text-lg md:mt-8"
               style={{ opacity: reducedMotion ? 1 : 0 }}
             >
               Built from your venue&apos;s own way of doing things. Training your staff can actually use on shift.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-3 flex flex-wrap gap-3 sm:mt-6 sm:gap-4 md:mt-8">
               <a
                 href="#contact"
-                className="rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-parchment transition-colors hover:bg-ink/90"
+                className="rounded-full bg-ink px-5 py-2 font-sans text-xs font-medium text-parchment transition-colors hover:bg-ink/90 sm:px-7 sm:py-3 sm:text-sm"
               >
                 Get started
               </a>
               <a
                 href="#feature-guide"
-                className="rounded-full border border-ink/20 px-7 py-3 font-sans text-sm font-medium text-ink transition-colors hover:bg-ink/5"
+                className="rounded-full border border-ink/20 px-5 py-2 font-sans text-xs font-medium text-ink transition-colors hover:bg-ink/5 sm:px-7 sm:py-3 sm:text-sm"
               >
                 Learn more
               </a>
