@@ -2,26 +2,26 @@
   {
     "id": "74673443-e4b1-41b8-a0ba-27d8d92b4d19",
     "name": "Fryer Station",
-    "photoUrl": "https://kkgnjbqmhagspeomlzav.supabase.co/storage/v1/object/sign/photo-library/b379e33f-b0d8-47bf-810e-450635b29b6b/stations/74673443-e4b1-41b8-a0ba-27d8d92b4d19.jpg?token=eyJraWQiOiIwYmVhNWUwZi0xZGE2LTQ1ZmEtODQ0NC0yNjRhZWNkMzBjNDciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaG90by1saWJyYXJ5L2IzNzllMzNmLWIwZDgtNDdiZi04MTBlLTQ1MDYzNWIyOWI2Yi9zdGF0aW9ucy83NDY3MzQ0My1lNGIxLTQxYjgtYTBiYS0yN2Q4ZDkyYjRkMTkuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4ODYyMTUxMiwiZXhwIjoxNzg5MjI2MzEyfQ.WCW10VwSa02ar1662GvOlSiRn6sbZQbcCcXuCswLVMg"
+    "photoUrl": "/images/stations/fryer-station.jpg"
   },
   {
     "id": "f728e280-2265-42c4-b076-18b473c630f0",
     "name": "Pizza Station",
-    "photoUrl": "https://kkgnjbqmhagspeomlzav.supabase.co/storage/v1/object/sign/photo-library/b379e33f-b0d8-47bf-810e-450635b29b6b/stations/f728e280-2265-42c4-b076-18b473c630f0.jpg?token=eyJraWQiOiIwYmVhNWUwZi0xZGE2LTQ1ZmEtODQ0NC0yNjRhZWNkMzBjNDciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaG90by1saWJyYXJ5L2IzNzllMzNmLWIwZDgtNDdiZi04MTBlLTQ1MDYzNWIyOWI2Yi9zdGF0aW9ucy9mNzI4ZTI4MC0yMjY1LTQyYzQtYjA3Ni0xOGI0NzNjNjMwZjAuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4ODYyMTUxMiwiZXhwIjoxNzg5MjI2MzEyfQ.TGi9ZXV9JokeLvHTncE-wdje6xeTzwD4wjI_aJEm1SQ"
+    "photoUrl": "/images/stations/pizza-station.jpg"
   },
   {
     "id": "a4b7e570-da23-478e-9094-dd9fdf598c15",
     "name": "Bar",
-    "photoUrl": "https://kkgnjbqmhagspeomlzav.supabase.co/storage/v1/object/sign/photo-library/b379e33f-b0d8-47bf-810e-450635b29b6b/stations/a4b7e570-da23-478e-9094-dd9fdf598c15.jpg?token=eyJraWQiOiIwYmVhNWUwZi0xZGE2LTQ1ZmEtODQ0NC0yNjRhZWNkMzBjNDciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaG90by1saWJyYXJ5L2IzNzllMzNmLWIwZDgtNDdiZi04MTBlLTQ1MDYzNWIyOWI2Yi9zdGF0aW9ucy9hNGI3ZTU3MC1kYTIzLTQ3OGUtOTA5NC1kZDlmZGY1OThjMTUuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4ODYyMTUxMiwiZXhwIjoxNzg5MjI2MzEyfQ.GbInK1C3Qkhbns1rp4TBnG5IsuGPXpJffLymnBog2wo"
+    "photoUrl": "/images/stations/bar.jpg"
   },
   {
     "id": "b854a8ce-4470-441c-b021-3be10971767b",
     "name": "Cellar",
-    "photoUrl": "https://kkgnjbqmhagspeomlzav.supabase.co/storage/v1/object/sign/photo-library/b379e33f-b0d8-47bf-810e-450635b29b6b/stations/b854a8ce-4470-441c-b021-3be10971767b.jpg?token=eyJraWQiOiIwYmVhNWUwZi0xZGE2LTQ1ZmEtODQ0NC0yNjRhZWNkMzBjNDciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaG90by1saWJyYXJ5L2IzNzllMzNmLWIwZDgtNDdiZi04MTBlLTQ1MDYzNWIyOWI2Yi9zdGF0aW9ucy9iODU0YThjZS00NDcwLTQ0MWMtYjAyMS0zYmUxMDk3MTc2N2IuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4ODYyMTUxMywiZXhwIjoxNzg5MjI2MzEzfQ.8zEfy8ucGzhxzwJd-4bOsKKr6K5JMoDkPNqrhnYrWlI"
+    "photoUrl": "/images/stations/cellar.jpg"
   },
   {
     "id": "01a3c8e9-8bb8-426e-93ae-498b758d0d3a",
     "name": "Wash-up",
-    "photoUrl": "https://kkgnjbqmhagspeomlzav.supabase.co/storage/v1/object/sign/photo-library/b379e33f-b0d8-47bf-810e-450635b29b6b/stations/01a3c8e9-8bb8-426e-93ae-498b758d0d3a.jpg?token=eyJraWQiOiIwYmVhNWUwZi0xZGE2LTQ1ZmEtODQ0NC0yNjRhZWNkMzBjNDciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaG90by1saWJyYXJ5L2IzNzllMzNmLWIwZDgtNDdiZi04MTBlLTQ1MDYzNWIyOWI2Yi9zdGF0aW9ucy8wMWEzYzhlOS04YmI4LTQyNmUtOTNhZS00OThiNzU4ZDBkM2EuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4ODYyMTUxMywiZXhwIjoxNzg5MjI2MzEzfQ.1G_rRBPGVPocHgKG_vitj0MFiYts8tFOOhzmiIErCmY"
+    "photoUrl": "/images/stations/wash-up.jpg"
   }
 ]

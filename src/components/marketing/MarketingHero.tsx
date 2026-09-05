@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { IpadMockup } from "./IpadMockup";
 import { HeroSplashPreview, type HeroSplashPreviewHandle } from "./HeroSplashPreview";
+import { HeroBentoPreview, type HeroBentoPreviewHandle } from "./HeroBentoPreview";
 import { buildHeroMasterTimeline } from "./heroTimeline";
 
 // Block N1 — pin duration in viewport-heights. Grown substantially for N2's
@@ -59,7 +60,7 @@ export function MarketingHero() {
   const ipadRef = useRef<HTMLDivElement | null>(null);
   const glowRef = useRef<HTMLDivElement | null>(null);
   const splashRef = useRef<HeroSplashPreviewHandle | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const bentoRef = useRef<HeroBentoPreviewHandle | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -85,9 +86,10 @@ export function MarketingHero() {
       gsap.registerPlugin(ScrollTrigger, SplitText);
       if (cancelled) return;
       const splash = splashRef.current;
-      if (!splash) return;
+      const bento = bentoRef.current;
+      if (!splash || !bento) return;
 
-      const { timeline: masterTimeline, cascadeProgress } = buildHeroMasterTimeline(
+      const masterTimeline = buildHeroMasterTimeline(
         gsap,
         SplitText,
         {
@@ -102,7 +104,7 @@ export function MarketingHero() {
             rawGroupEl: splash.rawGroupEl,
             idleGroupEl: splash.idleGroupEl,
           },
-          videoWrapperEl: videoRef.current,
+          cardEls: bento.cardEls,
         },
         {
           ipadStartRotateXDeg: IPAD_START_ROTATE_X_DEG,
@@ -134,17 +136,6 @@ export function MarketingHero() {
         // stays robust regardless of however those constants get tuned.
         onUpdate: (self) => {
           section.dataset.heroProgress = String(self.progress);
-          // The baked video isn't a GSAP tween -- it's a real <video>
-          // element's own playback, started/stopped here based on
-          // whichever side of cascadeProgress the scrub currently sits on,
-          // idempotent so this doesn't call play()/pause() every tick.
-          const video = videoRef.current;
-          if (!video) return;
-          if (self.progress >= cascadeProgress && video.paused) {
-            video.play().catch(() => {});
-          } else if (self.progress < cascadeProgress && !video.paused) {
-            video.pause();
-          }
         },
       });
       // gsap loads via a post-mount dynamic import, well after the window
@@ -281,35 +272,9 @@ export function MarketingHero() {
             >
               <div className="relative flex h-full w-full items-center justify-center" style={{ transformStyle: "preserve-3d" }}>
                 <HeroSplashPreview ref={splashRef} />
-                {/* Baked Remotion loop (HeroTileDrop), 5-6 Sep 2026 --
-                    replaces the live GSAP tile-drop per John's explicit
-                    direction, accepting the tradeoff that it no longer
-                    scrubs 1:1 with scroll once revealed; it plays/loops on
-                    its own instead, started/stopped by progress in the
-                    ScrollTrigger onUpdate above. Reduced motion shows the
-                    same render's own settled-frame poster as a static
-                    image instead of an autoplaying video -- motion-
-                    sensitive users get the endpoint, not the loop. */}
-                {reducedMotion ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- static asset, no benefit from next/image inside this 3D-transformed mockup
-                  <img
-                    src="/videos/hero-tile-drop-poster.png"
-                    alt=""
-                    className="absolute inset-0 h-full w-full rounded-2xl object-cover"
-                  />
-                ) : (
-                  <video
-                    ref={videoRef}
-                    src="/videos/hero-tile-drop.mp4"
-                    poster="/videos/hero-tile-drop-poster.png"
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    className="absolute inset-0 h-full w-full rounded-2xl object-cover"
-                    style={{ opacity: 0 }}
-                  />
-                )}
+                <div className="absolute inset-0">
+                  <HeroBentoPreview ref={bentoRef} />
+                </div>
               </div>
             </IpadMockup>
           </div>
