@@ -5,6 +5,7 @@ import { ChitMarkTest } from "./compositions/ChitMarkTest";
 import { BentoGridTest } from "./compositions/BentoGridTest";
 import { OwnerDashboardTest } from "./compositions/OwnerDashboardTest";
 import { Explainer, EXPLAINER_DURATION_FRAMES, EXPLAINER_FPS } from "./compositions/Explainer";
+import { HeroTileDrop, HERO_TILE_DROP_DURATION } from "./compositions/HeroTileDrop";
 
 // Block N3 -- imports the REAL app stylesheet (not a copy) so color
 // tokens, fonts-as-CSS-vars, and the bento texture/keyframe classes never
@@ -43,6 +44,14 @@ export const RemotionRoot: React.FC = () => {
         fps={EXPLAINER_FPS}
         width={1080}
         height={1080}
+      />
+      <Composition
+        id="HeroTileDrop"
+        component={HeroTileDrop}
+        durationInFrames={HERO_TILE_DROP_DURATION}
+        fps={30}
+        width={720}
+        height={540}
       />
     </>
   );

@@ -51,20 +51,17 @@ function splashOpacities(page: Page) {
   });
 }
 
-const CARD_KEYS = ["ask-larder", "trained-on-sops", "certificates", "scan-station", "owner-strip"] as const;
-
-function cardStates(page: Page) {
-  return page.evaluate((keys) => {
-    return Object.fromEntries(
-      keys.map((k) => {
-        const el = document.querySelector(`[data-hero-card="${k}"]`);
-        if (!el) return [k, null];
-        const rect = el.getBoundingClientRect();
-        const transform = getComputedStyle(el).transform;
-        return [k, { opacity: Number(getComputedStyle(el).opacity), top: rect.top, transform }];
-      }),
-    );
-  }, CARD_KEYS);
+// 5-6 Sep 2026: the live GSAP tile-drop (4 separate `data-hero-card`
+// elements) was replaced by a single baked Remotion video loop
+// (HeroTileDrop) that crossfades in at the same cascade point instead --
+// this checks the <video>'s own opacity/playback state rather than 4
+// card transforms that no longer exist.
+function videoState(page: Page) {
+  return page.evaluate(() => {
+    const el = document.querySelector("video");
+    if (!el) return null;
+    return { opacity: Number(getComputedStyle(el).opacity), paused: el.paused, currentTime: el.currentTime };
+  });
 }
 
 function phraseOpacities(page: Page) {
@@ -148,8 +145,8 @@ async function main() {
     // viewports -- only the real pixel distance mapped to it differs) --
     // the raw trace/fill/wordmark group should have faded out for good.
     // (The idle ChitMark it hands off to is itself only transient here --
-    // it fades back out again once the bento cascade starts landing on
-    // top of it, so idle opacity is NOT asserted at a fixed checkpoint.)
+    // it fades back out again once the baked tile-drop video crossfades in
+    // on top of it, so idle opacity is NOT asserted at a fixed checkpoint.)
     await scrollToProgress(page, 0.78, Math.round(vp.height * 0.08));
     await page.waitForTimeout(1200);
     const splashOps = await splashOpacities(page);
@@ -164,9 +161,10 @@ async function main() {
     await page.waitForTimeout(1200);
     await page.screenshot({ path: `${OUT_DIR}/${vp.label}-hero-02-final-phrase.png` });
     const finalOpacities = await phraseOpacities(page);
-    const finalCards = await cardStates(page);
-    const cardsLanded = CARD_KEYS.every((k) => (finalCards[k]?.opacity ?? 0) > 0.9);
-    if (!cardsLanded) console.log(`[${vp.label}] CARDS NOT LANDED:`, JSON.stringify(finalCards));
+    const finalVideo = await videoState(page);
+    const videoRevealed = (finalVideo?.opacity ?? 0) > 0.9;
+    const videoPlaying = finalVideo?.paused === false;
+    if (!videoRevealed || !videoPlaying) console.log(`[${vp.label}] VIDEO NOT REVEALED/PLAYING:`, JSON.stringify(finalVideo));
 
     // Scroll well past the pin distance and confirm it released.
     await page.mouse.wheel(0, vp.height * 3);
@@ -177,14 +175,14 @@ async function main() {
     const pinHeld = midPos?.position === "fixed" && Math.abs(midPos.top) < 2;
     const pinReleased = endPos !== null && endPos.position !== "fixed";
     const finalPhraseVisible = (finalOpacities["ask-larder"] ?? 0) > 0.9;
-    const pass = pinHeld && pinReleased && !overlapFound && finalPhraseVisible && splashHandoffDone && cardsLanded;
+    const pass = pinHeld && pinReleased && !overlapFound && finalPhraseVisible && splashHandoffDone && videoRevealed && videoPlaying;
     if (!pass) anyFail = true;
 
     console.log(
       `[${vp.label}] start=${JSON.stringify(startPos)} mid=${JSON.stringify(midPos)} (pinned=${pinHeld}) ` +
         `end=${JSON.stringify(endPos)} (released=${pinReleased}) overlapFound=${overlapFound} ` +
         `splashHandoffDone=${splashHandoffDone} finalPhraseVisible=${finalPhraseVisible} (opacity=${finalOpacities["ask-larder"]}) ` +
-        `cardsLanded=${cardsLanded} -> ${pass ? "PASS" : "FAIL"}`,
+        `videoRevealed=${videoRevealed} videoPlaying=${videoPlaying} -> ${pass ? "PASS" : "FAIL"}`,
     );
 
     await ctx.close();

@@ -40,21 +40,7 @@ const PHRASE_TRAVEL_PX = 32;
 // rather than being pinned to a specific crossfade.
 const SPLASH_START = 0.2;
 const SPLASH_HANDOFF_CROSSFADE = 0.3;
-
-// Cascade: 4 real dashboard cell types fall from scattered/elevated
-// positions into their real grid layout, in the array's own authored
-// order -- ring (hero, lands first, anchors the composition) -> continue
-// (glyph+step-progress) -> certificates (fanned stack) -> ask-larder
-// (traced-chit, lands last) -- GSAP's plain numeric `stagger` over that
-// order IS the fall order, no grid-aware stagger config needed.
-const CARD_FALL_DURATION = 0.5;
-const CARD_STAGGER = 0.09;
-const CARD_SCATTER: { x: number; y: number; rotate: number; scale: number }[] = [
-  { x: -6, y: -70, rotate: -8, scale: 0.92 }, // ring (hero cell)
-  { x: 16, y: -65, rotate: 10, scale: 0.92 }, // continue
-  { x: -14, y: -55, rotate: -12, scale: 0.9 }, // certificates
-  { x: 14, y: -58, rotate: 9, scale: 0.9 }, // ask-larder
-];
+const VIDEO_HANDOFF_CROSSFADE = 0.3;
 
 export type HeroTimelineRefs = {
   phraseEls: [unknown, unknown, unknown, unknown]; // Training. / Onboarding. / Repeat. / Ask Larder.
@@ -68,7 +54,10 @@ export type HeroTimelineRefs = {
     rawGroupEl: unknown;
     idleGroupEl: unknown;
   };
-  cardEls: [unknown, unknown, unknown, unknown]; // ring / continue / certificates / ask-larder
+  // Baked Remotion loop (HeroTileDrop) replacing the live GSAP tile-drop,
+  // 5-6 Sep 2026 -- crossfades in once the cascade point is reached,
+  // instead of tweening 4 separate card elements.
+  videoWrapperEl: unknown;
 };
 
 export type HeroTimelineOptions = {
@@ -91,15 +80,22 @@ export type HeroTimelineOptions = {
  * positions that touch at exactly one point, where both are already at
  * opacity 0. Never give a fade-in an explicit position that lands inside
  * the preceding fade-out's own [start, start+duration) range.
+ *
+ * Returns `cascadeProgress` alongside the timeline (5-6 Sep 2026, baked
+ * video rebuild) -- the caller needs this as a plain number, not just a
+ * GSAP position label, to know when ScrollTrigger's own `self.progress`
+ * (0-1 over the whole pin) has crossed into "video revealed" territory,
+ * since starting/stopping `<video>` playback happens outside GSAP
+ * entirely (a real DOM element's `.play()`/`.pause()`, not a tween).
  */
 export function buildHeroMasterTimeline(
   gsap: GsapLike,
   SplitTextCtor: SplitTextCtor,
   refs: HeroTimelineRefs,
   opts: HeroTimelineOptions,
-): GsapTimeline {
+): { timeline: GsapTimeline; cascadeProgress: number } {
   const timeline = gsap.timeline({ paused: true });
-  const { phraseEls, subheadEls, ipadEl, glowEl, splash, cardEls } = refs;
+  const { phraseEls, subheadEls, ipadEl, glowEl, splash, videoWrapperEl } = refs;
 
   timeline.set(splash.idleGroupEl, { opacity: 0 }, 0);
   timeline.addLabel("splashStart", SPLASH_START);
@@ -128,7 +124,7 @@ export function buildHeroMasterTimeline(
   timeline.set(subheadEls[0], { opacity: 1 }, 0);
   timeline.set([subheadEls[1], subheadEls[2], subheadEls[3]], { opacity: 0 }, 0);
 
-  timeline.set(cardEls, { opacity: 0 }, 0);
+  timeline.set(videoWrapperEl, { opacity: 0 }, 0);
 
   let cursor = 0;
   let cascadeStart = 0;
@@ -144,45 +140,23 @@ export function buildHeroMasterTimeline(
     timeline.to(phraseEls[i + 1], { opacity: 1, y: 0, duration: CROSSFADE_IN }, cursor);
     timeline.to(subheadEls[i + 1], { opacity: 1, duration: CROSSFADE_IN }, cursor);
     if (isFinal) {
-      // The bento cascade starts exactly when the final phrase begins
-      // arriving -- the dashboard assembles as the payoff line lands, per
-      // the reference's own timing.
+      // The baked tile-drop video starts exactly when the final phrase
+      // begins arriving -- the dashboard "assembles" as the payoff line
+      // lands, per the reference's own timing (unchanged from the live
+      // GSAP cascade this replaced).
       cascadeStart = cursor;
     }
     cursor += CROSSFADE_IN;
     if (i + 1 < PHRASE_HOLD.length) cursor += PHRASE_HOLD[i + 1];
   }
 
-  // The idle chit mark clears off-screen right as the cards start landing
-  // on top of it, so the assembling dashboard doesn't read as cluttered
-  // mid-cascade.
-  timeline.to(splash.idleGroupEl, { opacity: 0, duration: 0.2 }, cascadeStart);
+  // The idle chit mark clears off-screen right as the video crossfades
+  // in on top of it, so the reveal doesn't briefly show both at once.
+  timeline.to(splash.idleGroupEl, { opacity: 0, duration: VIDEO_HANDOFF_CROSSFADE }, cascadeStart);
+  timeline.addLabel("videoReveal", cascadeStart);
+  timeline.to(videoWrapperEl, { opacity: 1, duration: VIDEO_HANDOFF_CROSSFADE }, cascadeStart);
 
-  timeline.addLabel("bentoCascade", cascadeStart);
-  timeline.fromTo(
-    cardEls,
-    {
-      opacity: 0,
-      x: (i: number) => CARD_SCATTER[i].x,
-      y: (i: number) => CARD_SCATTER[i].y,
-      rotate: (i: number) => CARD_SCATTER[i].rotate,
-      scale: (i: number) => CARD_SCATTER[i].scale,
-    },
-    {
-      opacity: 1,
-      x: 0,
-      y: 0,
-      rotate: 0,
-      scale: 1,
-      duration: CARD_FALL_DURATION,
-      ease: "back.out(1.7)",
-      stagger: CARD_STAGGER,
-    },
-    cascadeStart,
-  );
-  const cascadeEnd = cascadeStart + CARD_STAGGER * (cardEls.length - 1) + CARD_FALL_DURATION;
-
-  const totalDuration = Math.max(cursor, cascadeEnd);
+  const totalDuration = cursor;
 
   // Continuous across the whole journey, added last at position 0 spanning
   // totalDuration -- the untilt reads as one slow, steady reveal underneath
@@ -194,5 +168,5 @@ export function buildHeroMasterTimeline(
   );
   timeline.to(glowEl, { y: -opts.ipadTravelYPx * 2.5, opacity: 0.8, ease: "none", duration: totalDuration }, 0);
 
-  return timeline;
+  return { timeline, cascadeProgress: cascadeStart / totalDuration };
 }

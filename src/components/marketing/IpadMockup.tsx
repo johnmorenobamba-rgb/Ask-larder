@@ -5,7 +5,7 @@ import { forwardRef } from "react";
  * GSAP scroll transforms (rotateX/translateY live on the returned root
  * element via the forwarded ref, not here — this component only owns the
  * static frame markup). `children` renders into the screen area — Block N2
- * puts HeroSplashPreview and HeroBentoPreview there; both need
+ * puts HeroSplashPreview and the baked tile-drop video there; both need
  * `transform-style: preserve-3d` unbroken down to the screen div itself (not
  * just the outer bezel) so their own transforms compose through the
  * tablet's own tilt instead of pasting flat on top of it.
