@@ -45,7 +45,7 @@ export default async function CertsPage({
           <h1 className="font-display text-3xl font-bold text-ink">Your certificates</h1>
           {visibleCertTypes.length === 0 ? (
             <p className="font-sans text-ink">
-              No certificates required for your venue yet — ask your supervisor if you think
+              No certificates required for your venue yet. Ask your supervisor if you think
               that&apos;s wrong.
             </p>
           ) : (

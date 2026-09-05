@@ -35,7 +35,7 @@ export function ModuleUpdateNotice({
     });
 
     if (!res.ok) {
-      setError("Couldn't save that — check your connection and try again.");
+      setError("Couldn't save that. Check your connection and try again.");
       setLoading(false);
       return;
     }
@@ -73,7 +73,7 @@ export function ModuleUpdateNotice({
             disabled={loading}
             className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Saving…" : "Got it — continue"}
+            {loading ? "Saving…" : "Acknowledge and continue"}
           </button>
         </div>
       </PassSlide>

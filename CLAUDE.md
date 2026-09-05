@@ -50,7 +50,9 @@ Full SQL schema and RLS policy patterns are in Tech Bible §15 — use that as t
 - Literal stock-photo pantry/kitchen imagery in the brand system — the icon is a mark, not an illustration. Real venue photos (equipment, stations) belong in module content, not brand assets.
 - Consult the `frontend-design` skill before building any new screen — it encodes the taste/restraint principles this system is built on.
 
-**Voice:** plain verbs, sentence case, no filler, active voice (a button that says "Complete module" produces a confirmation that says "Module completed" — same vocabulary throughout). Confident and direct, never condescending to a nervous new hire. Errors state what happened and what to do next, without apologizing.
+**Voice:** plain verbs, sentence case, no filler, active voice (a button that says "Complete module" produces a confirmation that says "Module completed," same vocabulary throughout). Confident and direct, never condescending to a nervous new hire. Errors state what happened and what to do next, without apologizing.
+
+**No dashes in copy, absolute rule (confirmed in Notion, Build Manual Block N, 5 Sep 2026).** No hyphens, en-dashes, or em-dashes anywhere in the product's or any marketing surface's actual copy, including as a standalone punctuation mark, a fallback/empty-value placeholder ("None" instead of "—"), or a numeric range separator (write "9am to 5pm," not "9am-5pm"). Rewrite the sentence structure around it, don't substitute a comma in the same spot. The one exception is genuine compound words, which are spelling, not punctuation (self-serve, e-signature, non-negotiable, multi-tenant), and URLs/slugs/code identifiers, which aren't copy at all. This file's own engineering prose and code comments generally are developer documentation, not user-facing copy, so they're not held to this rule, but don't let that become an excuse to drift the product's own copy back toward it.
 
 ## Agentic self-testing — standing practice, not optional (Build Manual Part C)
 

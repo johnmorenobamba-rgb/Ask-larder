@@ -45,7 +45,7 @@ export function CompleteScreen({
           APPROVED · {staffName} · {venueName} · {completedDate}
         </p>
         <p className="font-sans text-ink max-w-sm mx-auto">
-          Everything you just went through stays available — come back any time to check it
+          Everything you just went through stays available. Come back any time to check it
           again.
         </p>
         {!hasSeenIntro && (

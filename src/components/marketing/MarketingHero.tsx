@@ -192,7 +192,7 @@ export function MarketingHero() {
               className="mt-8 max-w-md text-lg text-ink/80"
               style={{ opacity: reducedMotion ? 1 : 0 }}
             >
-              Built from your venue&apos;s own way of doing things — training your staff can actually use on shift.
+              Built from your venue&apos;s own way of doing things. Training your staff can actually use on shift.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <a

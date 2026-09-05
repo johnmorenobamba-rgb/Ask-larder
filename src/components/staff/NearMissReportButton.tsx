@@ -100,7 +100,7 @@ export function NearMissReportButton({
       <div className="w-full max-w-md space-y-4 rounded-2xl bg-parchment p-6">
         {done ? (
           <div className="space-y-4 text-center">
-            <p className="font-display text-xl text-ink">Thanks — that&apos;s been sent.</p>
+            <p className="font-display text-xl text-ink">Thanks. That&apos;s been sent.</p>
             <button
               type="button"
               onClick={reset}

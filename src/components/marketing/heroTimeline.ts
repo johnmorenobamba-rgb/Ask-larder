@@ -41,20 +41,19 @@ const PHRASE_TRAVEL_PX = 32;
 const SPLASH_START = 0.2;
 const SPLASH_HANDOFF_CROSSFADE = 0.3;
 
-// Cascade: 5 cards fall from scattered/elevated positions into their real
-// (now size-varied) grid layout, in the array's own authored order --
-// ask-larder (hero, lands first, anchors the composition) -> trained-on-sops
-// (wide) -> certificates -> scan-station -> owner-strip (full-width, lands
-// last, seals the layout) -- GSAP's plain numeric `stagger` over that order
-// IS the fall order, no grid-aware stagger config needed.
+// Cascade: 4 real dashboard cell types fall from scattered/elevated
+// positions into their real grid layout, in the array's own authored
+// order -- ring (hero, lands first, anchors the composition) -> continue
+// (glyph+step-progress) -> certificates (fanned stack) -> ask-larder
+// (traced-chit, lands last) -- GSAP's plain numeric `stagger` over that
+// order IS the fall order, no grid-aware stagger config needed.
 const CARD_FALL_DURATION = 0.5;
 const CARD_STAGGER = 0.09;
 const CARD_SCATTER: { x: number; y: number; rotate: number; scale: number }[] = [
-  { x: -6, y: -70, rotate: -8, scale: 0.92 }, // ask-larder (hero cell)
-  { x: 16, y: -65, rotate: 10, scale: 0.92 }, // trained-on-sops
+  { x: -6, y: -70, rotate: -8, scale: 0.92 }, // ring (hero cell)
+  { x: 16, y: -65, rotate: 10, scale: 0.92 }, // continue
   { x: -14, y: -55, rotate: -12, scale: 0.9 }, // certificates
-  { x: 14, y: -58, rotate: 9, scale: 0.9 }, // scan-station
-  { x: 0, y: -50, rotate: -4, scale: 0.94 }, // owner-strip (full-width, settles flat)
+  { x: 14, y: -58, rotate: 9, scale: 0.9 }, // ask-larder
 ];
 
 export type HeroTimelineRefs = {
@@ -69,7 +68,7 @@ export type HeroTimelineRefs = {
     rawGroupEl: unknown;
     idleGroupEl: unknown;
   };
-  cardEls: [unknown, unknown, unknown, unknown, unknown]; // greeting / progress / continue / certificates / ask-larder
+  cardEls: [unknown, unknown, unknown, unknown]; // ring / continue / certificates / ask-larder
 };
 
 export type HeroTimelineOptions = {

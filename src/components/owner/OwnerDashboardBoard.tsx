@@ -254,7 +254,7 @@ function NearMissCell({
           <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Near-miss reports</p>
           <p className="truncate font-sans text-ink">
             <AnimatedNumber value={count} animate={entered} /> unresolved
-            {recentStation ? ` — most recent at ${recentStation}` : ""}
+            {recentStation ? ` (most recent at ${recentStation})` : ""}
           </p>
         </div>
       </ElevatedCell>

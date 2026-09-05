@@ -6,6 +6,7 @@ import { openAskLarderOverlay } from "@/lib/askLarderBus";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
 import { ChitMark } from "@/components/shared/ChitMark";
 import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
+import { ProgressRing } from "@/components/shared/ProgressRing";
 import { ParallaxPermissionPrompt } from "@/components/shared/ParallaxPermissionPrompt";
 import { useViewportParallax } from "@/lib/hooks/useViewportParallax";
 import { StationsGallery } from "@/components/staff/StationsGallery";
@@ -19,13 +20,12 @@ type ShiftContext = {
   next: { label: string; range: string } | null;
 };
 
-const RING_RADIUS = 54;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
 // Custom line-icon glyphs only, per the Branding Kit's standing rule — no
 // stock icon library. StationGlyph matches the nav drawer's icon language
 // (24x24 viewBox, 1.5 stroke weight) rather than being a one-off style.
-function StationGlyph({ color }: { color: string }) {
+// Exported -- the marketing hero's tablet preview reuses this exact glyph
+// for its own real Continue-cell rendering, not a redrawn copy.
+export function StationGlyph({ color }: { color: string }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3" y="8" width="18" height="3" rx="1" stroke={color} strokeWidth="1.5" />
@@ -86,8 +86,11 @@ function ChitOutlineGlyph({ color }: { color: string }) {
  * tracks step client-side), the same limitation already accepted for the
  * checklist's in-progress ring, so "in progress" renders as roughly half
  * filled rather than an invented exact count.
+ *
+ * Exported -- the marketing hero's tablet preview reuses this for its own
+ * real Continue-cell rendering, not a redrawn copy.
  */
-function SegmentedProgress({ total, done }: { total: number; done: number }) {
+export function SegmentedProgress({ total, done }: { total: number; done: number }) {
   if (total === 0) return null;
   return (
     <div className="mt-2 flex gap-1">
@@ -96,6 +99,39 @@ function SegmentedProgress({ total, done }: { total: number; done: number }) {
       ))}
     </div>
   );
+}
+
+/**
+ * Optional Remotion-driven per-cell entrance -- additive and backward
+ * compatible, same pattern as ChitMark's `driveFrameSeconds`. When
+ * `remotionFrame` is undefined (every real app render) cells fall back
+ * entirely to the existing CSS `animate-bento-cell-in` keyframe; when
+ * provided (Block N3's tile-fall beat) each cell computes its own
+ * deterministic settle-in from frame math instead, so cells fall into
+ * place independently rather than as one rigid unit.
+ */
+function easeOutBack(t: number) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  const x = Math.min(1, Math.max(0, t));
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+
+function cellEntranceStyle(remotionFrame: number | undefined, delayMs: number) {
+  if (remotionFrame === undefined) return { animationDelay: `${delayMs}ms` };
+  const delayFrames = delayMs * 0.03;
+  const duration = 18;
+  const local = remotionFrame - delayFrames;
+  const p = Math.min(1, Math.max(0, local / duration));
+  const eased = easeOutBack(p);
+  return {
+    opacity: Math.min(1, Math.max(0, local / (duration * 0.55))),
+    transform: `translateY(${(1 - eased) * -50}px) rotate(${(1 - eased) * -3}deg) scale(${0.9 + eased * 0.1})`,
+  };
+}
+
+function cellClassName(base: string, remotionFrame: number | undefined) {
+  return remotionFrame === undefined ? `animate-bento-cell-in ${base}` : base;
 }
 
 export function BentoGrid({
@@ -116,6 +152,7 @@ export function BentoGrid({
   activityPhotoUrl,
   shiftContext,
   stations,
+  remotionFrame,
 }: {
   venueSlug: string;
   staffName: string;
@@ -134,6 +171,8 @@ export function BentoGrid({
   activityPhotoUrl: string;
   shiftContext: ShiftContext;
   stations: { id: string; name: string; qrCodeSlug: string; qrDataUrl: string; photoUrl: string }[];
+  /** Block N3 only -- drives per-cell entrance from a Remotion frame instead of the CSS keyframe. Leave undefined in the live app. */
+  remotionFrame?: number;
 }) {
   const router = useRouter();
   const [ringAnimated, setRingAnimated] = useState(false);
@@ -143,9 +182,6 @@ export function BentoGrid({
     const raf = requestAnimationFrame(() => setRingAnimated(true));
     return () => cancelAnimationFrame(raf);
   }, []);
-
-  const fraction = totalCount > 0 ? completedCount / totalCount : 0;
-  const ringOffset = RING_CIRCUMFERENCE * (1 - (ringAnimated ? fraction : 0));
 
   // certRows arrives pre-sorted most-urgent-first (home/page.tsx) -- the
   // front-of-stack card's status also drives the cell's own ambient glow,
@@ -177,8 +213,8 @@ export function BentoGrid({
       <div className="mx-auto grid w-full max-w-3xl grid-cols-4 gap-4">
         {/* Greeting — flat Ink, full width, no photo */}
         <div
-          className="animate-bento-cell-in col-span-4 rounded-2xl bg-ink px-6 py-6"
-          style={{ animationDelay: "0ms" }}
+          className={cellClassName("col-span-4 rounded-2xl bg-ink px-6 py-6", remotionFrame)}
+          style={cellEntranceStyle(remotionFrame, 0)}
         >
           <h1 className="font-display text-2xl font-bold text-parchment">
             {timeGreeting}, {staffName}.
@@ -192,8 +228,8 @@ export function BentoGrid({
             extra whitespace; sm:min-h floors the cell's height since implicit
             auto rows would otherwise size it off its own content alone. */}
         <div
-          className="animate-bento-cell-in col-span-4 sm:col-span-2 sm:row-span-2"
-          style={{ animationDelay: "80ms" }}
+          className={cellClassName("col-span-4 sm:col-span-2 sm:row-span-2", remotionFrame)}
+          style={cellEntranceStyle(remotionFrame, 80)}
         >
           <ElevatedCell
             glowColor="var(--color-bay-green)"
@@ -203,27 +239,7 @@ export function BentoGrid({
             tilt={false}
             className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl bg-parchment px-6 py-8 sm:min-h-[280px]"
           >
-            <div className="relative flex h-32 w-32 items-center justify-center sm:h-44 sm:w-44">
-              <svg className="h-32 w-32 -rotate-90 sm:h-44 sm:w-44" viewBox="0 0 128 128">
-                <circle cx="64" cy="64" r={RING_RADIUS} fill="none" stroke="var(--color-clay-brown)" strokeOpacity="0.2" strokeWidth="8" />
-                <circle
-                  cx="64"
-                  cy="64"
-                  r={RING_RADIUS}
-                  fill="none"
-                  stroke="var(--color-bay-green)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={RING_CIRCUMFERENCE}
-                  strokeDashoffset={ringOffset}
-                  style={{ transition: "stroke-dashoffset 600ms ease-out" }}
-                />
-              </svg>
-              <span className="absolute font-display text-2xl font-bold text-ink sm:text-3xl">
-                <AnimatedNumber value={completedCount} animate={ringAnimated} /> of{" "}
-                <AnimatedNumber value={totalCount} animate={ringAnimated} />
-              </span>
-            </div>
+            <ProgressRing completedCount={completedCount} totalCount={totalCount} animate={ringAnimated} />
             <p className="font-sans text-sm text-clay-brown sm:text-base">modules complete</p>
           </ElevatedCell>
         </div>
@@ -235,8 +251,8 @@ export function BentoGrid({
           type="button"
           onClick={() => continueModule && router.push(`/${venueSlug}/modules/${continueModule.id}`)}
           disabled={!continueModule}
-          className="animate-bento-cell-in col-span-4 block w-full text-left disabled:opacity-60 sm:col-span-2"
-          style={{ animationDelay: "140ms" }}
+          className={cellClassName("col-span-4 block w-full text-left disabled:opacity-60 sm:col-span-2", remotionFrame)}
+          style={cellEntranceStyle(remotionFrame, 140)}
         >
           <ElevatedCell
             glowColor="var(--color-clay-brown)"
@@ -283,7 +299,7 @@ export function BentoGrid({
             textured/patterned, dot-grid on Parchment). Lightweight v1 per
             spec: today's date + whichever configured venues.shift_windows
             window contains now, no roster data invented. */}
-        <div className="animate-bento-cell-in col-span-4 sm:col-span-1" style={{ animationDelay: "200ms" }}>
+        <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 200)}>
           <ElevatedCell
             glowColor="var(--color-clay-brown)"
             floatDurationS={5.9}
@@ -299,7 +315,7 @@ export function BentoGrid({
             <p className="mt-2 font-display text-base text-ink">{shiftContext.dateLabel}</p>
             {shiftContext.current ? (
               <p className="mt-1 font-sans text-sm text-bay-green">
-                On shift now — {shiftContext.current.label} ·{" "}
+                On shift now: {shiftContext.current.label} ·{" "}
                 <span className="font-mono text-xs">{shiftContext.current.range}</span>
               </p>
             ) : shiftContext.next ? (
@@ -318,8 +334,8 @@ export function BentoGrid({
         <button
           type="button"
           onClick={() => openAskLarderOverlay()}
-          className="animate-bento-cell-in col-span-4 block w-full sm:col-span-1"
-          style={{ animationDelay: "260ms" }}
+          className={cellClassName("col-span-4 block w-full sm:col-span-1", remotionFrame)}
+          style={cellEntranceStyle(remotionFrame, 260)}
         >
           <ElevatedCell
             glowColor="var(--color-saffron)"
@@ -339,7 +355,7 @@ export function BentoGrid({
             width; the fan didn't hold up at this narrower footprint).
             Ghost/outline treatment — stays the sole ghost cell (Bento
             variety pass, confirmed). */}
-        <div className="animate-bento-cell-in col-span-4 sm:col-span-1" style={{ animationDelay: "320ms" }}>
+        <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 320)}>
           <ElevatedCell
             glowColor={certGlowColor}
             floatDurationS={6.0}
@@ -390,7 +406,7 @@ export function BentoGrid({
             Collapses entirely — not rendered, no placeholder -- when nothing
             is genuinely close to expiring. */}
         {nextCertExpiring && (
-          <div className="animate-bento-cell-in col-span-4 sm:col-span-1" style={{ animationDelay: "380ms" }}>
+          <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 380)}>
             <a href={`/${venueSlug}/certs/${nextCertExpiring.id}`} className="block h-full">
               <ElevatedCell
                 glowColor="var(--color-saffron)"
@@ -419,7 +435,7 @@ export function BentoGrid({
             Photo-backed with a bottom scrim (real venue photography once a
             venue has some uploaded, same accepted stock fallback as
             Continue until then). */}
-        <div className="animate-bento-cell-in col-span-4 sm:col-span-2" style={{ animationDelay: "440ms" }}>
+        <div className={cellClassName("col-span-4 sm:col-span-2", remotionFrame)} style={cellEntranceStyle(remotionFrame, 440)}>
           <ElevatedCell
             glowColor="var(--color-ink)"
             floatDurationS={6.1}

@@ -1,0 +1,55 @@
+{
+  "venueSlug": "two-fires",
+  "staffName": "Tomas Reyes",
+  "venueName": "Two Fires",
+  "timeGreeting": "Morning",
+  "completedCount": 1,
+  "totalCount": 9,
+  "continueModule": {
+    "id": "47e3805e-b8db-4910-ace1-8e5c279161f0",
+    "title": "Food Safety & Hygiene",
+    "status": "Not started"
+  },
+  "continuePhotoUrl": "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=640&h=480&fit=crop",
+  "continueSectionsTotal": 3,
+  "continueSectionsDone": 0,
+  "certRows": [
+    {
+      "id": "8fb6122c-b03d-4202-9522-5222f3c0dec7",
+      "name": "First Aid",
+      "status": "expiring",
+      "days": 9,
+      "label": "Expires in 9d",
+      "color": "var(--color-saffron)"
+    },
+    {
+      "id": "7b96ea6c-5641-4e9c-a467-a94411a6418d",
+      "name": "Food Handling",
+      "status": "valid",
+      "days": 200,
+      "label": "Valid",
+      "color": "var(--color-bay-green)"
+    }
+  ],
+  "allCertsValid": false,
+  "nextCertExpiring": {
+    "id": "8fb6122c-b03d-4202-9522-5222f3c0dec7",
+    "name": "First Aid",
+    "status": "expiring",
+    "days": 9,
+    "label": "Expires in 9d",
+    "color": "var(--color-saffron)"
+  },
+  "fallbackCount": 6,
+  "activityPhotoUrl": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=480&fit=crop",
+  "shiftContext": {
+    "dateLabel": "Saturday 5 September",
+    "hasAnyWindows": true,
+    "current": null,
+    "next": {
+      "label": "Opening",
+      "range": "11:00-14:00"
+    }
+  },
+  "stations": []
+}

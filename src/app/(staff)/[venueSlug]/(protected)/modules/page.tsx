@@ -58,7 +58,7 @@ export default async function ModulesPage({
           </div>
           {visibleModules.length === 0 ? (
             <p className="font-sans text-ink">
-              No modules assigned yet — ask your supervisor to check your role is set up
+              No modules assigned yet. Ask your supervisor to check your role is set up
               correctly.
             </p>
           ) : (

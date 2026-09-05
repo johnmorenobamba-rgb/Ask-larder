@@ -1,5 +1,3 @@
-import { LARDER_MARK_PATH, LARDER_MARK_PATH_BOLD } from "./LarderMark";
-
 // Structural types for exactly the methods used here, not GSAP's own types —
 // gsap is always either a dynamic import (marketing hero) or a static import
 // in an already-lazy-loaded module (SplashSequence, via SplashScreen's
@@ -27,56 +25,11 @@ type SplitTextCtor = new (target: Element, vars: { type: string }) => SplitTextI
 const WORDMARK_DURATION = 0.55;
 const WORDMARK_STAGGER = 0.055;
 
-/** Both builders below position their post-wordmark beats relative to this
- * span (not a guessed hold duration) so "legible" can never cut in before
- * every character has actually finished staggering in. */
+/** Positions the wordmark's post-stagger beats relative to this span (not a
+ * guessed hold duration) so "legible" can never cut in before every
+ * character has actually finished staggering in. */
 function wordmarkSpan(charCount: number) {
   return WORDMARK_DURATION + WORDMARK_STAGGER * Math.max(0, charCount - 1);
-}
-
-/**
- * Block N2 — the cold-load splash's tween-construction, extracted out of
- * SplashSequence.tsx's inline effect so it's defined once rather than
- * copy-pasted. SplashSequence.tsx's own call site is a pure relocation —
- * same tweens (DrawSVG/MorphSVG), same autoplay, same onComplete-driven
- * hand-off, unaffected by anything below.
- *
- * NOT used for the marketing hero's scrubbed tablet-screen preview — see
- * buildScrubSafeSplashPreviewTimeline below for why and what it uses
- * instead.
- */
-export function buildSplashTimeline(
-  gsap: GsapLike,
-  SplitTextCtor: SplitTextCtor,
-  refs: { traceEl: Element; fillEl: Element; wordmarkEl: HTMLElement },
-  opts: { paused?: boolean; onComplete?: () => void } = {},
-): { timeline: GsapTimeline; split: SplitTextInstance } {
-  const { traceEl, fillEl, wordmarkEl } = refs;
-
-  const split = new SplitTextCtor(wordmarkEl, { type: "chars" });
-  gsap.set(split.chars, { opacity: 0, y: 8 });
-  gsap.set(wordmarkEl, { opacity: 1 });
-
-  const timeline = gsap.timeline({ paused: opts.paused, onComplete: opts.onComplete });
-  const span = wordmarkSpan(split.chars.length);
-
-  timeline
-    .addLabel("draw")
-    .to(traceEl, { drawSVG: "100%", duration: 0.5, ease: "power2.out" }, "draw")
-    .addLabel("settle")
-    .to(traceEl, { morphSVG: LARDER_MARK_PATH_BOLD, strokeWidth: 5, duration: 0.2, ease: "power2.out" }, "settle")
-    .to(fillEl, { opacity: 1, duration: 0.2 }, "settle")
-    .addLabel("wordmark", "settle+=0.35")
-    .to(
-      split.chars,
-      { opacity: 1, y: 0, duration: WORDMARK_DURATION, ease: "back.out(1.9)", stagger: WORDMARK_STAGGER },
-      "wordmark",
-    )
-    .addLabel("legible", `wordmark+=${span + 0.25}`)
-    .to(traceEl, { morphSVG: LARDER_MARK_PATH, strokeWidth: 3, duration: 0.2, ease: "power2.inOut" }, "legible")
-    .to(fillEl, { opacity: 0, duration: 0.2 }, "legible");
-
-  return { timeline, split };
 }
 
 /**
@@ -98,14 +51,16 @@ export function buildSplashTimeline(
  *   its own idle trace, just tweened once here instead of driving a
  *   continuous loop).
  * - "settle" -> `strokeWidth` thickens + the fill fades in (no path-shape
- *   morph — the bold *path* variant is skipped here; only the real
- *   cold-load splash, which autoplays and doesn't hit this limitation,
- *   uses buildSplashTimeline's actual MorphSVG shape change).
- * - "wordmark" / "legible" -> identical to buildSplashTimeline (opacity/y
- *   stagger via SplitText, both plain properties).
+ *   morph -- the real cold-load splash (SplashSequence.tsx) doesn't do one
+ *   either anymore; it renders ChitMark's own `animateIn`/`intensity="hero"`
+ *   reveal directly rather than tweening a private copy of the path here).
+ * - "wordmark" / "legible" -> the same character-stagger beats
+ *   SplashSequence.tsx builds for the real splash (opacity/y stagger via
+ *   SplitText, both plain properties) -- kept independent rather than
+ *   shared, since one is scroll-scrubbed and the other autoplays.
  *
- * Deliberately does NOT pass `paused: true` here, unlike buildSplashTimeline
- * — confirmed via isolated repro that a child timeline created with
+ * Deliberately does NOT pass `paused: true` here -- confirmed via isolated
+ * repro that a child timeline created with
  * `paused: true` never renders once nested into a parent via `.add()` and
  * driven only through the parent's `.progress()` (ScrollTrigger's scrub),
  * regardless of whether the tweened property is plugin-driven or plain

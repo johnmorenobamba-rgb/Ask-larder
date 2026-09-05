@@ -315,7 +315,7 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
 
             {overlayView === "voice-coming-soon" && !askedQuestion && (
               <p className="mb-4 font-sans text-sm text-clay-brown">
-                Voice questions are coming soon — type your question instead.
+                Voice questions are coming soon. Type your question instead.
               </p>
             )}
 

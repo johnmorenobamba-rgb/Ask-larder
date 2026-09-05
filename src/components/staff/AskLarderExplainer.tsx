@@ -54,7 +54,7 @@ const BEATS: Beat[] = [
         </p>
         <div className="rounded-2xl bg-parchment border-2 border-bay-green px-4 py-4">
           <p className="font-sans text-ink text-sm">
-            Answer drawn from your venue&apos;s approved closing procedure — walk through it
+            Answer drawn from your venue&apos;s approved closing procedure. Walk through it
             step by step, right from your training.
           </p>
         </div>

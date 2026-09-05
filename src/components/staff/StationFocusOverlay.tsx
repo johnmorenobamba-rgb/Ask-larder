@@ -66,7 +66,7 @@ export function StationFocusOverlay({
               className="h-28 w-28 shrink-0 rounded-xl border-2 border-clay-brown/20 bg-white p-2"
             />
             <p className="font-sans text-sm text-clay-brown">
-              Staff scan the printed code at this station to open its content directly — this is just here to confirm
+              Staff scan the printed code at this station to open its content directly. This is just here to confirm
               it matches the right station.
             </p>
           </div>

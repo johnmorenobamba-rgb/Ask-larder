@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
-import { EmberGlowBackground } from "./EmberGlowBackground";
 
 // GSAP + DrawSVG/MorphSVG/SplitText (~40KB gzipped -- real weight on a
 // so-so kitchen-iPad wifi connection, per the Decision Log's own flag on
@@ -41,12 +40,13 @@ function readAlreadyShownToday(): boolean {
 }
 
 /**
- * Block J4/L5 — the in-app cold-load splash. Ember-glow background (Block
- * J4's EmberGlowBackground) behind Block L5's SplashSequence -- one
- * coordinated `gsap.timeline()` that DrawSVG-traces the chit mark,
- * MorphSVGs it into a bolder filled state, then SplitText-staggers the
- * wordmark in character-by-character, before handing off to a plain
- * ChitMark for the same idle traveling-glow trace every other usage has.
+ * Block J4/L5, rebuilt 5 Sep 2026 (Notion, Splash & Animated Logo spec) —
+ * the in-app cold-load splash. Plain Ink background -- the ember-glow
+ * canvas + colored light pillars (Block J4's EmberGlowBackground) were
+ * removed entirely, not toned down. SplashSequence now renders ChitMark
+ * directly (`animateIn` + `intensity="hero"`) for the mark instead of a
+ * separate DrawSVG/MorphSVG trace, so this is the same "mark tracing with
+ * a glow" technique used everywhere else, not a second implementation.
  * Plays once per calendar day per device. Never replays on internal
  * client-side navigation -- this mounts once in the root layout, which the
  * App Router doesn't remount on route changes, so only a genuine fresh
@@ -121,9 +121,8 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
       {children}
       {visible && (
         <div
-          className={`fixed inset-0 z-[100] transition-opacity duration-300 ${fadingOut ? "opacity-0" : "opacity-100"}`}
+          className={`fixed inset-0 z-[100] bg-ink transition-opacity duration-300 ${fadingOut ? "opacity-0" : "opacity-100"}`}
         >
-          <EmberGlowBackground />
           <div className="relative flex h-full flex-col items-center justify-center">
             <div className="animate-stamp relative">
               <SplashSequence

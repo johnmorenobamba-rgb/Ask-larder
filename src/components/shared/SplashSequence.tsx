@@ -1,45 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { SplitText } from "gsap/SplitText";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { ChitMark } from "./ChitMark";
-import { LARDER_MARK_PATH } from "./LarderMark";
-import { buildSplashTimeline } from "./splashTimeline";
 
-gsap.registerPlugin(DrawSVGPlugin, MorphSVGPlugin, SplitText);
+gsap.registerPlugin(SplitText);
 
-// Matches SplashScreen's original glow sizing (2.6x the icon) -- a pure
-// radial-gradient with no shape to trace, so it never reads as a container
-// behind the mark (see ChitMark.tsx's doc comment for why drop-shadow was
-// rejected for this same reason).
+// Punchier, more saturated than the Branding Kit's flat swatches -- at low
+// opacity behind a small icon, the flat Saffron read as barely-there.
 const GLOW_SIZE_RATIO = 2.6;
+const WORDMARK_DELAY_S = 0.75;
+const WORDMARK_DURATION = 0.55;
+const WORDMARK_STAGGER = 0.055;
 
 /**
- * Block L5 -- the splash's cold-load entrance, rebuilt as one coordinated
- * `gsap.timeline()`. Replaces J4's CSS-keyframe wordmark + ChitMark's
- * `animateIn`/`intensity="hero"` draw-in for this one call site only --
- * ChitMark itself (dashboard tile, floating bubble) is untouched, and once
- * this timeline completes it hands off to a plain, already-idle <ChitMark>
- * so the shared WAAPI traveling-glow trace takes over rather than this
- * component reimplementing it. J4's trigger logic (once/day, never on
- * internal nav) lives entirely in SplashScreen.tsx and isn't touched here.
+ * Splash rebuild, 5 Sep 2026 (Notion, Splash & Animated Logo spec):
+ * previously DrawSVG/MorphSVG-traced its own private copy of the mark
+ * before handing off to a plain idle ChitMark once settled -- two separate
+ * implementations of "the mark tracing with a glow" that could drift apart.
+ * Now just renders ChitMark directly with its own `animateIn` +
+ * `intensity="hero"` reveal, which was already built to cover exactly this
+ * kind of one-time cold-load moment (see ChitMark.tsx's own doc comment:
+ * "the prop stays for any future non-splash reveal use"). One
+ * implementation, reused, not redrawn -- same principle as the Remotion
+ * video importing the real dashboard components instead of a mockup.
  *
- * Beats are declared as timeline positions relative to each other (labels /
- * `"<"` `"-=n"` offsets), not independently hand-computed millisecond
- * delays -- draw-in and the wordmark's character stagger both hang off the
- * same timeline, so retiming one beat can't silently desync the other the
- * way two separate CSS animations with their own delays could.
- *
- * Block N2 -- the actual tween construction now lives in
- * buildSplashTimeline() (./splashTimeline.ts), extracted so the marketing
- * hero's tablet-screen preview can scrub the exact same beats instead of
- * autoplaying them. This component's own call site is a pure relocation --
- * same tweens, same autoplay, same onComplete-driven hand-off to a plain
- * idle ChitMark below.
+ * Only the wordmark's character-stagger reveal is still hand-built here
+ * (unchanged from before -- SplitText, same duration/stagger/ease), timed
+ * via its own small delayed timeline rather than sharing one master
+ * timeline with the mark, since there's no longer a trace/fill tween on
+ * this component's own elements to hang shared labels off of.
  */
 export function SplashSequence({
   size,
@@ -53,27 +45,25 @@ export function SplashSequence({
   wordmark?: string;
 }) {
   const reducedMotion = usePrefersReducedMotion();
-  const [settled, setSettled] = useState(false);
-  const traceRef = useRef<SVGPathElement | null>(null);
-  const fillRef = useRef<SVGPathElement | null>(null);
   const wordmarkRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    if (reducedMotion) {
-      const raf = requestAnimationFrame(() => setSettled(true));
-      return () => cancelAnimationFrame(raf);
-    }
-    const trace = traceRef.current;
-    const fillEl = fillRef.current;
+    if (reducedMotion) return;
     const wordmarkEl = wordmarkRef.current;
-    if (!trace || !fillEl || !wordmarkEl) return;
+    if (!wordmarkEl) return;
 
-    const { timeline: tl, split } = buildSplashTimeline(
-      gsap,
-      SplitText,
-      { traceEl: trace, fillEl, wordmarkEl },
-      { onComplete: () => setSettled(true) },
-    );
+    const split = new SplitText(wordmarkEl, { type: "chars" });
+    gsap.set(split.chars, { opacity: 0, y: 8 });
+    gsap.set(wordmarkEl, { opacity: 1 });
+
+    const tl = gsap.timeline({ delay: WORDMARK_DELAY_S });
+    tl.to(split.chars, {
+      opacity: 1,
+      y: 0,
+      duration: WORDMARK_DURATION,
+      ease: "back.out(1.9)",
+      stagger: WORDMARK_STAGGER,
+    });
 
     return () => {
       tl.kill();
@@ -96,21 +86,7 @@ export function SplashSequence({
               "radial-gradient(circle, rgba(232,169,59,0.55) 0%, rgba(232,169,59,0.26) 30%, rgba(232,169,59,0) 62%)",
           }}
         />
-        {settled ? (
-          <ChitMark size={size} fillColor={fillColor} traceColor={traceColor} />
-        ) : (
-          <svg width={size} height={size} viewBox="0 0 72 72" role="img" aria-label="Larder">
-            <path ref={fillRef} d={LARDER_MARK_PATH} fill={fillColor} opacity={0} />
-            <path
-              ref={traceRef}
-              d={LARDER_MARK_PATH}
-              fill="none"
-              stroke={traceColor}
-              strokeWidth={3}
-              strokeLinecap="round"
-            />
-          </svg>
-        )}
+        <ChitMark size={size} fillColor={fillColor} traceColor={traceColor} animateIn intensity="hero" />
       </div>
       <span aria-label={wordmark} className="font-display text-2xl font-bold text-parchment">
         <span ref={wordmarkRef} aria-hidden="true" className={reducedMotion ? "" : "opacity-0"}>

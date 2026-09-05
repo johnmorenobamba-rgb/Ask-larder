@@ -108,7 +108,7 @@ export function CertUploadForm({
             </label>
             {existingPhotoUrl && !file && (
               <p className="font-mono text-xs text-clay-brown">
-                A photo is already on file — choose a new one to replace it.
+                A photo is already on file. Choose a new one to replace it.
               </p>
             )}
           </div>

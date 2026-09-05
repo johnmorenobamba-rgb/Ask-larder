@@ -40,7 +40,7 @@ export default async function OwnerModuleVersionsPage({
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-6">
-        <h1 className="font-display text-3xl font-bold text-ink">{module.title} — versions</h1>
+        <h1 className="font-display text-3xl font-bold text-ink">{module.title} version history</h1>
 
         {module.status === "live" && <PublishVersionForm moduleId={module.id} />}
 
@@ -69,10 +69,10 @@ export default async function OwnerModuleVersionsPage({
                 </p>
                 {v.changelog && <p className="font-sans text-sm text-ink">{v.changelog}</p>}
                 <p className="font-mono text-xs text-bay-green">
-                  Acknowledged ({acked.length}): {acked.map((p) => p.app_users?.name).join(", ") || "—"}
+                  Acknowledged ({acked.length}): {acked.map((p) => p.app_users?.name).join(", ") || "None"}
                 </p>
                 <p className="font-mono text-xs text-preserve-red">
-                  Outstanding ({notAcked.length}): {notAcked.map((p) => p.app_users?.name).join(", ") || "—"}
+                  Outstanding ({notAcked.length}): {notAcked.map((p) => p.app_users?.name).join(", ") || "None"}
                 </p>
               </div>
             );

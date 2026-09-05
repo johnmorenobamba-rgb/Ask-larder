@@ -46,7 +46,7 @@ export default async function OwnerCompletionsPage() {
                       const p = progressByKey.get(`${s.id}:${m.id}`);
                       const status = p?.status ?? "not_started";
                       const label =
-                        status === "completed" ? "Completed" : status === "in_progress" ? "In progress" : "—";
+                        status === "completed" ? "Completed" : status === "in_progress" ? "In progress" : "Not started";
                       const color =
                         status === "completed"
                           ? "text-bay-green"
