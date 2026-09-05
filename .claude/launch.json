@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "larder-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "C:\\Users\\johnm\\Documents\\Ask-larder\\scripts\\dev-with-node24.cmd",
+      "runtimeArgs": [],
       "port": 3000
     }
   ]

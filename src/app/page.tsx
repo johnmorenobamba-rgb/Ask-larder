@@ -1,6 +1,7 @@
 import { LarderMark } from "@/components/shared/LarderMark";
 import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { FeatureGuideStrip } from "@/components/marketing/FeatureGuideStrip";
+import { ExplainerVideoSection } from "@/components/marketing/ExplainerVideoSection";
 
 // Block N1/N2 — replaces the "under construction" placeholder at the bare
 // root domain (Decision Log, 31 Aug 2026; Build Manual Block N). Separate
@@ -37,6 +38,22 @@ export default function Home() {
       </header>
       <MarketingHero />
       <FeatureGuideStrip />
+      <ExplainerVideoSection />
+
+      {/* Temporary placeholder CTA -- N4 (Build Manual) owns the real final
+          CTA content; this is the same block that used to sit inside
+          FeatureGuideStrip, just relocated so `#contact` (linked from the
+          header nav and the hero's "Get started") stays live. */}
+      <div id="contact" className="border-t border-ink/10 bg-parchment px-6 py-16 text-center sm:px-10 md:px-16">
+        <p className="font-display text-2xl font-bold text-ink">Want to see it on your own venue?</p>
+        <p className="mt-2 text-ink/70">Book a walkthrough. We&apos;ll bring your own SOPs into it.</p>
+        <a
+          href="mailto:hello@asklarder.com.au?subject=Book%20a%20walkthrough"
+          className="mt-6 inline-block rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-parchment transition-colors hover:bg-ink/90"
+        >
+          Book a walkthrough
+        </a>
+      </div>
     </main>
   );
 }

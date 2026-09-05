@@ -47,30 +47,36 @@ function DashboardGlyph() {
 const FEATURES = [
   {
     glyph: DocumentGlyph,
-    title: "Built from your own SOPs",
-    body: "Modules are structured from the way your venue already works, not a generic course.",
+    title: "Built from your SOPs",
+    body: "Not a generic course. Trained on how your venue actually runs.",
   },
   {
     glyph: BadgeGlyph,
-    title: "Certs tracked automatically",
-    body: "RSA, food handling, first aid, WWCC — expiry nudges before they lapse.",
+    title: "Certs, tracked automatically",
+    body: "RSA, food handling, first aid, and WWCC, all nudged before they lapse.",
   },
   {
     glyph: ChatGlyph,
-    title: "Ask Larder, on shift",
-    body: "Staff get answers grounded in your venue's own approved content — nothing else.",
+    title: "Your SOPs, always on shift",
+    body: "Ask Larder only ever answers from your own approved content.",
   },
   {
     glyph: DashboardGlyph,
-    title: "See it from the owner side",
-    body: "Completion, certificates, and escalations in one dashboard.",
+    title: "Owner visibility",
+    body: "Completions, certificates, and escalations, all in one place.",
   },
 ];
 
 /**
- * Block N2 — the quick feature guide shown once the pinned hero releases.
- * Plain scroll-into-view fade-up (IntersectionObserver), not GSAP — this
- * section doesn't need the hero's scrub machinery, just a light reveal.
+ * Block N — Section 1 (revised sequencing, Build Manual 1 Sep 2026): the
+ * short, punchy features list directly above the Remotion explainer video
+ * (Section 2). Plain scroll-into-view fade-up (IntersectionObserver), not
+ * GSAP — this section doesn't need the hero's scrub machinery, just a
+ * light reveal. The closing contact/CTA block that used to live at the
+ * bottom of this component moved to the end of the page (page.tsx) — it's
+ * N4's final-CTA content, not part of Section 1, but the `#contact`
+ * anchor it exposes is still linked from the header nav and the hero, so
+ * it moved rather than disappeared.
  */
 export function FeatureGuideStrip() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -113,17 +119,6 @@ export function FeatureGuideStrip() {
               <p className="mt-1 text-sm text-ink/70">{f.body}</p>
             </div>
           ))}
-        </div>
-
-        <div id="contact" className="mt-20 border-t border-ink/10 pt-12 text-center">
-          <p className="font-display text-2xl font-bold text-ink">Want to see it on your own venue?</p>
-          <p className="mt-2 text-ink/70">Book a walkthrough — we&apos;ll bring your own SOPs into it.</p>
-          <a
-            href="mailto:hello@asklarder.com.au?subject=Book%20a%20walkthrough"
-            className="mt-6 inline-block rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-parchment transition-colors hover:bg-ink/90"
-          >
-            Book a walkthrough
-          </a>
         </div>
       </div>
     </section>
