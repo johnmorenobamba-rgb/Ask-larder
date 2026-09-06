@@ -899,6 +899,100 @@ export type Database = {
           },
         ]
       }
+      venue_contacts: {
+        Row: {
+          contact_type: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_contacts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_licence_profile: {
+        Row: {
+          abn: string | null
+          address: string | null
+          approved_trading_hours: Json | null
+          conditions: string | null
+          created_at: string | null
+          id: string
+          late_night_endorsement: boolean | null
+          licence_number: string | null
+          licence_type: string | null
+          licensed_capacity: number | null
+          state: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          abn?: string | null
+          address?: string | null
+          approved_trading_hours?: Json | null
+          conditions?: string | null
+          created_at?: string | null
+          id?: string
+          late_night_endorsement?: boolean | null
+          licence_number?: string | null
+          licence_type?: string | null
+          licensed_capacity?: number | null
+          state?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          abn?: string | null
+          address?: string | null
+          approved_trading_hours?: Json | null
+          conditions?: string | null
+          created_at?: string | null
+          id?: string
+          late_night_endorsement?: boolean | null
+          licence_number?: string | null
+          licence_type?: string | null
+          licensed_capacity?: number | null
+          state?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_licence_profile_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           branding: Json | null
