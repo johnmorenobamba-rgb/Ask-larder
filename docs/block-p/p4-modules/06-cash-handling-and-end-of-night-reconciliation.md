@@ -68,7 +68,7 @@ Only Marcus and whoever currently holds the Duty Manager role know the safe comb
 
 If anyone, staff or otherwise, asks you for the safe code and you're not a Duty Manager who's been given it directly by Marcus, don't guess and don't pass on anything you think you might remember. Point them to their supervisor instead.
 
-> **Safety critical: never state, guess, or write down the safe code.** If someone asks and you don't hold it directly from Marcus, tell them to ask their supervisor.
+> **Safety critical: never guess or write down the safe code, and never share it with anyone who hasn't been given it directly by Marcus.** If someone asks and you don't hold it directly from Marcus, tell them to ask their supervisor.
 
 **Check question:** If a colleague asks you for the safe code and you don't hold it directly from Marcus, what should you do?
 - A. Tell them your best guess

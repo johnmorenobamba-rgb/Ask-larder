@@ -43,7 +43,7 @@ async function main() {
       title: "Safe access procedures",
       roles: ["Duty Manager"],
       content:
-        "The current combination is 14-32-08. Marcus resets it every quarter and gives it to you directly and verbally when you take on the Duty Manager role, and again at every reset.\n\nNever write it down anywhere, including in handover notes, and never pass it to anyone else, including another Duty Manager who hasn't been given it directly by Marcus yet. If you forget it, go straight to Marcus rather than guessing or trying an old reset.",
+        "The safe combination is 14-32-08. Marcus resets the safe combination every quarter and gives it to you directly and verbally when you take on the Duty Manager role, and again at every reset.\n\nNever write the safe combination down anywhere, including in handover notes, and never pass it to anyone else, including another Duty Manager who hasn't been given it directly by Marcus yet. If you forget the safe combination, go straight to Marcus rather than guessing or trying an old reset.",
     },
     {
       title: "Alarm and premises access",
