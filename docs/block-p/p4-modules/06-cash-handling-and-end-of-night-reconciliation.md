@@ -75,3 +75,19 @@ If anyone, staff or otherwise, asks you for the safe code and you're not a Duty 
 - B. Check the handover notes for it
 - C. Tell them to ask their supervisor (correct)
 - D. Give it to them if they seem trustworthy
+
+---
+
+## Section 6: Petty cash, deliveries, and ordering authority
+
+Petty cash withdrawals up to $50 need the Duty Manager's sign off, noted in the reconciliation log with what it was for. Anything above $50 needs Marcus's approval before the cash leaves the till or safe, no exceptions, regardless of how routine the purchase seems.
+
+Routine stock orders, kegs, spirits, wine, and the snack board ingredients, are placed by the Duty Manager or Bar Supervisor as part of normal stock rotation. Anything outside that, a new supplier, a bulk order, or a price that looks off, needs Marcus's sign off before the order goes in.
+
+When a delivery arrives, check it against the invoice before signing for it: quantity, condition, any damage, and use by dates on anything perishable. Don't sign for a delivery you haven't actually checked, a signature confirms it arrived correctly, not just that it arrived.
+
+**Check question:** What's the threshold for a petty cash withdrawal that needs Marcus's approval, not just the Duty Manager's?
+- A. Any amount over $20
+- B. Any amount over $50 (correct)
+- C. Any amount over $100
+- D. Petty cash never needs approval

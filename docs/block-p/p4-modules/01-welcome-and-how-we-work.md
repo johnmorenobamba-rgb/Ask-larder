@@ -32,7 +32,21 @@ The team: Marcus is the owner and licensee. Priya is Duty Manager and also our R
 
 ---
 
-## Section 3: How your training works
+## Section 3: Checking the roster
+
+The roster is posted on the whiteboard in the office, updated every Sunday for the week ahead. If you're ever unsure who else is on shift with you, or what time someone starts or finishes, that's where to check first rather than guessing or relying on a text thread.
+
+Any last minute change, a shift swap or someone calling in sick, gets written on the same board by whoever's Duty Manager on shift, so it stays the one place everyone can trust.
+
+**Check question:** Where do you check who's rostered on for a shift?
+- A. Whatever was last texted in the group chat
+- B. The whiteboard in the office (correct)
+- C. Ask Larder
+- D. There's no fixed place, ask around
+
+---
+
+## Section 4: How your training works
 
 Each module is broken into short sections like this one. Read a section, then answer a quick question to check it landed. Getting a question wrong just shows you the right answer, there's no penalty and no lockout, so answer honestly rather than guessing.
 
@@ -44,7 +58,21 @@ This section is context setting and has no check question.
 
 ---
 
-## Section 4: The venue at a glance
+## Section 5: If Ask Larder or the wifi is down
+
+Ask Larder needs the venue's wifi to work, so if the wifi drops or the tool itself is down, it won't be available for a question mid shift. That doesn't mean the information's gone, it means you check a different place for it.
+
+A printed copy of the RSA refusal script, the emergency contacts, and the closing sequence is kept in the folder behind the bar, the same folder that holds the banned patron notes. For anything else, ask whoever's Duty Manager or Bar Supervisor is on shift, the same person you'd escalate to anyway.
+
+**Check question:** If Ask Larder is down and you need the RSA refusal script, where do you look?
+- A. Wait until the wifi comes back before doing anything
+- B. The printed folder behind the bar (correct)
+- C. Search for it online
+- D. Guess based on what you remember from training
+
+---
+
+## Section 6: The venue at a glance
 
 The Quiet Fox holds an on premises liquor licence, licence number 32104578, with no late night endorsement. That means nothing here trades past 1am, ever, and that limit matters for how we run last drinks and closing.
 

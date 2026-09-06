@@ -62,7 +62,21 @@ The cheese board contains dairy, and the lavash served with it contains gluten. 
 
 ---
 
-## Section 5: Stock rotation and use by dates
+## Section 5: Shellfish and other allergens we don't carry
+
+None of The Quiet Fox's menu items contain shellfish or shellfish derivatives. Marinated olives, marinated feta, kettle chips, pretzels, the cheese board, and the charcuterie board are every item we serve, and none of them contain shellfish in any form.
+
+That means if a guest asks about a shellfish allergy, you can say no with total confidence rather than hedging. "I'm not sure" is an honest answer, but it isn't a useful one to someone checking whether a menu is safe for them. "No, nothing on our menu contains shellfish" is both honest and actually useful, and it's true for everything we serve.
+
+**Check question:** A guest tells you they have a shellfish allergy and asks if anything on the menu is safe for them. What do you tell them?
+- A. Check with the kitchen before answering
+- B. None of our menu items contain shellfish, so everything is safe from that allergen (correct)
+- C. Recommend they avoid the cheese board only
+- D. Tell them you're not sure and to order at their own risk
+
+---
+
+## Section 6: Stock rotation and use by dates
 
 Rotate stock so nothing sits in the display fridge past its use by date. Check dates when you restock during your shift, not just at the start of the week.
 

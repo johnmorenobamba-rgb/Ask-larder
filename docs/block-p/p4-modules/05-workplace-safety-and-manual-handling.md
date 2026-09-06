@@ -52,7 +52,21 @@ Read the label before using anything you're not familiar with, and ask Priya or 
 
 ---
 
-## Section 4: Reporting hazards and near misses
+## Section 4: Pre-service safety check
+
+Before service starts, walk the floor and check that both fire exits are clear and unobstructed, with exit signage lit and nothing stacked or stored in front of either door. This takes two minutes and matters most exactly when you'd be tempted to skip it, on a busy night when the room's about to fill up.
+
+While you're doing that walk, give glassware and equipment a quick visual check too. Pull any chipped glass from service and follow up on anything that looked off the night before, before the first guest arrives.
+
+**Check question:** What must be checked before service starts, alongside glassware and equipment?
+- A. The weather forecast for the night
+- B. That both fire exits are clear and unobstructed (correct)
+- C. How many guests have booked in the function nook
+- D. The price of tonight's drinks specials
+
+---
+
+## Section 5: Reporting hazards and near misses
 
 If you spot a hazard or something goes wrong that could have caused an injury, tell whoever's Duty Manager on shift straight away. It gets logged in the near miss folder and reviewed by Marcus every week.
 

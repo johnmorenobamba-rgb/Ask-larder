@@ -78,12 +78,16 @@ If a patron pushes back at all, don't argue it yourself, call Priya or Jordan ov
 
 The Quiet Fox doesn't run crowd controllers, our room is small enough that Priya or Jordan can read the floor themselves, and most issues here are refusals rather than anything physical. Stay calm, keep your voice level, and give a patron space rather than crowding them if a conversation gets heated.
 
+If a patron refuses to leave after being cut off, don't try to move them yourself. Call Priya or Jordan straight away and let them make a calm, direct request. If that doesn't work and the patron still won't go, the next step is calling 000, this is now a police matter, not something staff handle alone.
+
 There's a silent duress button fitted under the main till, wired through to a monitored security service. Use it if you ever feel unsafe, it doesn't need an explanation first, that's what it's there for.
 
 We also keep a folder behind the bar with a photo and a short note on anyone who's been asked not to return. If a face looks familiar on the door or at the bar, check the folder rather than relying on memory alone.
 
-**Check question:** Where should you check if a patron's face looks familiar from a past incident?
-- A. Ask another Bar Attendant if they recognise them
-- B. The banned patron folder behind the bar (correct)
-- C. Look them up on social media
-- D. Wait and see if they cause trouble again
+> **Safety critical: never attempt to physically remove a patron who won't leave.** Call Priya or Jordan, and if that doesn't resolve it, call 000.
+
+**Check question:** If a patron refuses to leave after being cut off and Priya or Jordan can't resolve it, what's the next step?
+- A. Ask another Bar Attendant to help walk them out
+- B. Call 000, this is now a police matter (correct)
+- C. Keep serving them water until they decide to leave
+- D. Lock the front door so they can't come back in

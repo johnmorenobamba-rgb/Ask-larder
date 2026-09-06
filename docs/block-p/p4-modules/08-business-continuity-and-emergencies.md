@@ -34,28 +34,32 @@ Put the small "cash preferred, card outage" sign up at the door so guests know b
 
 ---
 
-## Section 3: Supplier and trade backups
+## Section 3: Power outage procedure
 
-We keep a backup keg supplier and a backup spirits supplier on file, both live accounts rather than just a name on a card, in case our primary distributor's delivery is delayed. If you notice a delivery hasn't turned up when expected, flag it to the Duty Manager rather than assuming it'll sort itself out.
+A power outage is different from an EFTPOS or Square outage, everything goes dark and cold holding is at risk, not just payments. Light the candles or torches kept behind the bar so the room stays safe to move around in, and let guests know what's happening rather than leaving them guessing.
 
-For anything physical that breaks, Brunswick Electrical Services covers electrical issues, Nicholson St Plumbing covers plumbing, and Merri Locksmiths runs a 24 hour line for lockouts or lock issues. These contacts are kept in the office folder along with our insurance broker's details.
+The under bar fridge is the main risk: once the power's out, board ingredients are no longer being held at or below 5°C. If an outage runs past 30 to 60 minutes, treat anything in that fridge as compromised and stop serving from it until power's back and the fridge has had time to recover to temperature.
 
-**Check question:** Why does The Quiet Fox keep a backup keg and spirits supplier on file?
-- A. To get better prices by comparing suppliers
-- B. In case the primary distributor's delivery is delayed (correct)
-- C. Because the primary supplier is being phased out
-- D. They're not actually used, just kept as contacts
+If the outage looks like it's going to run long, or it's affecting the whole street rather than just The Quiet Fox, the Duty Manager makes the call on whether to close early rather than trying to keep trading in the dark.
+
+**Check question:** What's the main risk to manage during a power outage, beyond guests not being able to see?
+- A. The Square terminals losing their settings
+- B. The under bar fridge losing cold holding for board ingredients (correct)
+- C. The beer lines running flat
+- D. The duress alarm not working
 
 ---
 
-## Section 4: Who to go to and where details live
+## Section 4: Water and gas safety
 
-Day to day, hazards, near misses, and anything operational go to whoever's Duty Manager on shift. Anything involving the licence itself, like a regulator query, goes through Marcus, who deals directly with Liquor Control Victoria, the state body that regulates our licence.
+The Quiet Fox has no kitchen and no cooking gas anywhere on site, our food service is cold boards only, so there's no gas appliance here to shut off or check for a leak. That doesn't make gas a zero risk topic though.
 
-Insurance details are kept with the physical policy documents in the office, referenced by policy number rather than repeated in training, so if you ever need them, that's where to point someone.
+> **Safety critical: if you ever smell gas anywhere on the premises, don't switch anything electrical on or off, get everyone out, and call 000 from outside.**
 
-**Check question:** Who handles queries involving The Quiet Fox's liquor licence with the regulator?
-- A. Whoever's Duty Manager that night
-- B. Marcus (correct)
-- C. Any staff member who answers the office phone
-- D. The insurance broker
+If a pipe bursts or a tap won't shut off, the main water shutoff valve is in the office, next to the electrical panel. Turning it off there stops water anywhere in the building. Call Nicholson St Plumbing straight after, they're our regular plumber and already know the site.
+
+**Check question:** Where is the main water shutoff valve at The Quiet Fox?
+- A. Behind the main bar, next to the glasswasher
+- B. In the office, next to the electrical panel (correct)
+- C. In the cool room
+- D. There isn't one, water has to be shut off at the street
