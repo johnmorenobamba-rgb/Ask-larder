@@ -105,14 +105,24 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
-  const [{ data: venue }, stationResult] = await Promise.all([
+  // Role-tiered fallback (Tech Bible §15i, added 6 Sep 2026): owner/manager
+  // accounts are always authorized-tier; a frontline staff member is
+  // authorized only if their staff_roles row has been explicitly marked so
+  // (defaults to 'frontline', matching the "identical protection unless a
+  // venue explicitly says otherwise" design).
+  const isBackOfficeAccount = staff.role === "owner" || staff.role === "manager";
+  const [{ data: venue }, stationResult, tierResult] = await Promise.all([
     supabase.from("venues").select("name, shift_windows").eq("id", staff.venue_id).maybeSingle(),
     stationId ? supabase.from("stations").select("name").eq("id", stationId).maybeSingle() : Promise.resolve(null),
+    isBackOfficeAccount || !staff.staff_role_id
+      ? Promise.resolve(null)
+      : supabase.from("staff_roles").select("fallback_tier").eq("id", staff.staff_role_id).maybeSingle(),
   ]);
   const station = stationResult?.data ?? null;
   // Null out a station id that didn't resolve (wrong venue, deleted, or
   // simply absent) rather than trusting the client-supplied value verbatim.
   const resolvedStationId = station ? stationId! : null;
+  const isAuthorizedTier = isBackOfficeAccount || tierResult?.data?.fallback_tier === "authorized";
 
   let queryEmbedding: number[];
   try {
@@ -131,9 +141,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }
 
+  // Tier-gate restricted chunks (Tech Bible §15i): this is a defense-in-depth
+  // check independent of module_roles scoping -- a frontline-tier user never
+  // has a restricted chunk's actual text put in front of the model, even if
+  // retrieval somehow returned it (e.g. a module_roles misconfiguration).
+  // Authorized-tier users (owner/manager, or a staff_role explicitly marked
+  // 'authorized') see restricted chunks like any other.
+  const visibleChunks = (chunks ?? []).filter((c) => isAuthorizedTier || !c.is_restricted);
+  const withheldCount = (chunks?.length ?? 0) - visibleChunks.length;
+
   const retrievedText =
-    chunks && chunks.length > 0
-      ? chunks.map((c, i) => `[${i + 1}] ${c.content_chunk}`).join("\n\n")
+    visibleChunks.length > 0
+      ? visibleChunks.map((c, i) => `[${i + 1}] ${c.content_chunk}`).join("\n\n")
       : "(no matching venue content found)";
 
   const contextBlock = [
@@ -142,6 +161,9 @@ export async function POST(request: Request) {
       ? `Venue shift windows (informational only, not for gating access): ${JSON.stringify(venue.shift_windows)}`
       : null,
     station ? `Asked from station: ${station.name}` : null,
+    withheldCount > 0
+      ? `Note: ${withheldCount} additional matching chunk(s) exist for this question but are restricted to authorized roles (manager and above); they have been withheld because this staff member is not authorized. If the question is genuinely asking for that restricted information, this IS a fallback-rule case -- apply it, don't say the topic "isn't covered."`
+      : null,
     `Retrieved venue content:\n${retrievedText}`,
     `Staff question: ${question}`,
   ]

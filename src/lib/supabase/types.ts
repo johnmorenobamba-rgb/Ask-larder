@@ -362,6 +362,7 @@ export type Database = {
           content_chunk: string
           embedding: string | null
           id: string
+          is_restricted: boolean | null
           source_module_id: string | null
           venue_id: string | null
         }
@@ -369,6 +370,7 @@ export type Database = {
           content_chunk: string
           embedding?: string | null
           id?: string
+          is_restricted?: boolean | null
           source_module_id?: string | null
           venue_id?: string | null
         }
@@ -376,6 +378,7 @@ export type Database = {
           content_chunk?: string
           embedding?: string | null
           id?: string
+          is_restricted?: boolean | null
           source_module_id?: string | null
           venue_id?: string | null
         }
@@ -433,6 +436,7 @@ export type Database = {
         Row: {
           content: string | null
           id: string
+          is_restricted: boolean | null
           module_id: string | null
           photo_refs: string[] | null
           section_order: number
@@ -441,6 +445,7 @@ export type Database = {
         Insert: {
           content?: string | null
           id?: string
+          is_restricted?: boolean | null
           module_id?: string | null
           photo_refs?: string[] | null
           section_order: number
@@ -449,6 +454,7 @@ export type Database = {
         Update: {
           content?: string | null
           id?: string
+          is_restricted?: boolean | null
           module_id?: string | null
           photo_refs?: string[] | null
           section_order?: number
@@ -822,18 +828,21 @@ export type Database = {
       staff_roles: {
         Row: {
           department: string | null
+          fallback_tier: string | null
           id: string
           name: string
           venue_id: string | null
         }
         Insert: {
           department?: string | null
+          fallback_tier?: string | null
           id?: string
           name: string
           venue_id?: string | null
         }
         Update: {
           department?: string | null
+          fallback_tier?: string | null
           id?: string
           name?: string
           venue_id?: string | null
@@ -950,6 +959,7 @@ export type Database = {
         Returns: {
           content_chunk: string
           id: string
+          is_restricted: boolean
           similarity: number
           source_module_id: string
         }[]
@@ -971,7 +981,7 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals["public"]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends

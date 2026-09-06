@@ -54,7 +54,7 @@ async function ingestModule(moduleId: string): Promise<void> {
   const [{ data: sections, error: sectionsError }, { data: questions, error: questionsError }] = await Promise.all([
     admin
       .from("module_sections")
-      .select("content")
+      .select("content, is_restricted")
       .eq("module_id", moduleId)
       .order("section_order"),
     admin.from("check_questions").select("question").eq("module_id", moduleId),
@@ -62,12 +62,20 @@ async function ingestModule(moduleId: string): Promise<void> {
   if (sectionsError) throw new Error(sectionsError.message);
   if (questionsError) throw new Error(questionsError.message);
 
-  const chunks: string[] = [];
+  // Each chunk carries the is_restricted flag of the section it came from
+  // (Tech Bible §15i) -- this is what lets the API withhold a chunk's
+  // content from a frontline-tier user even if module_roles scoping alone
+  // would have let the query through.
+  const chunks: { text: string; isRestricted: boolean }[] = [];
   for (const section of sections ?? []) {
-    if (section.content) chunks.push(...chunkContent(section.content));
+    if (section.content) {
+      for (const text of chunkContent(section.content)) {
+        chunks.push({ text, isRestricted: section.is_restricted ?? false });
+      }
+    }
   }
   for (const q of questions ?? []) {
-    chunks.push(q.question);
+    chunks.push({ text: q.question, isRestricted: false });
   }
 
   if (chunks.length === 0) {
@@ -76,7 +84,10 @@ async function ingestModule(moduleId: string): Promise<void> {
   }
 
   console.log(`Embedding ${chunks.length} chunk(s) for "${moduleRow.title}"...`);
-  const embeddings = await embedTexts(chunks, "document");
+  const embeddings = await embedTexts(
+    chunks.map((c) => c.text),
+    "document",
+  );
 
   // Delete-then-reinsert: safe to rerun after a module's content or version
   // changes, since it replaces the full chunk set for this module rather
@@ -85,10 +96,11 @@ async function ingestModule(moduleId: string): Promise<void> {
   if (deleteError) throw new Error(deleteError.message);
 
   const { error: insertError } = await admin.from("knowledge_chunks").insert(
-    chunks.map((content_chunk, i) => ({
+    chunks.map((chunk, i) => ({
       venue_id: moduleRow.venue_id,
       source_module_id: moduleId,
-      content_chunk,
+      content_chunk: chunk.text,
+      is_restricted: chunk.isRestricted,
       embedding: embeddings[i] as unknown as string,
     })),
   );
