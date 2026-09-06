@@ -40,6 +40,14 @@ function heroPosition(page: Page) {
   });
 }
 
+// 6 Sep 2026 fix: the pin's `start` is offset by the sticky header's real
+// height (MarketingHero.tsx) so the pinned section's top settles right
+// below the header instead of underneath it -- "pinned" now means
+// top ~= header height, not top ~= 0.
+function headerHeight(page: Page) {
+  return page.evaluate(() => document.querySelector("header")?.getBoundingClientRect().height ?? 0);
+}
+
 function splashOpacities(page: Page) {
   return page.evaluate(() => {
     const trace = document.querySelector("[data-hero-splash-trace]");
@@ -120,6 +128,7 @@ async function main() {
     await page.waitForTimeout(4200);
     await page.screenshot({ path: `${OUT_DIR}/${vp.label}-hero-00-start.png` });
     const startPos = await heroPosition(page);
+    const headerH = await headerHeight(page);
 
     // Scroll partway into the pin window and confirm it's genuinely held
     // fixed against real scroll input, not just scrolled with the page.
@@ -177,7 +186,7 @@ async function main() {
     const endPos = await heroPosition(page);
     await page.screenshot({ path: `${OUT_DIR}/${vp.label}-hero-03-end.png` });
 
-    const pinHeld = midPos?.position === "fixed" && Math.abs(midPos.top) < 2;
+    const pinHeld = midPos?.position === "fixed" && Math.abs(midPos.top - headerH) < 2;
     const pinReleased = endPos !== null && endPos.position !== "fixed";
     const finalPhraseVisible = (finalOpacities["ask-larder"] ?? 0) > 0.9;
     const pass = pinHeld && pinReleased && !overlapFound && finalPhraseVisible && splashHandoffDone && cardsLanded;

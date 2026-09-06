@@ -55,7 +55,12 @@ const PROBLEMS = [
  * FeatureGuideStrip.tsx's own IntersectionObserver + staggered fade-up
  * (same threshold/duration/stagger), and each problem is a real
  * ElevatedCell instead of a plain circle + text -- matches the tilt/glow
- * card language used everywhere else in the product.
+ * card language used everywhere else in the product. Deliberately a
+ * vertical stacked list (icon left, text right) rather than a column
+ * grid -- FeatureGuideStrip and HowItWorksSection both use a grid of
+ * same-shape cards immediately before and after this section, so this
+ * one reads as a different shape (a short list of issues) rather than a
+ * third copy of the same card-grid template.
  */
 export function ProblemSolutionSection() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -86,7 +91,7 @@ export function ProblemSolutionSection() {
         <h2 className="mb-12 text-center font-display text-3xl font-bold text-ink sm:text-4xl">
           Binders don&apos;t train anyone.
         </h2>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="mx-auto flex max-w-2xl flex-col gap-4">
           {PROBLEMS.map(({ glyph: Glyph, body }, i) => (
             <div
               key={body}
@@ -97,9 +102,9 @@ export function ProblemSolutionSection() {
                 transitionDelay: visible ? `${i * 90}ms` : "0ms",
               }}
             >
-              <ElevatedCell depth="secondary" glowColor="var(--color-preserve-red)" className="h-full rounded-2xl bg-parchment">
-                <div className="flex h-full flex-col items-center gap-3 px-5 py-6 text-center">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-preserve-red/10 text-preserve-red">
+              <ElevatedCell depth="secondary" glowColor="var(--color-preserve-red)" className="rounded-2xl bg-parchment">
+                <div className="flex items-center gap-4 px-5 py-4 text-left">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-preserve-red/10 text-preserve-red">
                     <Glyph />
                   </div>
                   <p className="font-sans text-sm text-ink/80">{body}</p>

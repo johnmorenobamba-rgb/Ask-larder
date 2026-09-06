@@ -119,10 +119,20 @@ export function MarketingHero() {
       // splashTimeline.ts. Cast through ScrollTrigger.create's own
       // parameter type (derived from this actual dynamic import, not a
       // named gsap.core.* type) rather than reaching for `any`.
+      // The sticky header (page.tsx, z-50) sits at the same top:0 as this
+      // section's own pinned `position: fixed` -- "top top" alone pins the
+      // section flush with the viewport top, sliding its own top padding
+      // (and, once the phrase crossfade's -PHRASE_TRAVEL_PX upward tween
+      // runs, the heading text itself) underneath the opaque header rather
+      // than below it. Offsetting the pin's start by the header's real
+      // measured height keeps the section's pinned top sitting right below
+      // the header for the whole scrubbed sequence instead of behind it.
+      const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 80;
+
       type ScrollTriggerVars = Parameters<typeof ScrollTrigger.create>[0];
       trigger = ScrollTrigger.create({
         trigger: section,
-        start: "top top",
+        start: `top top+=${headerHeight}`,
         end: () => {
           const vh = window.innerHeight * (window.innerWidth < MOBILE_BREAKPOINT_PX ? PIN_VH_MOBILE : PIN_VH_DESKTOP);
           return `+=${vh}`;

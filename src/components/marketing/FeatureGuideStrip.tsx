@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ElevatedCell } from "@/components/shared/ElevatedCell";
+import { ChitMark } from "@/components/shared/ChitMark";
 
 // Simple line-icon glyphs matching the Branding Kit's custom-icon rule (no
 // stock icon library) — same 24x24/1.5-stroke language as StationGlyph in
@@ -77,6 +79,16 @@ const FEATURES = [
  * N4's final-CTA content, not part of Section 1, but the `#contact`
  * anchor it exposes is still linked from the header nav and the hero, so
  * it moved rather than disappeared.
+ *
+ * Creative pass (6 Sep 2026): real ElevatedCell depth (bay-green glow — the
+ * one color not already used by ProblemSolutionSection's preserve-red or
+ * HowItWorksSection's clay-brown, so the three light sections read as
+ * distinct, not a repeated template) plus a mirrored ChitMark watermark
+ * bleeding from the bottom right corner. ComplianceSection already uses
+ * this exact watermark technique from the top left in saffron-on-ink;
+ * this is deliberately the mirror image (`scaleX(-1)`, opposite corner,
+ * a faint ink mark on parchment instead) so the two watermark moments in
+ * the page don't read as the same copy-pasted accent.
  */
 export function FeatureGuideStrip() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -99,9 +111,16 @@ export function FeatureGuideStrip() {
   }, []);
 
   return (
-    <section id="feature-guide" className="bg-parchment px-6 py-24 sm:px-10 md:px-16">
-      <div ref={ref} className="mx-auto max-w-6xl">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <section id="feature-guide" className="relative overflow-hidden bg-parchment px-6 py-24 sm:px-10 md:px-16">
+      <div
+        className="pointer-events-none absolute -bottom-16 -right-16 opacity-[0.07]"
+        style={{ transform: "scaleX(-1)" }}
+        aria-hidden="true"
+      >
+        <ChitMark size={280} traceColor="var(--color-clay-brown)" fillColor="var(--color-ink)" />
+      </div>
+      <div ref={ref} className="relative z-10 mx-auto max-w-6xl">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => (
             <div
               key={f.title}
@@ -112,11 +131,15 @@ export function FeatureGuideStrip() {
                 transitionDelay: visible ? `${i * 90}ms` : "0ms",
               }}
             >
-              <div className="text-preserve-red">
-                <f.glyph />
-              </div>
-              <p className="font-display mt-3 text-lg font-bold text-ink">{f.title}</p>
-              <p className="mt-1 text-sm text-ink/70">{f.body}</p>
+              <ElevatedCell depth="secondary" glowColor="var(--color-bay-green)" className="h-full rounded-2xl bg-parchment">
+                <div className="flex h-full flex-col gap-3 px-5 py-6">
+                  <div className="text-bay-green">
+                    <f.glyph />
+                  </div>
+                  <p className="font-display text-lg font-bold text-ink">{f.title}</p>
+                  <p className="text-sm text-ink/70">{f.body}</p>
+                </div>
+              </ElevatedCell>
             </div>
           ))}
         </div>
