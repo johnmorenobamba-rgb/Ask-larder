@@ -21,7 +21,8 @@ flowchart TD
     C -- "No" --> C1["Flag: non-VIC licensing + food-safety taxonomy not yet built for this flow — escalate to founder before continuing licensing branch"]
     C -- "Yes" --> D["Staffing: capture the venue's real role names + FOH/BOH department tag for each"]
 
-    D --> E{"Liquor licence type (VCGLR)?"}
+    D --> D2["Rostering: how shifts get assigned, where the roster is posted/checked, who manages changes and swaps"]
+    D2 --> E{"Liquor licence type (VCGLR)?"}
     E -- "General licence / Full Club licence" --> F["Full-licence conditions: licensed capacity, approved trading hours, late-night endorsement Y/N, area/outdoor conditions"]
     E -- "On-premises licence" --> G["On-premises conditions: liquor tied to meals/function use, typically no late-night endorsement, capacity"]
     E -- "Other / unsure" --> G2["Flag for founder review — do not proceed on an assumed licence type"]
@@ -51,7 +52,8 @@ flowchart TD
     T --> U["Equipment & stations: bar equipment always (beer lines, glasswasher, coffee machine, cool room); kitchen equipment only if food branch != none"]
     U --> V["OHS: manual handling, chemical/cleaning safety, glass collection, hazard & near-miss reporting"]
     V --> W["Cash handling: float management, safe drop, EFTPOS reconciliation — the safe code itself is never captured as content, see gap note"]
-    W --> X["Closing procedures: till reconciliation, stock lock-up, alarm set, last-drinks/RSA compliance check, CCTV review"]
+    W --> W2["Petty cash: withdrawal approval threshold, who signs off, what it's actually for"]
+    W2 --> X["Closing procedures: till reconciliation, stock lock-up, alarm set, last-drinks/RSA compliance check, CCTV review"]
     X --> Y{"Security scope beyond RSA/crowd control?"}
     Y -- "Crowd controllers used (from gate above)" --> Y1["Security module includes bag checks, ID scanning, duress alarm use, banned-patron handling"]
     Y -- "No crowd controllers" --> Y2["Security content folded into Closing Procedures as a lighter section, no standalone module"]
@@ -88,6 +90,14 @@ flowchart TD
 | Department tag per role (FOH/BOH) | — | A | `staff_roles.department` | Column already exists (added §15c). Bar roles are near-universally FOH; only relevant if the bar also runs a kitchen. |
 | Which roles are legally barred from serving alcohol (under 18) | — | B | `module_sections.content` in the RSA module + gates who `module_roles` links certain sections to | No dedicated "minimum age" column exists on `staff_roles`; captured as narrative policy, not enforced structurally. Flag if this ever needs runtime enforcement (e.g. blocking a shift assignment) — that would need a new column. |
 | Named staff for invite (name, email/phone) | — | A | `app_users` rows (`role='staff'`, `name`, `email`, `phone`) | Technically onboarding-adjacent rather than SOP content — these become real login-invite rows, not module material. |
+
+### 2.2a Rostering (added 7 Sep 2026 — see §3 note below)
+
+| Question / group | Branch | Type | Destination | Notes |
+|---|---|---|---|---|
+| How shifts get assigned, roster cadence | — | B | `module_sections.content` in the Welcome/How We Work module | Procedural, venue-specific — e.g. "posted Thursdays for the following week." |
+| Where staff actually check the roster (physical board, shared doc, app) | — | A (structural, currently impossible) | **NO DESTINATION** — see gap #9 | This is the concrete case that surfaced the gap: three separate personas asked Ask Larder "where do I check the roster" during Block P's full-shift simulation and none could be told, because nothing in the schema represents a roster or even a pointer to where one lives. |
+| Who manages changes/swaps | — | B | `module_sections.content` | |
 
 ### 2.3 Liquor licensing (bar-specific branch)
 
@@ -154,7 +164,8 @@ flowchart TD
 |---|---|---|---|---|
 | Float amount, till reconciliation process, EFTPOS reconciliation | Always | B | `module_sections.content` in Cash Handling module | |
 | Safe drop procedure (the *process*) | Always | B | `module_sections.content` | |
-| Who has the safe code / how the code is shared | Always | **Deliberately NOT ingested** | Must never reach `sop_source_documents` → `knowledge_chunks`, and module content should say "ask your supervisor for the safe combination" rather than state it — this is the locked Fallback Rule applied one step upstream, at intake time rather than at chat time. | See gap #5 — there is currently no mechanical safeguard stopping an onboarding specialist from accidentally typing a real code into the interview transcript that later gets embedded; today it relies entirely on the human doing the intake knowing not to ask for it. |
+| Who has the safe code / how the code is shared | Always | Ingested, but tier-gated (revised 7 Sep 2026 — see §3 note) | `module_sections.content` / `knowledge_chunks`, tagged `is_restricted = true` (Tech Bible §15i), scoped via `module_roles` to only the roles the venue names as authorized to hold it | The original design here ("never captured as content") was superseded once the blanket fallback rule itself was found to be wrong — a Duty Manager's own module told her to set the alarm as her own task, then the blanket rule refused to tell her the code for it. The actual answer now IS captured, just tier-gated at retrieval and generation time rather than never existing at all. See gap #5's update below. |
+| Petty cash: withdrawal approval threshold, who signs off, what it's actually for (added 7 Sep 2026) | Always | B | `module_sections.content` in Cash Handling | Same category of gap as rostering (§2.2a) — this exact topic was asked by all three personas in Block P's full-shift simulation and never had documented content to answer from. No schema destination gap here (it's ordinary narrative content, not a structural fact), but it belongs in the flow's own question bank, which it was missing from entirely — that's the actual gap. |
 
 ### 2.11 Closing procedures (bar-specific branch)
 
@@ -203,7 +214,9 @@ These are genuine gaps in the current schema (Tech Bible §4/§15–§15h) surfa
 
 4. **No venue-level hazard-escalation routing.** `near_miss_reports` captures the report itself, but nothing configures who should be notified when one is filed — today that's implicit (an owner has to check the dashboard). Minor gap, but real: a `near_miss_escalation_contacts` field or reuse of gap #7's contacts table would close it.
 
-5. **No safeguard against sensitive content entering the knowledge base.** The Fallback Rule (never answer questions requiring access to keys/vaults/safes/alarm codes) is enforced at chat time via the system prompt, but nothing stops the actual code from being captured during onboarding and embedded into `knowledge_chunks` in the first place — at which point the fallback line becomes security theatre over a chunk that already contains the secret. Needs either an intake-time redaction step or a "do not ingest" flag on `sop_source_documents`.
+5. **No safeguard against sensitive content entering the knowledge base — PARTIALLY RESOLVED 7 Sep 2026.** The original concern (nothing stops a real code from being captured and embedded, at which point a blanket fallback line becomes security theatre over a chunk that already contains the secret) is still valid as far as it goes, but the underlying design assumption — that the secret should *never* be captured at all — turned out to be wrong. Live testing found the blanket fallback rule itself created a real contradiction: a Duty Manager's own module assigned her the task of setting the alarm, then the fallback rule refused to tell her the code to do it. The actual fix (Tech Bible §15i, role-tiered fallback) captures the secret deliberately, tags it `is_restricted = true` on both `knowledge_chunks` and `module_sections`, and gates it at both retrieval (`module_roles` scoping) and generation time (a `staff_roles.fallback_tier` check) so only venue-designated authorized roles ever see it. What's still genuinely unresolved: nothing stops an onboarding specialist from accidentally capturing a secret into an *ordinary, non-restricted* section by mistake — the tiering only protects content that was deliberately flagged `is_restricted` at authoring time. A real onboarding tool still needs an intake-time prompt ("is this a secret that should be tier-gated?") rather than relying on the author remembering.
+
+9. **No roster representation of any kind (added 7 Sep 2026).** Three separate personas (owner, Duty Manager, Bar Attendant) asked Ask Larder's live instance where to check who's on shift during Block P's full-shift simulation, and none could be told — there's no table representing a roster, a shift assignment, or even a pointer to where a venue's roster physically lives (a board, a shared doc, a rostering app). This is the same class of gap as #7 (no contacts table): a real, recurring operational question with nowhere to live. Not necessarily a new table — could be as simple as a `venues.roster_location` text field for "where to look," or as involved as real shift-assignment data if the product ever wants Ask Larder to answer "am I on tomorrow" with a real yes/no rather than pointing at a board.
 
 6. **No banned-patron register table**, if that needs to function as an actual list rather than a physical folder the venue already keeps at the door. Flagging as optional/lower-priority — the SOP for *how* to check it can live as normal module content regardless of whether the list itself is ever digitised.
 
