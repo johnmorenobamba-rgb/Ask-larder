@@ -154,14 +154,14 @@ export async function POST(request: Request) {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      // Pinned to 0 (7 Sep 2026, Block P finding): the fallback-rule call is
-      // a policy classification, not creative writing -- a genuinely
-      // identical question got isEscalation: true in one run and false in
-      // another with no code change between them, on a borderline case the
-      // prompt has since been made less ambiguous about. Determinism matters
-      // more than variation here; this reduces run-to-run drift on top of
-      // that fix, though it isn't a hard guarantee at the API level.
-      temperature: 0,
+      // Tried pinning temperature to 0 for determinism (7 Sep 2026, Block P
+      // finding: an identical question got a different escalation outcome
+      // across two runs with no code change) -- the API rejected it with
+      // "temperature is deprecated for this model" when combined with
+      // output_config.effort. Sonnet 5's effort-based control has replaced
+      // temperature for this call shape, so determinism here now rests on
+      // the prompt no longer having a genuinely ambiguous decision to make
+      // (see the fallback-rule rewrite above), not on a sampling parameter.
       system: [
         { type: "text", text: FALLBACK_AND_SCOPE_INSTRUCTIONS, cache_control: { type: "ephemeral" } },
         { type: "text", text: contextBlock },
