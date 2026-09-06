@@ -252,5 +252,10 @@ export async function POST(request: Request) {
     console.error("ask-larder chat_messages insert error:", insertError);
   }
 
-  return NextResponse.json({ answer: toolResult.answer, isEscalation, chunkIds });
+  return NextResponse.json({
+    answer: toolResult.answer,
+    isEscalation,
+    outOfScope: toolResult.out_of_scope,
+    chunkIds,
+  });
 }
