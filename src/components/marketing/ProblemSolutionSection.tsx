@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { ElevatedCell } from "@/components/shared/ElevatedCell";
+
 // Custom line-icon glyphs, same 24x24/1.5-stroke language as
 // FeatureGuideStrip.tsx (Branding Kit rule: no stock icon library).
 function BinderGlyph() {
@@ -45,11 +50,36 @@ const PROBLEMS = [
  * (reinforcing the explainer video's own pain-first hook in scannable
  * text) then states the solution in one line, not a second features list
  * (FeatureGuideStrip already owns that job further up the page).
+ *
+ * Creative pass (6 Sep 2026): scroll reveal copied from
+ * FeatureGuideStrip.tsx's own IntersectionObserver + staggered fade-up
+ * (same threshold/duration/stagger), and each problem is a real
+ * ElevatedCell instead of a plain circle + text -- matches the tilt/glow
+ * card language used everywhere else in the product.
  */
 export function ProblemSolutionSection() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="bg-parchment px-6 py-24 sm:px-10 md:px-16">
-      <div className="mx-auto max-w-4xl">
+      <div ref={ref} className="mx-auto max-w-4xl">
         <p className="mb-3 text-center font-mono text-xs uppercase tracking-[0.2em] text-clay-brown">
           The real cost of training by memory
         </p>
@@ -57,12 +87,24 @@ export function ProblemSolutionSection() {
           Binders don&apos;t train anyone.
         </h2>
         <div className="grid gap-6 sm:grid-cols-3">
-          {PROBLEMS.map(({ glyph: Glyph, body }) => (
-            <div key={body} className="flex flex-col items-center gap-3 text-center">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-preserve-red/10 text-preserve-red">
-                <Glyph />
-              </div>
-              <p className="font-sans text-sm text-ink/80">{body}</p>
+          {PROBLEMS.map(({ glyph: Glyph, body }, i) => (
+            <div
+              key={body}
+              className="transition-all duration-500 ease-out motion-reduce:transition-none"
+              style={{
+                opacity: visible ? 1 : 0,
+                transform: visible ? "translateY(0)" : "translateY(16px)",
+                transitionDelay: visible ? `${i * 90}ms` : "0ms",
+              }}
+            >
+              <ElevatedCell depth="secondary" glowColor="var(--color-preserve-red)" className="h-full rounded-2xl bg-parchment">
+                <div className="flex h-full flex-col items-center gap-3 px-5 py-6 text-center">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-preserve-red/10 text-preserve-red">
+                    <Glyph />
+                  </div>
+                  <p className="font-sans text-sm text-ink/80">{body}</p>
+                </div>
+              </ElevatedCell>
             </div>
           ))}
         </div>

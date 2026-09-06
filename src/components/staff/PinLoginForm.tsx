@@ -80,37 +80,39 @@ export function PinLoginForm({
   const selectedName = staff.find((s) => s.id === selectedStaffId)?.name;
 
   return (
-    <div className="space-y-4">
-      <button
-        type="button"
-        onClick={() => {
-          setSelectedStaffId(null);
-          setPin("");
-          setError(null);
-        }}
-        className="font-mono text-xs text-clay-brown underline"
-      >
-        Not {selectedName}?
-      </button>
-      <p className="font-display text-xl text-ink">Enter your PIN</p>
-      <input
-        type="password"
-        inputMode="numeric"
-        maxLength={6}
-        value={pin}
-        onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-        className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-mono text-2xl tracking-[0.5em] text-center text-ink focus:border-preserve-red outline-none"
-        autoFocus
-      />
-      {error && <p className="text-preserve-red font-sans text-sm">{error}</p>}
-      <button
-        type="button"
-        onClick={submitPin}
-        disabled={loading || pin.length < 4}
-        className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
-      >
-        {loading ? "Checking…" : "Log in"}
-      </button>
-    </div>
+    <ElevatedCell depth="secondary" glowColor="var(--color-preserve-red)" className="rounded-3xl bg-parchment">
+      <div className="space-y-4 px-6 py-6">
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedStaffId(null);
+            setPin("");
+            setError(null);
+          }}
+          className="font-mono text-xs text-clay-brown underline"
+        >
+          Not {selectedName}?
+        </button>
+        <p className="font-display text-xl text-ink">Enter your PIN</p>
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={6}
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+          className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-mono text-2xl tracking-[0.5em] text-center text-ink focus:border-preserve-red outline-none"
+          autoFocus
+        />
+        {error && <p className="text-preserve-red font-sans text-sm">{error}</p>}
+        <button
+          type="button"
+          onClick={submitPin}
+          disabled={loading || pin.length < 4}
+          className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
+        >
+          {loading ? "Checking…" : "Log in"}
+        </button>
+      </div>
+    </ElevatedCell>
   );
 }

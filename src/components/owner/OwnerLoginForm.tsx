@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ElevatedCell } from "@/components/shared/ElevatedCell";
 
 export function OwnerLoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
@@ -32,32 +33,34 @@ export function OwnerLoginForm({ redirectTo }: { redirectTo: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        autoFocus
-        className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-sans text-ink outline-none focus:border-preserve-red"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        placeholder="Password"
-        className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-sans text-ink outline-none focus:border-preserve-red"
-      />
-      {error && <p className="font-sans text-sm text-preserve-red">{error}</p>}
-      <button
-        type="button"
-        onClick={submit}
-        disabled={loading || !email || !password}
-        className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
-      >
-        {loading ? "Checking…" : "Log in"}
-      </button>
-    </div>
+    <ElevatedCell depth="secondary" glowColor="var(--color-clay-brown)" className="rounded-3xl bg-parchment">
+      <div className="space-y-4 px-6 py-6">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          autoFocus
+          className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-sans text-ink outline-none focus:border-preserve-red"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder="Password"
+          className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-sans text-ink outline-none focus:border-preserve-red"
+        />
+        {error && <p className="font-sans text-sm text-preserve-red">{error}</p>}
+        <button
+          type="button"
+          onClick={submit}
+          disabled={loading || !email || !password}
+          className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
+        >
+          {loading ? "Checking…" : "Log in"}
+        </button>
+      </div>
+    </ElevatedCell>
   );
 }

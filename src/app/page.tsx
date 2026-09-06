@@ -11,12 +11,17 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 // root domain (Decision Log, 31 Aug 2026; Build Manual Block N). Separate
 // from Block M's venue-specific `/[venueSlug]` login gateway.
 //
-// Nav wiring (Block N4, confirmed 6 Sep 2026): "Login" now links to the
-// real Two Fires demo venue's gateway page (Block M, `/[venueSlug]/page.tsx`)
-// instead of a mailto placeholder. "Blog" is removed outright -- no blog
-// exists, and there's no plan to build one yet. "Contact us" and the final
-// CTA's "Book a walkthrough" both link to the real `/contact` form
-// (`ContactForm.tsx` -> `/api/contact` -> Resend) instead of mailto links.
+// Nav wiring (Block N4, confirmed 6 Sep 2026): "See a live demo" links to
+// the real Two Fires demo venue's gateway page (Block M,
+// `/[venueSlug]/page.tsx`). Labeled honestly, not "Login" -- Larder is
+// founder onboarded, not self serve, so a real venue never logs in via
+// this public site; it goes straight to its own bookmarked `/[venueSlug]`
+// URL given at setup. A returning customer without that link uses
+// "Contact us" instead, which already leads to a real person. "Blog" is
+// removed outright -- no blog exists, and there's no plan to build one
+// yet. "Contact us" and the final CTA's "Book a walkthrough" both link to
+// the real `/contact` form (`ContactForm.tsx` -> `/api/contact` -> Resend)
+// instead of mailto links.
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col bg-parchment">
@@ -27,7 +32,7 @@ export default function Home() {
         </div>
         <nav className="flex items-center gap-6 font-sans text-sm text-ink/80">
           <a href="/two-fires" className="hover:text-ink">
-            Login
+            See a live demo
           </a>
           <a href="/contact" className="hover:text-ink">
             Contact us

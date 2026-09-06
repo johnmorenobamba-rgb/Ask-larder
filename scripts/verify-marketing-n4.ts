@@ -2,7 +2,7 @@ import { chromium, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
 // Block N4 verification — the three new marketing sections, the footer,
-// and the nav/CTA wiring (Login -> Block M gateway, Learn more -> the
+// and the nav/CTA wiring (See a live demo -> Block M gateway, Learn more -> the
 // explainer video, Contact us / Book a walkthrough -> the real contact
 // form). Same conventions as scripts/verify-marketing-hero.ts (viewport
 // set, labeled screenshot naming) -- this project's own established
@@ -49,12 +49,12 @@ async function main() {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(4200); // clears the once-per-day splash, same as verify-marketing-hero.ts
 
-    // Nav: Blog removed, Login and Contact us point at real destinations.
+    // Nav: Blog removed, the demo link and Contact us point at real destinations.
     const navText = await page.locator("header nav").innerText();
     const blogGone = !navText.includes("Blog");
     if (!blogGone) console.log(`[${vp.label}] FAIL: Blog link still present in nav`);
 
-    const loginHref = await page.locator('header nav a:has-text("Login")').getAttribute("href");
+    const loginHref = await page.locator('header nav a:has-text("See a live demo")').getAttribute("href");
     const contactHref = await page.locator('header nav a:has-text("Contact us")').getAttribute("href");
     const navWiringOk = loginHref === "/two-fires" && contactHref === "/contact";
     if (!navWiringOk) console.log(`[${vp.label}] FAIL: nav hrefs wrong -- login=${loginHref} contact=${contactHref}`);
@@ -117,12 +117,20 @@ async function main() {
     await page.waitForLoadState("networkidle");
     const contactUsOk = page.url().endsWith("/contact");
 
-    // Block M: Login opens the real venue gateway with a working picker.
+    // Block M: the venue gateway's own "Login" button opens a working picker.
     await page.goto("http://localhost:3000/two-fires");
     await page.waitForLoadState("networkidle");
     await page.screenshot({ path: `${OUT_DIR}/${vp.label}-n4-venue-gateway.png` });
     const gatewayHasName = (await page.locator("body").innerText()).includes("Two Fires");
-    await page.locator('button:has-text("Login")').click();
+    // Native DOM click, not Playwright's mouse-simulated click -- the
+    // button now sits inside an ElevatedCell (creative pass, 6 Sep 2026),
+    // whose continuous idle-float animation means its bounding box never
+    // reports "stable" to Playwright's actionability check even though
+    // it's perfectly clickable. Same fix as the "Learn more" click above.
+    await page.evaluate(() => {
+      const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Login");
+      btn?.click();
+    });
     await page.waitForTimeout(400);
     await page.screenshot({ path: `${OUT_DIR}/${vp.label}-n4-venue-picker.png` });
     const staffHref = await page.locator('a:has-text("I\'m on shift")').getAttribute("href");
