@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -700,6 +700,57 @@ export type Database = {
           },
         ]
       }
+      onboarding_content_checks: {
+        Row: {
+          answer: string | null
+          could_answer: boolean | null
+          created_at: string | null
+          id: string
+          module_id: string | null
+          self_consistency_checked: boolean
+          test_question: string | null
+          topic_key: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          answer?: string | null
+          could_answer?: boolean | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          self_consistency_checked?: boolean
+          test_question?: string | null
+          topic_key?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          answer?: string | null
+          could_answer?: boolean | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          self_consistency_checked?: boolean
+          test_question?: string | null
+          topic_key?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_content_checks_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_content_checks_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photo_library: {
         Row: {
           created_at: string | null
@@ -1042,6 +1093,54 @@ export type Database = {
           },
         ]
       }
+      venue_key_roles: {
+        Row: {
+          app_user_id: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          role_type: string
+          venue_id: string | null
+        }
+        Insert: {
+          app_user_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          role_type: string
+          venue_id?: string | null
+        }
+        Update: {
+          app_user_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role_type?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_key_roles_app_user_id_fkey"
+            columns: ["app_user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_key_roles_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_licence_profile: {
         Row: {
           abn: string | null
@@ -1051,7 +1150,9 @@ export type Database = {
           created_at: string | null
           id: string
           late_night_endorsement: boolean | null
+          legal_name: string | null
           licence_number: string | null
+          licence_status: string | null
           licence_type: string | null
           licensed_capacity: number | null
           state: string | null
@@ -1065,7 +1166,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           late_night_endorsement?: boolean | null
+          legal_name?: string | null
           licence_number?: string | null
+          licence_status?: string | null
           licence_type?: string | null
           licensed_capacity?: number | null
           state?: string | null
@@ -1079,7 +1182,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           late_night_endorsement?: boolean | null
+          legal_name?: string | null
           licence_number?: string | null
+          licence_status?: string | null
           licence_type?: string | null
           licensed_capacity?: number | null
           state?: string | null
@@ -1095,6 +1200,44 @@ export type Database = {
           },
         ]
       }
+      venue_promotions: {
+        Row: {
+          created_at: string | null
+          day_of_week: string
+          description: string | null
+          end_time: string
+          id: string
+          start_time: string
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: string
+          description?: string | null
+          end_time: string
+          id?: string
+          start_time: string
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          start_time?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_promotions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           branding: Json | null
@@ -1104,6 +1247,7 @@ export type Database = {
           monthly_tier: string | null
           multi_venue_group_id: string | null
           name: string
+          roster_location: string | null
           shift_windows: Json | null
           slug: string | null
         }
@@ -1115,6 +1259,7 @@ export type Database = {
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name: string
+          roster_location?: string | null
           shift_windows?: Json | null
           slug?: string | null
         }
@@ -1126,10 +1271,59 @@ export type Database = {
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name?: string
+          roster_location?: string | null
           shift_windows?: Json | null
           slug?: string | null
         }
         Relationships: []
+      }
+      wizard_sessions: {
+        Row: {
+          current_step: string | null
+          id: string
+          started_at: string | null
+          started_by: string | null
+          status: string
+          updated_at: string | null
+          venue_id: string | null
+          venue_type_flags: Json
+        }
+        Insert: {
+          current_step?: string | null
+          id?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string | null
+          venue_id?: string | null
+          venue_type_flags?: Json
+        }
+        Update: {
+          current_step?: string | null
+          id?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string | null
+          venue_id?: string | null
+          venue_type_flags?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wizard_sessions_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wizard_sessions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1158,6 +1352,19 @@ export type Database = {
           is_restricted: boolean
           similarity: number
           source_module_id: string
+        }[]
+      }
+      match_knowledge_chunks_for_authoring: {
+        Args: {
+          p_match_count?: number
+          p_query_embedding: string
+          p_source_module_id: string
+        }
+        Returns: {
+          content_chunk: string
+          id: string
+          is_restricted: boolean
+          similarity: number
         }[]
       }
       publish_module_version: {
