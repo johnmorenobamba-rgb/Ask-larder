@@ -399,6 +399,108 @@ export type Database = {
           },
         ]
       }
+      menu_item_modifier_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          menu_item_id: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_modifier_groups_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_modifiers: {
+        Row: {
+          allergens_added: string[] | null
+          allergens_removed: string[] | null
+          created_at: string | null
+          id: string
+          modifier_group_id: string | null
+          name: string
+        }
+        Insert: {
+          allergens_added?: string[] | null
+          allergens_removed?: string[] | null
+          created_at?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          name: string
+        }
+        Update: {
+          allergens_added?: string[] | null
+          allergens_removed?: string[] | null
+          created_at?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_modifiers_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item_modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          base_allergens: string[] | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          venue_id: string | null
+        }
+        Insert: {
+          base_allergens?: string[] | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          venue_id?: string | null
+        }
+        Update: {
+          base_allergens?: string[] | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_roles: {
         Row: {
           id: string
