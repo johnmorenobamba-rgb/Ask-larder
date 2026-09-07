@@ -32,7 +32,13 @@ export function FoodServiceGateForm({
   const [error, setError] = useState<string | null>(null);
 
   const triggered = level === "full_kitchen";
-  const valid = !!level && (!triggered || (fssName.trim() && foodHandlingRoleIds.length > 0));
+  // foodHandlingRoleIds is deliberately NOT required to submit -- same
+  // ordering bug as RsaMarshalForm (Staff roles, page 11a, is reachable
+  // only after this page), confirmed live by Block Q6: it silently lost a
+  // typed FSS name/phone/email with no error shown. The "at least one role"
+  // requirement (Q1 catalog row 18's Food Handling analog) is checked for
+  // completeness on Review & activate instead of blocking this save.
+  const valid = !!level && (!triggered || fssName.trim());
 
   function toggleRole(id: string) {
     setFoodHandlingRoleIds((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
@@ -101,7 +107,13 @@ export function FoodServiceGateForm({
             <fieldset className="space-y-2">
               <legend className={labelClass}>Roles that require Food Handling certification</legend>
               {staffRoles.length === 0 && (
-                <p className="font-sans text-sm text-ink/70">Add staff roles first on the Staff roles page, then come back here.</p>
+                <p className="font-sans text-sm text-ink/70">
+                  No staff roles yet. You can still save the Food Safety Supervisor's details above and continue — add
+                  staff roles on that page later, then come back here to pick who needs Food Handling certification.
+                </p>
+              )}
+              {staffRoles.length > 0 && foodHandlingRoleIds.length === 0 && (
+                <p className="font-sans text-sm text-preserve-red">No roles selected yet — at least one is needed before this venue's onboarding is complete.</p>
               )}
               {staffRoles.map((r) => (
                 <label key={r.id} className="flex items-center gap-2 font-sans text-sm text-ink">

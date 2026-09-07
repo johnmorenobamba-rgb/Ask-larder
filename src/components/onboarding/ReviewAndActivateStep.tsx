@@ -38,11 +38,13 @@ export function ReviewAndActivateStep({
   venueName,
   flags,
   summary,
+  outstandingItems,
 }: {
   venueSlug: string;
   venueName: string;
   flags: VenueTypeFlags;
   summary: Summary;
+  outstandingItems: string[];
 }) {
   const router = useRouter();
   const [activating, setActivating] = useState(false);
@@ -97,6 +99,17 @@ export function ReviewAndActivateStep({
               {escalations.map((key) => (
                 <FounderEscalationPanel key={key} title={ESCALATION_LABELS[key] ?? key} body="Still flagged for the founder to follow up before this venue relies on it." />
               ))}
+            </div>
+          )}
+
+          {outstandingItems.length > 0 && (
+            <div className="w-full space-y-1 rounded-2xl border-2 border-clay-brown/40 px-4 py-3 text-left">
+              <p className="font-mono text-[10px] uppercase tracking-wide text-clay-brown">Still open</p>
+              <ul className="list-disc space-y-1 pl-4 font-sans text-sm text-ink">
+                {outstandingItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
             </div>
           )}
 

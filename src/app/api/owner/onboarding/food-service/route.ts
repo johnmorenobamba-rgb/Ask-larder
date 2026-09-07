@@ -36,9 +36,10 @@ export async function POST(request: Request) {
   if (triggered && !fssName) {
     return NextResponse.json({ error: "The Food Safety Supervisor's name is required for this risk level." }, { status: 400 });
   }
-  if (triggered && foodHandlingRoleIds.length === 0) {
-    return NextResponse.json({ error: "Select at least one role that requires Food Handling certification." }, { status: 400 });
-  }
+  // foodHandlingRoleIds may legitimately be empty on a first visit -- Staff
+  // roles (11a) is reachable only after this page. Q1's "at least one role"
+  // requirement is checked for completeness on Review & activate, not as a
+  // hard block here (see FoodServiceGateForm.tsx for the full rationale).
 
   const supabase = await createClient();
 

@@ -27,7 +27,8 @@ const answerFromRetrievedTool: Anthropic.Tool = {
       },
       could_answer: {
         type: "boolean",
-        description: "True only if the retrieved content genuinely, directly supports the answer given -- false if you had to guess, infer beyond what's written, or the content simply doesn't cover it.",
+        description:
+          "True if the retrieved content addresses what the question is actually asking, even if the content itself honestly says a detail is unconfirmed or names who to check with instead of stating a fact outright -- that is a real, correct answer, not a gap. False only if you had to guess or infer something the content never states, or the content doesn't address this question's topic at all. Do not set false merely because some fact adjacent to the answer is uncertain -- judge whether the QUESTION was answered, not whether every fact mentioned in doing so is independently confirmed.",
       },
     },
     required: ["answer", "could_answer"],
@@ -106,7 +107,9 @@ export async function POST(request: Request) {
       model: MODEL,
       max_tokens: 1024,
       system:
-        "You are running a draft-content spot check for an onboarding specialist authoring a staff training module -- not answering a real staff member's question. Answer the test question using ONLY the retrieved content below. Never use general knowledge, and never guess or fill a gap with a plausible-sounding answer. If the retrieved content doesn't actually cover what's being asked, say so plainly (e.g. \"this isn't covered in what's written yet\") and set could_answer to false -- that's the useful, correct outcome here, since the whole point of this check is finding gaps in the content before the module goes live.",
+        "You are running a draft-content spot check for an onboarding specialist authoring a staff training module -- not answering a real staff member's question. Answer the test question using ONLY the retrieved content below. Never use general knowledge, and never guess or fill a gap with a plausible-sounding answer.\n\n" +
+        "Judge could_answer on whether the QUESTION was answered, not on whether every fact mentioned along the way is independently confirmed. An honest answer that directly addresses the question -- including one that says a specific detail isn't confirmed yet and names who to check with, or gives a real procedure to follow instead of a fact -- is a correct, complete answer and should be marked could_answer: true. This is the same no-fabrication discipline the rest of this product is built on: content that honestly reports uncertainty is doing its job correctly, and this check exists to catch content that's actually silent or evasive on the question's topic, not to demand every adjacent fact be nailed down.\n\n" +
+        "Set could_answer to false only when the retrieved content doesn't address what this question is actually asking about, or when answering it would require guessing or inferring something never stated. If that happens, say so plainly (e.g. \"this isn't covered in what's written yet\") -- that is the real, useful gap this check exists to find.",
       messages: [
         {
           role: "user",

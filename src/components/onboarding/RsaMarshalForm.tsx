@@ -24,7 +24,15 @@ export function RsaMarshalForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const valid = roleIds.length > 0 && marshalDesignated !== null && (!marshalDesignated || marshalName.trim());
+  // roleIds is deliberately NOT required to submit: Staff roles is a later
+  // page in the canonical order (11a), so on a first visit this list is
+  // always empty. Gating Continue on it here trapped the marshal identity
+  // fields on this same page behind an unrelated later page's completion --
+  // real onboarding run (Block Q6) confirmed this silently loses a typed
+  // marshal name/phone/email with no error shown. The "at least one role"
+  // requirement (Q1 catalog row 18) is still real, just checked for
+  // completeness on Review & activate instead of blocking this save.
+  const valid = marshalDesignated !== null && (!marshalDesignated || marshalName.trim());
 
   function toggleRole(id: string) {
     setRoleIds((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
@@ -62,7 +70,13 @@ export function RsaMarshalForm({
         <fieldset className="space-y-2">
           <legend className={labelClass}>Roles that require RSA</legend>
           {staffRoles.length === 0 && (
-            <p className="font-sans text-sm text-ink/70">Add staff roles first on the Staff roles page, then come back here.</p>
+            <p className="font-sans text-sm text-ink/70">
+              No staff roles yet. You can still save the RSA marshal's details below and continue — add staff roles on
+              that page later, then come back here to pick which roles need RSA.
+            </p>
+          )}
+          {staffRoles.length > 0 && roleIds.length === 0 && (
+            <p className="font-sans text-sm text-preserve-red">No roles selected yet — at least one is needed before this venue's onboarding is complete.</p>
           )}
           {staffRoles.map((r) => (
             <label key={r.id} className="flex items-center gap-2 font-sans text-sm text-ink">

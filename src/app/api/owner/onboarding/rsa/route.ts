@@ -21,9 +21,12 @@ export async function POST(request: Request) {
   const marshalPhone = typeof body?.marshalPhone === "string" ? body.marshalPhone.trim() : "";
   const marshalEmail = typeof body?.marshalEmail === "string" ? body.marshalEmail.trim() : "";
 
-  if (roleIds.length === 0) {
-    return NextResponse.json({ error: "Select at least one role that requires RSA." }, { status: 400 });
-  }
+  // roleIds may legitimately be empty here -- Staff roles (page 11a) is
+  // reachable only after this page in the canonical order, so a first visit
+  // always has none yet. Q1 catalog row 18 still requires at least one role
+  // selected eventually; that completeness check belongs on Review &
+  // activate, not as a hard block here (Block Q6 found this trapped the
+  // marshal identity fields below behind an unrelated later page).
   if (marshalDesignated && !marshalName) {
     return NextResponse.json({ error: "The RSA marshal's name is required." }, { status: 400 });
   }
