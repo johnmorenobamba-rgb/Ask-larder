@@ -34,6 +34,16 @@ const DUTY_MANAGER_PIN = "7391";
 const BARTENDER_NAME = "Ash Thompson";
 const BARTENDER_PIN = "2648";
 
+// Cook persona (fix round item 4): Head Chef scope, kitchen + shared modules
+// only (food safety fundamentals, allergen awareness, general workplace
+// safety, business continuity, welcome), no FOH-only or restricted modules.
+// Default fallback_tier ('frontline') applies -- Head Chef is not one of
+// the two roles with safe/alarm access. Named after the already-established
+// Head Chef character from this venue's own module content ("Vinh keeps the
+// kitchen's cleaning schedule...", module 06), not an invented name.
+const HEAD_CHEF_NAME = "Vinh Tran";
+const HEAD_CHEF_PIN = "8214";
+
 // ---------------------------------------------------------------------------
 // Module content, transcribed from docs/block-p-pub/p4-modules/*.md. Each
 // section's body (heading + paragraphs + photo-block/safety-critical
@@ -877,7 +887,21 @@ async function main() {
     .select("id")
     .single();
   if (btErr) throw btErr;
-  console.log("Seeded accounts: owner, Duty Manager, Bartender");
+
+  const hcPinHash = await bcrypt.hash(HEAD_CHEF_PIN, 10);
+  const { error: hcErr } = await admin
+    .from("app_users")
+    .insert({
+      venue_id: venueId,
+      role: "staff",
+      name: HEAD_CHEF_NAME,
+      staff_role_id: roles["Head Chef"],
+      pin_hash: hcPinHash,
+    })
+    .select("id")
+    .single();
+  if (hcErr) throw hcErr;
+  console.log("Seeded accounts: owner, Duty Manager, Bartender, Head Chef");
 
   // Certificate types + role mapping. RSA is required for every bar/floor
   // role per module content ("Every bar and floor role at The Coachman's
@@ -983,6 +1007,7 @@ async function main() {
   console.log(`  Staff login: http://localhost:3000/${SLUG}/login`);
   console.log(`  Duty Manager (${DUTY_MANAGER_NAME}) PIN: ${DUTY_MANAGER_PIN}  [role='staff', fallback_tier=authorized]`);
   console.log(`  Bartender (${BARTENDER_NAME}) PIN: ${BARTENDER_PIN}  [role='staff', fallback_tier=frontline]`);
+  console.log(`  Head Chef (${HEAD_CHEF_NAME}) PIN: ${HEAD_CHEF_PIN}  [role='staff', fallback_tier=frontline]`);
   console.log(`\n  Module IDs for ingestion:`);
   for (const [title, id] of Object.entries(moduleIds)) {
     console.log(`    ${id}  ${title}`);
