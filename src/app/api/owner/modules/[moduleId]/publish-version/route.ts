@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { ingestModule } from "@/lib/ai/ingestModule";
 
 // The "new version" path for an already-live module -- calls the existing
 // publish_module_version() RPC (security-definer, already checks
@@ -24,6 +25,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  // Re-embed: the version bump means module_sections content may have
+  // changed since the last ingest. Best-effort, same reasoning as go-live —
+  // the version publish already succeeded and shouldn't roll back over a
+  // transient embedding failure.
+  try {
+    await ingestModule(moduleId, supabase);
+  } catch (ingestError) {
+    console.error("publish-version ingestion failed:", ingestError instanceof Error ? ingestError.message : ingestError);
   }
 
   return NextResponse.json({ ok: true, versionId: data });

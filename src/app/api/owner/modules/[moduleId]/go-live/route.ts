@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { ingestModule } from "@/lib/ai/ingestModule";
 
 // First-time-live only, per approve -> go-live -> publish-version's split:
 // this is a plain status flip, no module_versions row. Once a module is
@@ -28,6 +29,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   }
   if (!data) {
     return NextResponse.json({ error: "Module not found or not approved." }, { status: 404 });
+  }
+
+  // Best-effort: the status flip already happened and shouldn't roll back
+  // over an embedding failure. A retry (re-running go-live is a no-op once
+  // status is already 'live', so this relies on ingestModule also being
+  // callable idempotently elsewhere) or a manual `ingest-module.ts` run
+  // covers a transient Voyage failure here.
+  try {
+    await ingestModule(moduleId, supabase);
+  } catch (ingestError) {
+    console.error("go-live ingestion failed:", ingestError instanceof Error ? ingestError.message : ingestError);
   }
 
   return NextResponse.json({ ok: true });
