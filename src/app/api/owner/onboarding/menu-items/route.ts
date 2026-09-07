@@ -21,7 +21,16 @@ export async function POST(request: Request) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const category = typeof body?.category === "string" ? body.category : "";
   const description = typeof body?.description === "string" ? body.description.trim() : "";
-  const baseAllergens = Array.isArray(body?.baseAllergens) ? body.baseAllergens.filter((a: unknown) => typeof a === "string") : [];
+  // Client (MenuReviewTable.tsx) sends base_allergens (snake_case, matching
+  // the menu_items column and MenuUploadStep's ParsedMenuItem shape) -- this
+  // previously read the camelCase baseAllergens, which was always
+  // undefined, so every allergen checkbox silently never persisted
+  // (confirmed live: Q7's grading found every menu_items row for a real
+  // venue had base_allergens = [] despite the onboarding transcript
+  // recording allergens being entered, including for a plain nuts product).
+  const baseAllergens = Array.isArray(body?.base_allergens)
+    ? body.base_allergens.filter((a: unknown) => typeof a === "string")
+    : [];
 
   if (!name) {
     return NextResponse.json({ error: "Item name is required." }, { status: 400 });

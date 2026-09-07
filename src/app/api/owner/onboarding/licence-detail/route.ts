@@ -37,13 +37,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Licensed capacity must be a positive whole number." }, { status: 400 });
   }
 
+  const TIME_RE = /^\d{2}:\d{2}$/;
   const cleanHours: Record<string, TradingHoursDay> = {};
   for (const [day, val] of Object.entries(tradingHours as Record<string, unknown>)) {
     if (!VALID_DAYS.has(day) || typeof val !== "object" || val === null) continue;
     const v = val as { closed?: boolean; open?: string; close?: string };
     if (v.closed) {
       cleanHours[day] = { closed: true };
-    } else if (typeof v.open === "string" && typeof v.close === "string" && v.open && v.close && v.open < v.close) {
+    } else if (typeof v.open === "string" && typeof v.close === "string" && TIME_RE.test(v.open) && TIME_RE.test(v.close)) {
+      // Deliberately no v.open < v.close ordering check: a hospitality
+      // venue trading past midnight (e.g. 17:00-01:00) is the common case,
+      // not the exception, and "close" here means "closes the following
+      // morning" whenever it's numerically earlier than "open" -- this was
+      // previously rejected outright by a same-day string comparison,
+      // silently dropping every late-trading day's hours (confirmed live:
+      // Q6/Q7's Wed-Sat 17:00-close nights all failed this check and only
+      // the venue's closed days ever made it into approved_trading_hours).
       cleanHours[day] = { closed: false, open: v.open, close: v.close };
     }
   }
