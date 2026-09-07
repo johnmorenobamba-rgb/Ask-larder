@@ -252,3 +252,9 @@ Every row from Q1 Part A, in the catalog's own order, with its capturing page an
 | 38 | Restricted access codes | 12 | `module_sections`/`knowledge_chunks` (`is_restricted=true`), scoped via `module_roles`, explicit intake-time "is this a secret?" prompt |
 
 Every Part C branch condition (gaming/EGM, non-Victoria states, banned-patron register) is covered inline above: gaming and non-VIC both route to `founder_escalation` (Pages 4 and 2 respectively); banned-patron register is confirmed content-only (Part B "Crowd control & door security" topic, Page 12), no schema.
+
+---
+
+## 7. Orchestrator addendum (post-Q3)
+
+Q3 flagged that a "not sure yet" answer to LIC0 (Page 3) had no defined `licence_status` value, which would recreate the "unasked vs. unresolved" ambiguity the enum exists to prevent. Resolved via `supabase/migrations/20260907130000_add_unconfirmed_licence_status.sql` (applied): `licence_status` now accepts a fifth value, `unconfirmed`, written when the specialist asked but the answer was genuinely unclear. This also sets `founder_escalation`, the same as the `Other/unsure` licence-type answer on Page 4. Q4 should treat `unconfirmed` as a real, selectable LIC0 answer, not an edge case to special-case away.
