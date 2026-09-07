@@ -41,6 +41,22 @@ let certNudgeLogAId: string;
 let certNudgeLogBId: string;
 let certTypeAId: string;
 let certTypeBId: string;
+let menuItemAId: string;
+let menuItemBId: string;
+let modifierGroupAId: string;
+let modifierGroupBId: string;
+let modifierAId: string;
+let modifierBId: string;
+let wizardSessionAId: string;
+let wizardSessionBId: string;
+let keyRoleAId: string;
+let keyRoleBId: string;
+let contentCheckAId: string;
+let contentCheckBId: string;
+let promotionAId: string;
+let promotionBId: string;
+let venueContactAId: string;
+let venueContactBId: string;
 let clientA: SupabaseClient<Database>;
 let clientB: SupabaseClient<Database>;
 
@@ -172,6 +188,120 @@ beforeAll(async () => {
     .single();
   certNudgeLogAId = nudgeA!.id;
   certNudgeLogBId = nudgeB!.id;
+
+  // Block Q additions: venue_licence_profile/venue_contacts (direct venue_id
+  // policy, added in the bar-pass migration but never previously exercised
+  // by this suite), menu_items (direct) + menu_item_modifier_groups/
+  // menu_item_modifiers (one- and two-hop FK-subquery policies), and the
+  // four Block Q2 tables -- wizard_sessions, venue_key_roles,
+  // onboarding_content_checks, venue_promotions (all direct venue_id
+  // policy) -- gated before Q6 per Build Manual Part C check 4.
+  await admin.from("venue_licence_profile").insert({ venue_id: venueAId, state: "VIC", licence_status: "full" });
+  await admin.from("venue_licence_profile").insert({ venue_id: venueBId, state: "VIC", licence_status: "full" });
+
+  const { data: contactA } = await admin
+    .from("venue_contacts")
+    .insert({ venue_id: venueAId, contact_type: "electrician", name: "A Sparky" })
+    .select("id")
+    .single();
+  const { data: contactB } = await admin
+    .from("venue_contacts")
+    .insert({ venue_id: venueBId, contact_type: "electrician", name: "B Sparky" })
+    .select("id")
+    .single();
+  venueContactAId = contactA!.id;
+  venueContactBId = contactB!.id;
+
+  const { data: menuItemA } = await admin
+    .from("menu_items")
+    .insert({ venue_id: venueAId, name: "A Dish", category: "food" })
+    .select("id")
+    .single();
+  const { data: menuItemB } = await admin
+    .from("menu_items")
+    .insert({ venue_id: venueBId, name: "B Dish", category: "food" })
+    .select("id")
+    .single();
+  menuItemAId = menuItemA!.id;
+  menuItemBId = menuItemB!.id;
+
+  const { data: modGroupA } = await admin
+    .from("menu_item_modifier_groups")
+    .insert({ menu_item_id: menuItemAId, name: "A Swap" })
+    .select("id")
+    .single();
+  const { data: modGroupB } = await admin
+    .from("menu_item_modifier_groups")
+    .insert({ menu_item_id: menuItemBId, name: "B Swap" })
+    .select("id")
+    .single();
+  modifierGroupAId = modGroupA!.id;
+  modifierGroupBId = modGroupB!.id;
+
+  const { data: modifierRowA } = await admin
+    .from("menu_item_modifiers")
+    .insert({ modifier_group_id: modifierGroupAId, name: "A Option" })
+    .select("id")
+    .single();
+  const { data: modifierRowB } = await admin
+    .from("menu_item_modifiers")
+    .insert({ modifier_group_id: modifierGroupBId, name: "B Option" })
+    .select("id")
+    .single();
+  modifierAId = modifierRowA!.id;
+  modifierBId = modifierRowB!.id;
+
+  const { data: wsA } = await admin
+    .from("wizard_sessions")
+    .insert({ venue_id: venueAId, current_step: "venue_basics" })
+    .select("id")
+    .single();
+  const { data: wsB } = await admin
+    .from("wizard_sessions")
+    .insert({ venue_id: venueBId, current_step: "venue_basics" })
+    .select("id")
+    .single();
+  wizardSessionAId = wsA!.id;
+  wizardSessionBId = wsB!.id;
+
+  const { data: krA } = await admin
+    .from("venue_key_roles")
+    .insert({ venue_id: venueAId, role_type: "rsa_marshal", name: "A Marshal" })
+    .select("id")
+    .single();
+  const { data: krB } = await admin
+    .from("venue_key_roles")
+    .insert({ venue_id: venueBId, role_type: "rsa_marshal", name: "B Marshal" })
+    .select("id")
+    .single();
+  keyRoleAId = krA!.id;
+  keyRoleBId = krB!.id;
+
+  const { data: ccA } = await admin
+    .from("onboarding_content_checks")
+    .insert({ venue_id: venueAId, module_id: moduleAId, topic_key: "welcome", test_question: "A question", could_answer: true })
+    .select("id")
+    .single();
+  const { data: ccB } = await admin
+    .from("onboarding_content_checks")
+    .insert({ venue_id: venueBId, module_id: moduleBId, topic_key: "welcome", test_question: "B question", could_answer: true })
+    .select("id")
+    .single();
+  contentCheckAId = ccA!.id;
+  contentCheckBId = ccB!.id;
+
+  const { data: promoA } = await admin
+    .from("venue_promotions")
+    .insert({ venue_id: venueAId, day_of_week: "friday", start_time: "17:00", end_time: "19:00" })
+    .select("id")
+    .single();
+  const { data: promoB } = await admin
+    .from("venue_promotions")
+    .insert({ venue_id: venueBId, day_of_week: "friday", start_time: "17:00", end_time: "19:00" })
+    .select("id")
+    .single();
+  promotionAId = promoA!.id;
+  promotionBId = promoB!.id;
 
   clientA = anonClient();
   clientB = anonClient();
@@ -344,6 +474,143 @@ describe("multi-tenant isolation", () => {
 
   it("venue A cannot read venue B's cert_nudge_log (FK-subquery policy)", async () => {
     const { data, error } = await clientA.from("cert_nudge_log").select("id").eq("id", certNudgeLogBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  // --- Block Q additions: venue_licence_profile, venue_contacts (direct
+  // venue_id policy, bar-pass migration, never previously exercised),
+  // menu_items (direct) + menu_item_modifier_groups/menu_item_modifiers
+  // (one- and two-hop FK-subquery), wizard_sessions, venue_key_roles,
+  // onboarding_content_checks, venue_promotions (Block Q2, direct
+  // venue_id policy) ---
+
+  it("venue A CAN read its own venue_licence_profile (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("venue_licence_profile").select("venue_id").eq("venue_id", venueAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's venue_licence_profile (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("venue_licence_profile").select("venue_id").eq("venue_id", venueBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A cannot write to venue B's venue_licence_profile", async () => {
+    await clientA.from("venue_licence_profile").update({ licence_status: "none" }).eq("venue_id", venueBId);
+    const admin = createAdminClient();
+    const { data: check } = await admin
+      .from("venue_licence_profile")
+      .select("licence_status")
+      .eq("venue_id", venueBId)
+      .single();
+    expect(check!.licence_status).toBe("full");
+  });
+
+  it("venue A CAN read its own venue_contacts (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("venue_contacts").select("id").eq("id", venueContactAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's venue_contacts (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("venue_contacts").select("id").eq("id", venueContactBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own menu_items (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("menu_items").select("id").eq("id", menuItemAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's menu_items (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("menu_items").select("id").eq("id", menuItemBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own menu_item_modifier_groups (FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("menu_item_modifier_groups").select("id").eq("id", modifierGroupAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's menu_item_modifier_groups (FK-subquery policy)", async () => {
+    const { data, error } = await clientA.from("menu_item_modifier_groups").select("id").eq("id", modifierGroupBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own menu_item_modifiers (two-hop FK-subquery policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("menu_item_modifiers").select("id").eq("id", modifierAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's menu_item_modifiers (two-hop FK-subquery policy)", async () => {
+    const { data, error } = await clientA.from("menu_item_modifiers").select("id").eq("id", modifierBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own wizard_sessions (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("wizard_sessions").select("id").eq("id", wizardSessionAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's wizard_sessions (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("wizard_sessions").select("id").eq("id", wizardSessionBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A cannot write to venue B's wizard_sessions", async () => {
+    await clientA.from("wizard_sessions").update({ current_step: "hacked" }).eq("id", wizardSessionBId);
+    const admin = createAdminClient();
+    const { data: check } = await admin
+      .from("wizard_sessions")
+      .select("current_step")
+      .eq("id", wizardSessionBId)
+      .single();
+    expect(check!.current_step).toBe("venue_basics");
+  });
+
+  it("venue A CAN read its own venue_key_roles (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("venue_key_roles").select("id").eq("id", keyRoleAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's venue_key_roles (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("venue_key_roles").select("id").eq("id", keyRoleBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own onboarding_content_checks (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("onboarding_content_checks").select("id").eq("id", contentCheckAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's onboarding_content_checks (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("onboarding_content_checks").select("id").eq("id", contentCheckBId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
+  });
+
+  it("venue A CAN read its own venue_promotions (direct venue_id policy, sanity check)", async () => {
+    const { data, error } = await clientA.from("venue_promotions").select("id").eq("id", promotionAId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it("venue A cannot read venue B's venue_promotions (direct venue_id policy)", async () => {
+    const { data, error } = await clientA.from("venue_promotions").select("id").eq("id", promotionBId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });
