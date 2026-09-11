@@ -44,6 +44,9 @@ export function SiteFooter() {
           <a href="/legal" className="hover:text-parchment">
             Legal
           </a>
+          <a href="/privacy" className="hover:text-parchment">
+            Privacy Policy
+          </a>
         </nav>
       </div>
     </footer>

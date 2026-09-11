@@ -13,3 +13,11 @@ supabase/.temp/
 .dev-server.log
 .dev-server-err.log
 scratch/
+
+# Real client financial/signed-document data -- never source of truth,
+# never committed. client-documents/templates/ (brand templates, no client
+# data) is tracked normally.
+client-documents/invoices/*
+!client-documents/invoices/.gitkeep
+client-documents/agreements/*
+!client-documents/agreements/.gitkeep

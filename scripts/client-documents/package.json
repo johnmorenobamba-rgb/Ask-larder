@@ -1,0 +1,11 @@
+{
+  "name": "larder-client-documents",
+  "private": true,
+  "description": "Standalone document-generation tooling for Larder's business documents (CSA, Order Form, Pricing Schedule, invoices). Isolated from the main app's dependencies on purpose -- docx is a business-tooling dependency, not a product runtime dependency.",
+  "type": "module",
+  "dependencies": {
+    "docx": "^9.5.1",
+    "docx-preview": "^0.4.0",
+    "jszip": "^3.10.2"
+  }
+}
