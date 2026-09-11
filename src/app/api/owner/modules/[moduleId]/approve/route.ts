@@ -12,7 +12,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("modules")
-    .update({ status: "approved" })
+    .update({ status: "approved", approved_by: staff.id, approved_at: new Date().toISOString() })
     .eq("id", moduleId)
     .eq("status", "pending_approval")
     .select("id")

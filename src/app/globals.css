@@ -27,6 +27,15 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Block R -- SOP document print pages (view/print-all) set their own page
+   background per section via print:bg-white; this just gives the printed
+   page sane margins instead of the browser's arbitrary default. */
+@media print {
+  @page {
+    margin: 18mm 16mm;
+  }
+}
+
 /* Locked motion language, New-Hire Flow spec: two timing families used
    everywhere so the app doesn't feel like ten different animation styles.
    Pass Slide's outgoing-screen half needs two mounted screens at once,

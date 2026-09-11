@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { ingestModule } from "@/lib/ai/ingestModule";
+import { generateSopDocument } from "@/lib/ai/generateSopDocument";
 
 // First-time-live only, per approve -> go-live -> publish-version's split:
 // this is a plain status flip, no module_versions row. Once a module is
@@ -40,6 +41,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
     await ingestModule(moduleId, supabase);
   } catch (ingestError) {
     console.error("go-live ingestion failed:", ingestError instanceof Error ? ingestError.message : ingestError);
+  }
+
+  // Block R -- fire the curated SOP document generation once, here, the
+  // first time a module actually goes live. Same best-effort convention as
+  // ingestModule above: the status flip already happened and shouldn't roll
+  // back over a generation failure. A missing document surfaces as a real
+  // "Generate SOP document" action on the SOPs dashboard (R3), not a silent
+  // gap, so this is safe to fail without blocking go-live.
+  try {
+    await generateSopDocument(moduleId, supabase);
+  } catch (sopError) {
+    console.error("go-live SOP document generation failed:", sopError instanceof Error ? sopError.message : sopError);
   }
 
   return NextResponse.json({ ok: true });

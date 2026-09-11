@@ -612,6 +612,8 @@ export type Database = {
       }
       modules: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string | null
           created_from_sop_ids: string[] | null
           id: string
@@ -622,6 +624,8 @@ export type Database = {
           version: number | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           created_from_sop_ids?: string[] | null
           id?: string
@@ -632,6 +636,8 @@ export type Database = {
           version?: number | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           created_from_sop_ids?: string[] | null
           id?: string
@@ -642,6 +648,13 @@ export type Database = {
           version?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "modules_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "modules_venue_id_fkey"
             columns: ["venue_id"]
@@ -815,6 +828,90 @@ export type Database = {
           },
           {
             foreignKeyName: "photo_library_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_documents: {
+        Row: {
+          content: Json
+          generated_at: string
+          generated_from_hash: string
+          id: string
+          module_id: string
+        }
+        Insert: {
+          content: Json
+          generated_at?: string
+          generated_from_hash: string
+          id?: string
+          module_id: string
+        }
+        Update: {
+          content?: Json
+          generated_at?: string
+          generated_from_hash?: string
+          id?: string
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_documents_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_edit_requests: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          module_id: string
+          requester: string | null
+          status: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          module_id: string
+          requester?: string | null
+          status?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          module_id?: string
+          requester?: string | null
+          status?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_edit_requests_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_edit_requests_requester_fkey"
+            columns: ["requester"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_edit_requests_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"

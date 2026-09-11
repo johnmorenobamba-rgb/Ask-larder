@@ -9,6 +9,7 @@ const SECTIONS = [
   { href: "completions", label: "Completions" },
   { href: "certs", label: "Certificates" },
   { href: "modules", label: "Modules" },
+  { href: "sops", label: "SOPs" },
   { href: "weekly-report", label: "Weekly report" },
   { href: "escalations", label: "Escalations" },
   { href: "near-misses", label: "Near-misses" },
@@ -26,7 +27,7 @@ export function OwnerNav({ venueSlug, venueName }: { venueSlug: string; venueNam
   }
 
   return (
-    <nav className="border-b-2 border-clay-brown/20 bg-parchment px-6 py-4">
+    <nav className="print:hidden border-b-2 border-clay-brown/20 bg-parchment px-6 py-4">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
         <Link href={`/${venueSlug}/owner/dashboard`} className="font-display text-lg font-bold text-ink">
           {venueName}
