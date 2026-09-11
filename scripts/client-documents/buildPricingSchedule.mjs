@@ -2,9 +2,7 @@
 // finalised Notion source as the CSA and Order Form.
 import { Packer } from "docx";
 import { writeFileSync } from "node:fs";
-import { makeDocument, clauseHeading, body, bullet, simpleTable } from "./brandKit.mjs";
-
-const CONTENT_WIDTH_DXA = 9638;
+import { makeDocument, clauseHeading, body, bullet, simpleTable, CONTENT_WIDTH_DXA } from "./brandKit.mjs";
 
 const sections = [
   body("Internal reference. Not for client distribution.", { after: 260, bold: true }),
@@ -19,7 +17,7 @@ const sections = [
       ["LDR-L — Large", "26+ staff", "Custom quote"],
       ["Founder's rate", "Coachman's Arms only", "$750 AUD"],
     ],
-    [3200, 3200, 3238],
+    [Math.round(CONTENT_WIDTH_DXA * 0.333), Math.round(CONTENT_WIDTH_DXA * 0.333), CONTENT_WIDTH_DXA - 2 * Math.round(CONTENT_WIDTH_DXA * 0.333)],
   ),
 
   clauseHeading("Monthly retainer"),

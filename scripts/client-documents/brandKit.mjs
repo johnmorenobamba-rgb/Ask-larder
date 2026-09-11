@@ -26,9 +26,30 @@ import {
   VerticalAlign,
   LevelFormat,
   convertInchesToTwip,
+  ImageRun,
 } from "docx";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const BULLET_LIST_REFERENCE = "brand-bullet-list";
+
+// Rendered by render-brand-assets.mjs from the real ChitMark idle-state
+// math (LARDER_MARK_PATH + the same 22%-of-path glow-segment fraction the
+// app uses), frozen at one position rather than animated -- "looks like
+// it's moving, but it isn't," per instruction. Re-run that script if the
+// banner copy or colors ever need to change; these two PNGs are generated
+// artifacts, not hand-drawn assets.
+const HEADER_BAND_PATH = path.join(__dirname, "assets/header-band.png");
+const FOOTER_BAND_PATH = path.join(__dirname, "assets/footer-band.png");
+
+// Source assets are rendered at 1286x260 / 1286x46 (2x) for print
+// crispness; placed at half that pixel size here so they're sharp without
+// being physically oversized on the page.
+const HEADER_BAND_ASPECT = 260 / 1286;
+const FOOTER_BAND_ASPECT = 46 / 1286;
 
 export const COLORS = {
   ink: "1F1B16",
@@ -47,10 +68,21 @@ export const FONTS = {
 };
 
 // DXA page setup, A4 with generous margins for a printable legal document.
+// HEADER_DISTANCE/FOOTER_DISTANCE are how far the header/footer band sits
+// from the physical page edge; the body TOP/BOTTOM margins are set wide
+// enough to clear the banner art so it never overlaps body text.
+const HEADER_DISTANCE = 320;
+const FOOTER_DISTANCE = 320;
 export const PAGE = {
   size: { width: 11906, height: 16838 }, // A4 in DXA
-  margins: { top: 1418, bottom: 1418, left: 1418, right: 1418 }, // ~1in
+  margins: { top: 2350, bottom: 1550, left: 1418, right: 1418, header: HEADER_DISTANCE, footer: FOOTER_DISTANCE },
 };
+
+// Content width = page width minus left/right margins -- every table's
+// column widths must sum to exactly this, and it's what the header/footer
+// banner images are sized to, so both line up with the page's actual
+// printable edges instead of guessing a round number.
+export const CONTENT_WIDTH_DXA = PAGE.size.width - PAGE.margins.left - PAGE.margins.right;
 
 export const numberingConfig = {
   config: [
@@ -80,27 +112,27 @@ export function bullet(text, opts = {}) {
   });
 }
 
-export function letterhead() {
-  return [
-    new Paragraph({
-      spacing: { after: 40 },
-      children: [
-        new TextRun({ text: "LARDER", font: FONTS.display, bold: true, color: COLORS.preserveRed, size: 32 }),
-      ],
-    }),
-    new Paragraph({
-      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLORS.ink, space: 6 } },
-      spacing: { after: 240 },
-      children: [
-        new TextRun({
-          text: "YOUR SOPS, ALWAYS ON SHIFT",
-          font: FONTS.mono,
-          color: COLORS.clayBrown,
-          size: 14,
-        }),
-      ],
-    }),
-  ];
+// Real Word Header/Footer (repeats every page), not body content -- the
+// old letterhead() paragraphs only ever appeared once, at the top of page
+// 1. The banner art is pre-rendered (render-brand-assets.mjs) since docx-js
+// has no diagonal-clip shape primitive; ImageRun just places the PNG.
+export function makeHeader() {
+  const width = Math.round((CONTENT_WIDTH_DXA / 1440) * 96);
+  const height = Math.round(width * HEADER_BAND_ASPECT);
+  return new Header({
+    children: [
+      new Paragraph({
+        spacing: { after: 0 },
+        children: [
+          new ImageRun({
+            type: "png",
+            data: readFileSync(HEADER_BAND_PATH),
+            transformation: { width, height },
+          }),
+        ],
+      }),
+    ],
+  });
 }
 
 export function docTitle(title, subtitle) {
@@ -190,8 +222,7 @@ export function sectionRule() {
   });
 }
 
-// columnWidths in DXA, must sum to the content width used below (9638 --
-// A4 minus 1in margins each side). Header row gets a Parchment-tinted
+// columnWidths in DXA, must sum to exactly CONTENT_WIDTH_DXA. Header row gets a Parchment-tinted
 // shaded background (ShadingType.CLEAR, per the skill's own gotcha --
 // SOLID renders black).
 export function simpleTable(headers, rows, columnWidths) {
@@ -240,11 +271,18 @@ export function simpleTable(headers, rows, columnWidths) {
 }
 
 export function makeFooter(docLabel) {
+  const width = Math.round((CONTENT_WIDTH_DXA / 1440) * 96);
+  const height = Math.round(width * FOOTER_BAND_ASPECT);
   return new Footer({
     children: [
       new Paragraph({
-        border: { top: { style: BorderStyle.SINGLE, size: 4, color: COLORS.clayBrown, space: 6 } },
-        tabStops: [{ type: "right", position: 9638 }],
+        spacing: { after: 60 },
+        children: [
+          new ImageRun({ type: "png", data: readFileSync(FOOTER_BAND_PATH), transformation: { width, height } }),
+        ],
+      }),
+      new Paragraph({
+        tabStops: [{ type: "right", position: CONTENT_WIDTH_DXA }],
         children: [
           new TextRun({ text: `Larder — ${docLabel}`, font: FONTS.mono, color: COLORS.clayBrown, size: 14 }),
           new TextRun({ text: "\t", font: FONTS.mono, size: 14 }),
@@ -269,8 +307,9 @@ export function makeDocument({ title, subtitle, sections, docLabel }) {
     sections: [
       {
         properties: { page: { size: PAGE.size, margin: PAGE.margins } },
+        headers: { default: makeHeader() },
         footers: { default: makeFooter(docLabel) },
-        children: [...letterhead(), ...docTitle(title, subtitle), ...sections],
+        children: [...docTitle(title, subtitle), ...sections],
       },
     ],
   });

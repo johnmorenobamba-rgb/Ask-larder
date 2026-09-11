@@ -58,6 +58,8 @@ for (const file of files) {
       ignoreWidth: false,
       ignoreHeight: false,
       breakPages: true,
+      renderHeaders: true,
+      renderFooters: true,
     });
   }, base64);
 

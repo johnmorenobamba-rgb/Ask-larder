@@ -30,7 +30,12 @@ await page.evaluate(async (b64) => {
   }
   const bytes = base64ToUint8Array(b64);
   const container = document.getElementById("container");
-  await window.docx.renderAsync(bytes, container, container, { inWrapper: true, breakPages: true });
+  await window.docx.renderAsync(bytes, container, container, {
+    inWrapper: true,
+    breakPages: true,
+    renderHeaders: true,
+    renderFooters: true,
+  });
 }, base64);
 
 await page.waitForTimeout(400);

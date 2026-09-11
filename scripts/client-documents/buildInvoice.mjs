@@ -16,6 +16,7 @@ import {
   TextRun,
   BorderStyle,
   AlignmentType,
+  CONTENT_WIDTH_DXA,
 } from "./brandKit.mjs";
 
 export function pendingField(fieldLabel) {
@@ -75,7 +76,7 @@ export function buildInvoiceSections({
     simpleTable(
       ["Description", "Qty", "Rate", "Amount"],
       lineItems.map((li) => [li.description, String(li.qty), money(li.rate), money(li.amount)]),
-      [5238, 900, 1600, 1900],
+      [4930, 847, 1506, CONTENT_WIDTH_DXA - 4930 - 847 - 1506],
     ),
   );
   sections.push(
