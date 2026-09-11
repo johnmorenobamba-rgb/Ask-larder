@@ -175,9 +175,11 @@ export type Database = {
         Row: {
           created_at: string | null
           escalation_status: string | null
+          exchange_id: string | null
           id: string
           is_escalation: boolean | null
           message: string
+          out_of_scope: boolean | null
           retrieved_chunk_ids: string[] | null
           role: string
           station_id: string | null
@@ -187,9 +189,11 @@ export type Database = {
         Insert: {
           created_at?: string | null
           escalation_status?: string | null
+          exchange_id?: string | null
           id?: string
           is_escalation?: boolean | null
           message: string
+          out_of_scope?: boolean | null
           retrieved_chunk_ids?: string[] | null
           role: string
           station_id?: string | null
@@ -199,9 +203,11 @@ export type Database = {
         Update: {
           created_at?: string | null
           escalation_status?: string | null
+          exchange_id?: string | null
           id?: string
           is_escalation?: boolean | null
           message?: string
+          out_of_scope?: boolean | null
           retrieved_chunk_ids?: string[] | null
           role?: string
           station_id?: string | null

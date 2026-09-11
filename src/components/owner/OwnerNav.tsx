@@ -9,6 +9,7 @@ const SECTIONS = [
   { href: "completions", label: "Completions" },
   { href: "certs", label: "Certificates" },
   { href: "modules", label: "Modules" },
+  { href: "weekly-report", label: "Weekly report" },
   { href: "escalations", label: "Escalations" },
   { href: "near-misses", label: "Near-misses" },
   { href: "stations", label: "Stations" },

@@ -260,6 +260,14 @@ export async function POST(request: Request) {
   const chunkIds = chunks?.map((c) => c.id) ?? [];
   const isEscalation = toolResult.fallback_triggered;
 
+  // Ties this exchange's user/assistant row pair together -- previously
+  // nothing did, which meant the Escalations page could only ever show the
+  // assistant's own reply text (the refusal wording), never the actual
+  // question that triggered it, and there was no reliable way to build the
+  // weekly digest below at all (out_of_scope lived only on the assistant
+  // row; the question text only on the user row).
+  const exchangeId = crypto.randomUUID();
+
   const { error: insertError } = await supabase.from("chat_messages").insert([
     {
       user_id: staff.id,
@@ -267,6 +275,7 @@ export async function POST(request: Request) {
       role: "user",
       message: question,
       station_id: resolvedStationId,
+      exchange_id: exchangeId,
     },
     {
       user_id: staff.id,
@@ -275,7 +284,9 @@ export async function POST(request: Request) {
       message: toolResult.answer,
       retrieved_chunk_ids: chunkIds,
       is_escalation: isEscalation,
+      out_of_scope: toolResult.out_of_scope,
       station_id: resolvedStationId,
+      exchange_id: exchangeId,
     },
   ]);
   if (insertError) {
