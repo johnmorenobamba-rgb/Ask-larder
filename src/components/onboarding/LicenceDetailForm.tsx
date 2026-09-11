@@ -26,6 +26,7 @@ export function LicenceDetailForm({
     lateNightEndorsement: boolean;
     conditions: string;
     tradingHours: TradingHours;
+    sourcedFromDocument: boolean;
   };
 }) {
   const router = useRouter();
@@ -35,7 +36,11 @@ export function LicenceDetailForm({
   const [lateNightEndorsement, setLateNightEndorsement] = useState(initial.lateNightEndorsement);
   const [conditions, setConditions] = useState(initial.conditions);
   const [tradingHours, setTradingHours] = useState<TradingHours>({ ...emptyHours(), ...initial.tradingHours });
-  const [sourcedFromDocument, setSourcedFromDocument] = useState(false);
+  // Previously local-only UI state, never sent to the server (Block Q9
+  // found this: a real, unconfirmed-capacity venue had no way to actually
+  // record that fact anywhere) -- now persisted to wizard_sessions via the
+  // submit below and surfaced as an outstanding item on Review & activate.
+  const [sourcedFromDocument, setSourcedFromDocument] = useState(initial.sourcedFromDocument);
   const [gamingEgm, setGamingEgm] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export function LicenceDetailForm({
         conditions,
         tradingHours,
         gamingEgm,
+        sourcedFromDocument,
       }),
     });
     const body = await res.json().catch(() => null);

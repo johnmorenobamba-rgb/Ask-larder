@@ -13,11 +13,15 @@ export function RsaMarshalForm({
 }: {
   venueSlug: string;
   staffRoles: { id: string; name: string }[];
-  initial: { roleIds: string[]; marshalDesignated: boolean; marshalName: string; marshalPhone: string; marshalEmail: string };
+  initial: { roleIds: string[]; marshalDesignated: boolean | null; marshalName: string; marshalPhone: string; marshalEmail: string };
 }) {
   const router = useRouter();
   const [roleIds, setRoleIds] = useState<string[]>(initial.roleIds);
-  const [marshalDesignated, setMarshalDesignated] = useState<boolean | null>(initial.marshalDesignated || null);
+  // Not `initial.marshalDesignated || null` -- that collapses a genuine
+  // saved `false` ("No, no dedicated marshal") back into null/unanswered,
+  // since false is falsy. initial.marshalDesignated is already the correct
+  // tri-state (null = not yet answered) from the page's own flag read.
+  const [marshalDesignated, setMarshalDesignated] = useState<boolean | null>(initial.marshalDesignated);
   const [marshalName, setMarshalName] = useState(initial.marshalName);
   const [marshalPhone, setMarshalPhone] = useState(initial.marshalPhone);
   const [marshalEmail, setMarshalEmail] = useState(initial.marshalEmail);

@@ -8,7 +8,7 @@ export function ModuleStatusActions({ moduleId, status }: { moduleId: string; st
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function transition(action: "approve" | "go-live") {
+  async function transition(action: "submit-for-approval" | "approve" | "go-live") {
     setLoading(true);
     setError(null);
     const res = await fetch(`/api/owner/modules/${moduleId}/${action}`, { method: "POST" });
@@ -23,6 +23,16 @@ export function ModuleStatusActions({ moduleId, status }: { moduleId: string; st
 
   return (
     <div className="flex items-center gap-2">
+      {status === "draft" && (
+        <button
+          type="button"
+          onClick={() => transition("submit-for-approval")}
+          disabled={loading}
+          className="rounded-full border-2 border-clay-brown/40 px-4 py-2 font-sans text-sm font-medium text-ink disabled:opacity-50"
+        >
+          Submit for approval
+        </button>
+      )}
       {status === "pending_approval" && (
         <button
           type="button"

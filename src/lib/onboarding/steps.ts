@@ -11,6 +11,15 @@ export type VenueTypeFlags = {
   food_service_level?: "full_kitchen" | "bar_snacks_low_risk" | "no_food_service";
   runs_happy_hour?: boolean;
   founder_escalation?: string[];
+  // Whether licensed_capacity/approved_trading_hours are confirmed against
+  // the actual licence document per Q1's D.1.2 compliance-critical bar, or
+  // are still a best-available figure pending that document. Q1/Q2's design
+  // (q2-wizard-flow-and-schema.md §3, Page 4) deliberately left this as a
+  // UI-only distinction rather than a schema column -- Block Q9's real
+  // onboarding run found the UI checkbox for it was never actually wired to
+  // anything, so it's persisted here (matching every other non-schema
+  // branching/outstanding-item flag) and surfaced on Review & activate.
+  capacity_sourced_from_document?: boolean;
 };
 
 export const WIZARD_STEP_SLUGS = [

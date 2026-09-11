@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   const lateNightEndorsement = Boolean(body?.lateNightEndorsement);
   const conditions = typeof body?.conditions === "string" ? body.conditions.trim() : "";
   const gamingEgm = body?.gamingEgm === true;
+  const sourcedFromDocument = body?.sourcedFromDocument === true;
   const tradingHours = body?.tradingHours && typeof body.tradingHours === "object" ? body.tradingHours : {};
 
   if (!VALID_TYPES.has(licenceType)) {
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
 
   const flags = await upsertWizardSession(supabase, staff.venue_id, {
     currentStep: "licence-detail",
-    flags: { founder_escalation: Array.from(priorEscalations) },
+    flags: { founder_escalation: Array.from(priorEscalations), capacity_sourced_from_document: sourcedFromDocument },
   });
 
   return NextResponse.json({ ok: true, flags });

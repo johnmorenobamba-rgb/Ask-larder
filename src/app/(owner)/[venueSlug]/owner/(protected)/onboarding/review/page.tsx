@@ -54,6 +54,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
       outstandingItems.push(`${label} ${role.name} doesn't have a Larder login yet — invite them under Staff and link it.`);
     }
   }
+  if (flags.licensed && flags.capacity_sourced_from_document !== true) {
+    outstandingItems.push("Licensed capacity and trading hours are unconfirmed against the actual licence document — verify before relying on them.");
+  }
 
   return (
     <ReviewAndActivateStep
