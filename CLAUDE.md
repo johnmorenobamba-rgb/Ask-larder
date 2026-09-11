@@ -41,7 +41,7 @@ Full SQL schema and RLS policy patterns are in Tech Bible §15 — use that as t
 
 **Logo:** icon + wordmark. Icon is a speech bubble shaped like a kitchen order chit (ties to "ask a question" + the product's own chit/pass vocabulary) — a jar/pantry icon was tried first and rejected for not connecting to onboarding/training. Wordmark: "Larder" in Fraunces bold.
 
-**Signature element — "The Stamp":** a circular maker's-mark badge (styled like a preserve-jar lid stamp), used specifically at module completion, certificate verification, and e-signature confirmation. This is a real UI component, not a one-off graphic — build it as a reusable component and use it ONLY at these three trust moments, not as decoration elsewhere.
+**Signature element — "The Stamp":** a circular maker's-mark badge (styled like a preserve-jar lid stamp), used specifically at module completion, a passed quiz, certificate verification, and e-signature confirmation. This is a real UI component, not a one-off graphic — build it as a reusable component and use it ONLY at these four trust moments, not as decoration elsewhere.
 
 **Explicit anti-patterns — do not do these:**
 - The generic "AI cream + terracotta" look (near `#F4F1EA` + `#D97757`) — Larder's palette is deliberately darker/more saturated to avoid reading as templated.
@@ -67,12 +67,12 @@ Before marking any module, feature, or fix as done, actually check it — don't 
 ## Content workflow
 
 - **Venue #1: raw.** John hands raw SOP/photo/interview material directly into a Claude Code session; build modules and the chatbot knowledge base by hand, file by file. No builder UI required yet.
-- **Venue #2 onward:** repeatable intake via Jotform + Make (routes submissions into Supabase + logs a Notion Decision Log entry automatically), with the `larder-sop-to-module` skill (build this once venue #1's real process is known, not before) doing the structuring work venue #1 did manually.
+- **Venue #2 onward: the onboarding wizard (Block Q).** This is the real, built and validated repeatable intake mechanism — Jotform + Make was the original plan but predates the wizard and no longer describes how intake actually works. Structured/guaranteed compliance fields (licence, RSA marshal, Food Safety Supervisor, trading hours, capacity, and similar) are captured through dedicated wizard pages that write straight to their real schema tables. SOP/content-authoring material goes through a gap-detection loop instead: draft section content, an automatic self-consistency check, immediate embedding via `ingestModule()`, then a test-question spot-check against the venue's own content, looping until every applicable topic is genuinely answerable. `submit-for-approval → approve → go-live` is the real owner-approval gate in practice (non-negotiable, see above) — going live also triggers `ingestModule()` for real, not a manually-run script. Jotform is still in real use elsewhere, for venue walkthrough field capture, just not for this intake flow. `larder-sop-to-module` as originally scoped — a skill to do by hand what venue #1 did manually — is superseded by the wizard's gap-detection loop; it is not still a future build item.
 - **Compliance content sourcing:** any allergen/food-safety/RSA/WWCC content must trace to a real standard — see the Sources & References doc in Notion. RSA and WWCC are state/territory-specific (different regulator, WWCC even has different names per state) — never assume Victoria's version applies nationally, confirm per venue's actual state.
 
 ## Skills & MCPs available
 
-Skills: `frontend-design` (every UI screen), `canvas-design` (static assets), `doc-coauthoring` (joint doc drafting), `skill-creator` (for building `larder-sop-to-module` and `larder-brand-voice` once ready), plus `docx`/`xlsx`/`pptx`/`pdf` for business documents (contracts, financial model) — not the product itself.
+Skills: `frontend-design` (every UI screen), `canvas-design` (static assets), `doc-coauthoring` (joint doc drafting), `skill-creator` (for building `larder-brand-voice` once ready — `larder-sop-to-module` is no longer planned, superseded by the Block Q onboarding wizard's gap-detection loop), plus `docx`/`xlsx`/`pptx`/`pdf` for business documents (contracts, financial model) — not the product itself.
 
 MCPs already available: Supabase, Vercel, GitHub, Resend, Sentry, PostHog, Notion, Figma, Make, Jotform, Google Drive, Canva, Adobe for creativity, HyperFrames by HeyGen.
 
