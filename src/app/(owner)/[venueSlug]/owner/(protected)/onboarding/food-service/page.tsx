@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { FoodServiceGateForm } from "@/components/onboarding/FoodServiceGateForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 export default async function FoodServicePage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -20,19 +22,22 @@ export default async function FoodServicePage({ params }: { params: Promise<{ ve
     foodHandlingRoleIds = (rows ?? []).map((r) => r.role_id);
   }
 
-  const flags = (session?.venue_type_flags as { food_service_level?: string } | null) ?? {};
+  const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 
   return (
-    <FoodServiceGateForm
-      venueSlug={venueSlug}
-      staffRoles={staffRoles ?? []}
-      initial={{
-        level: flags.food_service_level ?? "",
-        fssName: fss?.name ?? "",
-        fssPhone: fss?.phone ?? "",
-        fssEmail: fss?.email ?? "",
-        foodHandlingRoleIds,
-      }}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("food-service", flags)} />
+      <FoodServiceGateForm
+        venueSlug={venueSlug}
+        staffRoles={staffRoles ?? []}
+        initial={{
+          level: flags.food_service_level ?? "",
+          fssName: fss?.name ?? "",
+          fssPhone: fss?.phone ?? "",
+          fssEmail: fss?.email ?? "",
+          foodHandlingRoleIds,
+        }}
+      />
+    </>
   );
 }

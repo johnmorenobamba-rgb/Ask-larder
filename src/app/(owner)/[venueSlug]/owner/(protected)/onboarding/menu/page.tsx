@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { MenuReviewTable } from "@/components/onboarding/MenuReviewTable";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
 export default async function MenuPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -26,5 +28,10 @@ export default async function MenuPage({ params }: { params: Promise<{ venueSlug
     })),
   }));
 
-  return <MenuReviewTable venueSlug={venueSlug} venueId={staff!.venue_id!} existingItems={existingItems} />;
+  return (
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("menu", {})} />
+      <MenuReviewTable venueSlug={venueSlug} venueId={staff!.venue_id!} existingItems={existingItems} />
+    </>
+  );
 }

@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { LicensingGateForm } from "@/components/onboarding/LicensingGateForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
 export default async function LicensingPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -13,5 +15,10 @@ export default async function LicensingPage({ params }: { params: Promise<{ venu
     .eq("venue_id", staff!.venue_id!)
     .maybeSingle();
 
-  return <LicensingGateForm venueSlug={venueSlug} initial={profile?.licence_status ?? ""} />;
+  return (
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("licensing", {})} />
+      <LicensingGateForm venueSlug={venueSlug} initial={profile?.licence_status ?? ""} />
+    </>
+  );
 }

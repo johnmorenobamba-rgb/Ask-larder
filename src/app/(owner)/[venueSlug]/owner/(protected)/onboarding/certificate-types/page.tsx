@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { CertificateTypesForm } from "@/components/onboarding/CertificateTypesForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
 export default async function CertificateTypesPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -12,5 +14,10 @@ export default async function CertificateTypesPage({ params }: { params: Promise
     supabase.from("venue_licence_profile").select("state").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
 
-  return <CertificateTypesForm venueSlug={venueSlug} state={profile?.state ?? null} existing={certTypes ?? []} />;
+  return (
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("certificate-types", {})} />
+      <CertificateTypesForm venueSlug={venueSlug} state={profile?.state ?? null} existing={certTypes ?? []} />
+    </>
+  );
 }

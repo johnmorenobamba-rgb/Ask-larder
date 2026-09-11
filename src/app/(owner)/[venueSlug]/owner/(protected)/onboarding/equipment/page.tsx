@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { EquipmentContinueButton } from "@/components/onboarding/EquipmentContinueButton";
-import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 // Q2 Page 8c — equipment/station inventory. Reuses the existing
 // CreateStationForm/POST /api/owner/stations route unchanged, per the Block
@@ -21,6 +22,7 @@ export default async function EquipmentPage({ params }: { params: Promise<{ venu
 
   return (
     <div className="space-y-6">
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("equipment", flags)} />
       <div>
         <h2 className="font-display text-2xl font-bold text-ink">Equipment</h2>
         <p className="font-sans text-sm text-ink/70">

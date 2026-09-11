@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { StaffInviteForm } from "@/components/onboarding/StaffInviteForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
 export default async function StaffInvitePage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -17,5 +19,10 @@ export default async function StaffInvitePage({ params }: { params: Promise<{ ve
       .order("name"),
   ]);
 
-  return <StaffInviteForm venueSlug={venueSlug} staffRoles={staffRoles ?? []} existing={existing ?? []} />;
+  return (
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("staff-invite", {})} />
+      <StaffInviteForm venueSlug={venueSlug} staffRoles={staffRoles ?? []} existing={existing ?? []} />
+    </>
+  );
 }

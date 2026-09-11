@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { RsaMarshalForm } from "@/components/onboarding/RsaMarshalForm";
-import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 export default async function RsaPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -32,16 +33,19 @@ export default async function RsaPage({ params }: { params: Promise<{ venueSlug:
   const marshalDesignated = flags.rsa_marshal_designated ?? null;
 
   return (
-    <RsaMarshalForm
-      venueSlug={venueSlug}
-      staffRoles={staffRoles ?? []}
-      initial={{
-        roleIds,
-        marshalDesignated,
-        marshalName: marshal?.name ?? "",
-        marshalPhone: marshal?.phone ?? "",
-        marshalEmail: marshal?.email ?? "",
-      }}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("rsa", {})} />
+      <RsaMarshalForm
+        venueSlug={venueSlug}
+        staffRoles={staffRoles ?? []}
+        initial={{
+          roleIds,
+          marshalDesignated,
+          marshalName: marshal?.name ?? "",
+          marshalPhone: marshal?.phone ?? "",
+          marshalEmail: marshal?.email ?? "",
+        }}
+      />
+    </>
   );
 }

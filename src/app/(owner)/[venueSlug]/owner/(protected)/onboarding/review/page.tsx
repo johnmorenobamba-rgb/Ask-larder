@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { ReviewAndActivateStep } from "@/components/onboarding/ReviewAndActivateStep";
-import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 export default async function ReviewPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -59,20 +60,23 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
   }
 
   return (
-    <ReviewAndActivateStep
-      venueSlug={venueSlug}
-      venueName={venue?.name ?? venueSlug}
-      flags={flags}
-      summary={{
-        staffCount: staffCount.count ?? 0,
-        staffRoleCount: staffRoleCount.count ?? 0,
-        moduleCount: modules.length,
-        pendingModuleCount: modules.filter((m) => m.status === "pending_approval").length,
-        certificateTypeCount: certTypes.length,
-        menuItemCount: menuItemCount.count ?? 0,
-        contactCount: contactCount.count ?? 0,
-      }}
-      outstandingItems={outstandingItems}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("review", {})} />
+      <ReviewAndActivateStep
+        venueSlug={venueSlug}
+        venueName={venue?.name ?? venueSlug}
+        flags={flags}
+        summary={{
+          staffCount: staffCount.count ?? 0,
+          staffRoleCount: staffRoleCount.count ?? 0,
+          moduleCount: modules.length,
+          pendingModuleCount: modules.filter((m) => m.status === "pending_approval").length,
+          certificateTypeCount: certTypes.length,
+          menuItemCount: menuItemCount.count ?? 0,
+          contactCount: contactCount.count ?? 0,
+        }}
+        outstandingItems={outstandingItems}
+      />
+    </>
   );
 }

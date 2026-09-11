@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { LicenceDetailForm } from "@/components/onboarding/LicenceDetailForm";
-import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 export default async function LicenceDetailPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -19,17 +20,20 @@ export default async function LicenceDetailPage({ params }: { params: Promise<{ 
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 
   return (
-    <LicenceDetailForm
-      venueSlug={venueSlug}
-      initial={{
-        licenceType: profile?.licence_type ?? "",
-        licenceNumber: profile?.licence_number ?? "",
-        licensedCapacity: profile?.licensed_capacity ? String(profile.licensed_capacity) : "",
-        lateNightEndorsement: profile?.late_night_endorsement ?? false,
-        conditions: profile?.conditions ?? "",
-        tradingHours: (profile?.approved_trading_hours as Record<string, { closed: boolean; open: string; close: string }>) ?? {},
-        sourcedFromDocument: flags.capacity_sourced_from_document ?? false,
-      }}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("licence-detail", flags)} />
+      <LicenceDetailForm
+        venueSlug={venueSlug}
+        initial={{
+          licenceType: profile?.licence_type ?? "",
+          licenceNumber: profile?.licence_number ?? "",
+          licensedCapacity: profile?.licensed_capacity ? String(profile.licensed_capacity) : "",
+          lateNightEndorsement: profile?.late_night_endorsement ?? false,
+          conditions: profile?.conditions ?? "",
+          tradingHours: (profile?.approved_trading_hours as Record<string, { closed: boolean; open: string; close: string }>) ?? {},
+          sourcedFromDocument: flags.capacity_sourced_from_document ?? false,
+        }}
+      />
+    </>
   );
 }

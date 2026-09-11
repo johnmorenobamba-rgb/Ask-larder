@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { StaffRolesForm } from "@/components/onboarding/StaffRolesForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
 export default async function StaffRolesPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -12,5 +14,10 @@ export default async function StaffRolesPage({ params }: { params: Promise<{ ven
     supabase.from("venues").select("roster_location").eq("id", staff!.venue_id!).maybeSingle(),
   ]);
 
-  return <StaffRolesForm venueSlug={venueSlug} existing={roles ?? []} initialRosterLocation={venue?.roster_location ?? ""} />;
+  return (
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("staff-roles", {})} />
+      <StaffRolesForm venueSlug={venueSlug} existing={roles ?? []} initialRosterLocation={venue?.roster_location ?? ""} />
+    </>
+  );
 }

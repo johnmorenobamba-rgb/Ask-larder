@@ -119,6 +119,50 @@ export function getNextStep(slug: WizardStepSlug, flags: VenueTypeFlags): Wizard
   }
 }
 
+// Exact structural inverse of getNextStep, for a real on-page Back
+// affordance (fix round, 11 Sep 2026) -- the sidebar step nav already lets
+// you jump anywhere, but nothing on the page itself ever did. null means
+// "first page, nothing to go back to" (venue-basics only -- page 1,
+// owner+venue creation, is a separate pre-auth route entirely, not part of
+// this slug list). Every branch here mirrors getNextStep's own branch
+// one-for-one; if getNextStep's branching ever changes, this must change
+// with it.
+export function getPreviousStep(slug: WizardStepSlug, flags: VenueTypeFlags): WizardStepSlug | null {
+  const licensed = flags.licensed !== false;
+  switch (slug) {
+    case "venue-basics":
+      return null;
+    case "licensing":
+      return "venue-basics";
+    case "licence-detail":
+      return "licensing";
+    case "crowd-control":
+      return "licence-detail";
+    case "rsa":
+      return "crowd-control";
+    case "food-service":
+      return licensed ? "rsa" : "licensing";
+    case "menu":
+      return "food-service";
+    case "equipment":
+      return "menu";
+    case "promotions":
+      return "equipment";
+    case "contacts":
+      return licensed ? "promotions" : "equipment";
+    case "staff-roles":
+      return "contacts";
+    case "staff-invite":
+      return "staff-roles";
+    case "content-intake":
+      return "staff-invite";
+    case "certificate-types":
+      return "content-intake";
+    case "review":
+      return "certificate-types";
+  }
+}
+
 export function stepHref(venueSlug: string, slug: WizardStepSlug): string {
   return `/${venueSlug}/owner/onboarding/${slug}`;
 }

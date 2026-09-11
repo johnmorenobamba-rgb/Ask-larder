@@ -75,7 +75,7 @@ flowchart TD
     FOOD2 --> MENU
 
     MENU["Page 8a — Menu items (upload-parse or manual grid) -> menu_items"] --> MOD["Page 8b — Modifier groups + modifiers, only for items with swaps -> menu_item_modifier_groups / menu_item_modifiers"]
-    MOD --> EQUIP["Page 8c — Equipment/station inventory (venue-type-branched question set, same destination table) -> stations"]
+    MOD --> EQUIP["Page 8c — Equipment/station inventory (one generic form, not venue-type-branched -- see §3 correction below) -> stations"]
 
     EQUIP --> HH{"Page 9 — Happy hour: licensed AND confirmed only"}
     HH -- "not licensed" --> BC
@@ -149,7 +149,7 @@ Nested under a menu item. Writes `menu_item_modifier_groups` then `menu_item_mod
 ### Page 8c — Equipment/station inventory
 **Not explicitly named as a numbered page in the task brief's 14-item list, but required to cover Q1 Part A row 52 ("Equipment/station inventory").** Added here as a natural extension of the Page 8 cluster (physical-setup intake) rather than a standalone brief-numbered page — see §5 below for why this is called out explicitly to the orchestrator.
 
-Question set branches by venue type (bar/cellar for a bar or pub, espresso/food-prep/display-cabinet for a cafe) but all branches write to the same `stations` table (`name`, `qr_code_slug`, `primary_module_id`). Structured equipment detail (tap counts, gas cylinder counts) is **not** captured — Q1 explicitly flags this as "not urgent, no evidence of product need yet," and no column exists for it; this migration does not add one.
+Question set was *designed* to branch by venue type (bar/cellar for a bar or pub, espresso/food-prep/display-cabinet for a cafe), writing to the same `stations` table (`name`, `qr_code_slug`, `primary_module_id`) regardless. **Correction, fix round, 11 Sep 2026: Q4 built one generic "station name / slug / module" form, not the branched question set this paragraph originally claimed** — confirmed by Q6's real onboarding run (a live-music venue's PA/stage gear had no dedicated prompt) and by reading the shipped page directly. The freetext name field accommodates any venue's actual equipment fine in practice (Q6's own assessment), so this was ratified as the intentional final design rather than built out further — this paragraph was simply never corrected to match. Structured equipment detail (tap counts, gas cylinder counts) is **not** captured — Q1 explicitly flags this as "not urgent, no evidence of product need yet," and no column exists for it; this migration does not add one.
 
 ### Page 9 — Happy hour (licensed + confirmed only)
 Gate question shown only when `venue_type_flags.licensed = true`; never rendered at all on the no-licence path (this is the exact behavior gap the pub pass's flow couldn't enforce, fixed here by LIC0 existing upstream). If confirmed, repeatable groups write `venue_promotions` rows (`day_of_week`, `start_time`, `end_time`, `description`).

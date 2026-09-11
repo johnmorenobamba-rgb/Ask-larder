@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { SopIntakeHub } from "@/components/onboarding/SopIntakeHub";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { PART_B_TOPICS } from "@/lib/onboarding/constants";
-import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 
 export default async function ContentIntakePage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -47,12 +48,15 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
   }
 
   return (
-    <SopIntakeHub
-      venueSlug={venueSlug}
-      venueId={staff!.venue_id!}
-      flags={flags}
-      checks={checks ?? []}
-      existingModulesByTopic={existingModulesByTopic}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("content-intake", {})} />
+      <SopIntakeHub
+        venueSlug={venueSlug}
+        venueId={staff!.venue_id!}
+        flags={flags}
+        checks={checks ?? []}
+        existingModulesByTopic={existingModulesByTopic}
+      />
+    </>
   );
 }

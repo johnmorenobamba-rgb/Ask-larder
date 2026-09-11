@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { CrowdControlForm } from "@/components/onboarding/CrowdControlForm";
+import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 import { SECURITY_FIRM_CONTACT_TYPE, CROWD_CONTROL_LICENCES_CONTACT_TYPE } from "@/lib/onboarding/constants";
 
 export default async function CrowdControlPage({ params }: { params: Promise<{ venueSlug: string }> }) {
@@ -18,13 +20,16 @@ export default async function CrowdControlPage({ params }: { params: Promise<{ v
   const controllerLicences = contacts?.find((c) => c.contact_type === CROWD_CONTROL_LICENCES_CONTACT_TYPE);
 
   return (
-    <CrowdControlForm
-      venueSlug={venueSlug}
-      initial={{
-        required: Boolean(securityFirm || controllerLicences),
-        securityFirmName: securityFirm?.name ?? "",
-        controllerLicenceNumbers: controllerLicences?.notes ?? "",
-      }}
-    />
+    <>
+      <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("crowd-control", {})} />
+      <CrowdControlForm
+        venueSlug={venueSlug}
+        initial={{
+          required: Boolean(securityFirm || controllerLicences),
+          securityFirmName: securityFirm?.name ?? "",
+          controllerLicenceNumbers: controllerLicences?.notes ?? "",
+        }}
+      />
+    </>
   );
 }
