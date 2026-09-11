@@ -20,6 +20,22 @@ interface SectionInput {
 interface CheckQuestionInput {
   question: string;
   sectionIndex: number;
+  // Added in the fix round, 11 Sep 2026 -- confirmed live by a real staff
+  // walkthrough that this route never collected or persisted these at all,
+  // even though check_questions.options/correct_option_index have existed
+  // since the baseline schema and the staff-facing CheckQuestion component
+  // (src/components/staff/CheckQuestion.tsx) has always required them:
+  // zero options renders zero answer buttons, which permanently blocks the
+  // Continue button, which permanently blocks module completion. This
+  // wasn't caught by Q9's own re-verification because that run's go-live
+  // bug meant no module ever reached the staff-facing module runner at
+  // all. The Module Content & Assessment Standard requires multiple choice
+  // (occasionally true/false) -- free-text/acknowledge-only questions are
+  // not a supported format, so the fix is to actually collect options
+  // here, not to relax CheckQuestion.tsx's requirement.
+  options: string[];
+  correctOptionIndex: number;
+  correctiveText?: string;
 }
 
 interface RequestBody {
@@ -40,7 +56,14 @@ function isSectionInput(value: unknown): value is SectionInput {
 function isCheckQuestionInput(value: unknown): value is CheckQuestionInput {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
-  return typeof v.question === "string" && typeof v.sectionIndex === "number";
+  return (
+    typeof v.question === "string" &&
+    typeof v.sectionIndex === "number" &&
+    Array.isArray(v.options) &&
+    v.options.every((o) => typeof o === "string") &&
+    typeof v.correctOptionIndex === "number" &&
+    (v.correctiveText === undefined || typeof v.correctiveText === "string")
+  );
 }
 
 export async function POST(request: Request) {
@@ -63,9 +86,20 @@ export async function POST(request: Request) {
   }
   if (!checkQuestions.every(isCheckQuestionInput)) {
     return NextResponse.json(
-      { error: "Each check question needs question (string) and sectionIndex (number)." },
+      { error: "Each check question needs question, sectionIndex, options (array of strings), and correctOptionIndex." },
       { status: 400 },
     );
+  }
+  // Module Content & Assessment Standard: multiple choice, occasionally
+  // true/false -- 2 options is the floor (true/false), not 1 (which
+  // wouldn't be a real check at all).
+  for (const q of checkQuestions) {
+    if (q.options.length < 2) {
+      return NextResponse.json({ error: `"${q.question}" needs at least 2 options.` }, { status: 400 });
+    }
+    if (q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
+      return NextResponse.json({ error: `"${q.question}"'s correct answer must be one of its own options.` }, { status: 400 });
+    }
   }
 
   const staff = await getCurrentStaff();
@@ -174,6 +208,9 @@ export async function POST(request: Request) {
         module_id: resolvedModuleId,
         question: q.question,
         section_order: q.sectionIndex,
+        options: q.options,
+        correct_option_index: q.correctOptionIndex,
+        expected_answer_context: q.correctiveText?.trim() || null,
       })),
     );
     if (questionsInsertError) {

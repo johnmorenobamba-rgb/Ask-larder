@@ -19,7 +19,9 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
       .order("created_at", { ascending: false }),
     supabase
       .from("modules")
-      .select("id, title, topic_key, module_sections(content, is_restricted, section_order), check_questions(question, section_order)")
+      .select(
+        "id, title, topic_key, module_sections(content, is_restricted, section_order), check_questions(question, section_order, options, correct_option_index, expected_answer_context)",
+      )
       .eq("venue_id", staff!.venue_id!),
   ]);
 
@@ -35,7 +37,14 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
   // were invisible to this exact match, which would have caused a revisit
   // to silently create a duplicate module instead of updating the
   // existing one).
-  const existingModulesByTopic: Record<string, { moduleId: string; sections: { content: string; isRestricted: boolean }[]; checkQuestions: { question: string; sectionIndex: number }[] }> = {};
+  const existingModulesByTopic: Record<
+    string,
+    {
+      moduleId: string;
+      sections: { content: string; isRestricted: boolean }[];
+      checkQuestions: { question: string; sectionIndex: number; options: string[]; correctOptionIndex: number; correctiveText: string }[];
+    }
+  > = {};
   for (const topic of PART_B_TOPICS) {
     const match = (modules ?? []).find((m) => m.topic_key === topic.key) ?? (modules ?? []).find((m) => !m.topic_key && m.title === topic.label);
     if (!match) continue;
@@ -43,7 +52,18 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
     existingModulesByTopic[topic.key] = {
       moduleId: match.id,
       sections: sortedSections.map((s) => ({ content: s.content ?? "", isRestricted: s.is_restricted ?? false })),
-      checkQuestions: (match.check_questions ?? []).map((q) => ({ question: q.question, sectionIndex: q.section_order ?? 0 })),
+      checkQuestions: (match.check_questions ?? []).map((q) => ({
+        question: q.question,
+        sectionIndex: q.section_order ?? 0,
+        // Options/correct_option_index didn't exist in this route's request
+        // shape until the fix round (11 Sep 2026) -- a question saved before
+        // that resumes here with an empty options array, same as any other
+        // pre-fix row, so the specialist is prompted to fill them in rather
+        // than the page silently pretending they're already set.
+        options: (q.options as string[] | null) ?? [],
+        correctOptionIndex: q.correct_option_index ?? 0,
+        correctiveText: q.expected_answer_context ?? "",
+      })),
     };
   }
 
