@@ -112,7 +112,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Module not found for this venue." }, { status: 404 });
     }
 
-    const { error: titleError } = await supabase.from("modules").update({ title }).eq("id", resolvedModuleId);
+    // Also backfills topic_key on every update, not just create -- a module
+    // saved before this fix landed has no topic_key yet, and this is the
+    // one place that reliably knows which topic it belongs to (the request
+    // always carries topicKey, since SopIntakeHub always sends it).
+    const { error: titleError } = await supabase.from("modules").update({ title, topic_key: topicKey }).eq("id", resolvedModuleId);
     if (titleError) {
       console.error("module-sections title update error:", titleError.message);
       return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
@@ -141,7 +145,7 @@ export async function POST(request: Request) {
     // Page 14's explicit approve/go-live flow, which this route never calls.
     const { data: created, error: createError } = await supabase
       .from("modules")
-      .insert({ venue_id: venueId, title })
+      .insert({ venue_id: venueId, title, topic_key: topicKey })
       .select("id")
       .single();
     if (createError || !created) {

@@ -18,19 +18,25 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
       .order("created_at", { ascending: false }),
     supabase
       .from("modules")
-      .select("id, title, module_sections(content, is_restricted, section_order), check_questions(question, section_order)")
+      .select("id, title, topic_key, module_sections(content, is_restricted, section_order), check_questions(question, section_order)")
       .eq("venue_id", staff!.venue_id!),
   ]);
 
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 
-  // modules has no topic_key column (Q5's test-question route comment
-  // explains why: no FK-able label exists) — the module's title, which
-  // SopIntakeHub defaults to the topic's own label, is the best available
-  // match so a re-visit resumes editing rather than always starting fresh.
+  // Match by topic_key first — a module saved through this hub always
+  // carries it (module-sections/route.ts sets it on every create and
+  // update). Falls back to exact title match only for legacy rows saved
+  // before topic_key existed and never revisited since; matching by title
+  // alone was the original design and is fragile (confirmed live: 13 of
+  // 14 modules on a real venue used stylistic title variants like "RSA and
+  // responsible service" vs the canonical "RSA & responsible service" and
+  // were invisible to this exact match, which would have caused a revisit
+  // to silently create a duplicate module instead of updating the
+  // existing one).
   const existingModulesByTopic: Record<string, { moduleId: string; sections: { content: string; isRestricted: boolean }[]; checkQuestions: { question: string; sectionIndex: number }[] }> = {};
   for (const topic of PART_B_TOPICS) {
-    const match = (modules ?? []).find((m) => m.title === topic.label);
+    const match = (modules ?? []).find((m) => m.topic_key === topic.key) ?? (modules ?? []).find((m) => !m.topic_key && m.title === topic.label);
     if (!match) continue;
     const sortedSections = [...(match.module_sections ?? [])].sort((a, b) => a.section_order - b.section_order);
     existingModulesByTopic[topic.key] = {

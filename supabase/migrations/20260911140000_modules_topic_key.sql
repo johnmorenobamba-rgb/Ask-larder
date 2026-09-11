@@ -1,0 +1,22 @@
+-- Block Q content-intake hub bug fix, 11 Sep 2026.
+-- modules had no reliable link back to which Part B topic (Q1 catalog,
+-- q2-wizard-flow-and-schema.md Page 12) it was authored for -- the
+-- content-intake page matched modules to topics by exact title-string
+-- equality against PART_B_TOPICS' canonical labels
+-- (docs/block-q/q1-requirements-catalog.md Part B), but the title field
+-- is freely editable text with no enforcement.
+--
+-- Confirmed live on The Coachman's Arms Hotel (wizard-built,
+-- coachmans-arms-wizard): 13 of 14 real, saved, live modules used
+-- stylistic title variants ("RSA and responsible service" vs the
+-- canonical "RSA & responsible service") and were invisible to the hub's
+-- own "module saved" status -- worse, revisiting one of those topics and
+-- clicking "Save module content" would have silently created a
+-- *duplicate* module rather than updating the existing one, since
+-- moduleIdByTopic[topicKey] had nothing to seed from.
+--
+-- topic_key is nullable and freetext (not an FK to a fixed enum) --
+-- PART_B_TOPICS is application-layer data, not a database table, so this
+-- mirrors the same convention already used for onboarding_content_checks
+-- .topic_key.
+alter table modules add column if not exists topic_key text;
