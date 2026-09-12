@@ -1,8 +1,13 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentStaff } from "@/lib/auth/session";
+import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { DeleteStationButton } from "@/components/owner/DeleteStationButton";
+import { StationModuleSelect } from "@/components/owner/StationModuleSelect";
+import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
 
 export default async function OwnerStationsPage({
   params,
@@ -10,6 +15,7 @@ export default async function OwnerStationsPage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
+  const staff = await getCurrentStaff();
   const supabase = await createClient();
   const headerList = await headers();
   const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
@@ -19,33 +25,72 @@ export default async function OwnerStationsPage({
     supabase.from("modules").select("id, title").eq("status", "live").order("title"),
   ]);
 
-  const stationsWithQr = await Promise.all(
-    (stations ?? []).map(async (s) => ({
-      ...s,
-      qrDataUrl: await QRCode.toDataURL(`${origin}/${venueSlug}/station/${s.qr_code_slug}`),
-    })),
+  const stationIds = (stations ?? []).map((s) => s.id);
+  const { data: stationPhotos } =
+    stationIds.length > 0
+      ? await supabase
+          .from("photo_library")
+          .select("station_id, storage_path, created_at")
+          .eq("tag", "station")
+          .in("station_id", stationIds)
+          .order("created_at", { ascending: false })
+      : { data: [] as { station_id: string | null; storage_path: string; created_at: string | null }[] };
+  // Most recent photo per station -- rows are already newest-first, so the
+  // first one seen per station_id wins.
+  const photoPathByStation = new Map<string, string>();
+  for (const p of stationPhotos ?? []) {
+    if (p.station_id && !photoPathByStation.has(p.station_id)) photoPathByStation.set(p.station_id, p.storage_path);
+  }
+
+  const stationsWithDisplay = await Promise.all(
+    (stations ?? []).map(async (s) => {
+      const photoPath = photoPathByStation.get(s.id);
+      return {
+        ...s,
+        qrDataUrl: await QRCode.toDataURL(`${origin}/${venueSlug}/station/${s.qr_code_slug}`),
+        photoUrl: photoPath ? await getPhotoLibraryUrl(photoPath) : null,
+      };
+    }),
   );
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
-      <div className="mx-auto w-full max-w-lg space-y-6">
-        <h1 className="font-display text-3xl font-bold text-ink">Stations & QR codes</h1>
+      <div className="mx-auto w-full max-w-2xl space-y-6">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-ink">Stations & QR codes</h1>
+          <p className="font-sans text-sm text-clay-brown">
+            Each station gets a QR code staff can scan on the floor. Link a module, add a real photo, and print the label.
+          </p>
+        </div>
 
         <CreateStationForm modules={modules ?? []} />
 
         <div className="space-y-3">
-          {stationsWithQr.map((s) => (
-            <div key={s.id} className="flex items-center gap-4 rounded-2xl border-2 border-clay-brown/40 px-4 py-4">
-              {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URL, no benefit from next/image */}
-              <img src={s.qrDataUrl} alt={`QR code for ${s.name}`} className="h-24 w-24" />
-              <div className="flex-1">
+          {stationsWithDisplay.map((s) => (
+            <div key={s.id} className="flex flex-wrap items-start gap-4 rounded-2xl border-2 border-clay-brown/40 px-4 py-4">
+              {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URL / short-lived signed URL, neither benefits from next/image */}
+              <img
+                src={s.photoUrl ?? s.qrDataUrl}
+                alt={s.photoUrl ? s.name : `QR code for ${s.name}`}
+                className={s.photoUrl ? "h-20 w-20 rounded-xl object-cover" : "h-20 w-20"}
+              />
+              <div className="min-w-[220px] flex-1 space-y-2">
                 <p className="font-display text-ink">{s.name}</p>
-                <p className="font-mono text-xs text-clay-brown">{s.modules?.title ?? "No module assigned"}</p>
-                <DeleteStationButton stationId={s.id} />
+                <StationModuleSelect stationId={s.id} currentModuleId={s.primary_module_id} modules={modules ?? []} />
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <StationPhotoUpload venueId={staff!.venue_id!} stationId={s.id} />
+                  <Link
+                    href={`/${venueSlug}/owner/stations/${s.id}/label`}
+                    className="font-mono text-xs uppercase tracking-wide text-preserve-red underline"
+                  >
+                    View / print QR label
+                  </Link>
+                  <DeleteStationButton stationId={s.id} />
+                </div>
               </div>
             </div>
           ))}
-          {stationsWithQr.length === 0 && (
+          {stationsWithDisplay.length === 0 && (
             <p className="font-sans text-sm text-clay-brown">No stations yet.</p>
           )}
         </div>

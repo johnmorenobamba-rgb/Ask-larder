@@ -38,6 +38,7 @@ export function ModuleRunner({
   questions,
   backHref,
   backLabel = "Back to modules",
+  stationPhoto,
 }: {
   venueSlug: string;
   moduleId: string;
@@ -48,6 +49,10 @@ export function ModuleRunner({
   questions: Question[];
   backHref?: string;
   backLabel?: string;
+  /** Block S4 -- a real uploaded photo for the station this module is
+   * taught at, shown inline on the module's first section. Undefined/null
+   * when no station has uploaded one yet; nothing renders in that case. */
+  stationPhoto?: { url: string; stationName: string } | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -124,6 +129,15 @@ export function ModuleRunner({
         <PassSlide light key={step}>
           {current?.type === "section" ? (
             <div className="space-y-6">
+              {step === 0 && stationPhoto && (
+                <figure className="overflow-hidden rounded-2xl border-2 border-clay-brown/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL, not worth next/image's optimization pipeline */}
+                  <img src={stationPhoto.url} alt={stationPhoto.stationName} className="aspect-video w-full object-cover" />
+                  <figcaption className="bg-clay-brown/10 px-3 py-2 font-mono text-xs uppercase tracking-wide text-clay-brown">
+                    {stationPhoto.stationName}, your venue
+                  </figcaption>
+                </figure>
+              )}
               <ModuleContentBlock content={current.section.content ?? ""} />
               <button
                 type="button"

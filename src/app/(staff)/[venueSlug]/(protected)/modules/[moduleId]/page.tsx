@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { ModuleRunner } from "@/components/staff/ModuleRunner";
+import { getModuleStationPhoto } from "@/lib/stations/getModuleStationPhoto";
 
 function stripAnswerPrefix(context: string | null): string | null {
   if (!context) return null;
@@ -54,6 +55,8 @@ export default async function ModulePage({
     .select("id, question, options, correct_option_index, expected_answer_context, section_order")
     .eq("module_id", moduleId);
 
+  const stationPhoto = await getModuleStationPhoto(supabase, moduleId);
+
   return (
     <ModuleRunner
       venueSlug={venueSlug}
@@ -61,6 +64,7 @@ export default async function ModulePage({
       moduleTitle={module.title}
       moduleIndex={moduleIndex >= 0 ? moduleIndex + 1 : undefined}
       totalModules={visibleModuleIds.length}
+      stationPhoto={stationPhoto}
       sections={sections ?? []}
       questions={(questions ?? []).map((q) => ({
         id: q.id,
