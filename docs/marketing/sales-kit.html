@@ -1,0 +1,309 @@
+<!doctype html>
+<title>Larder Sales Kit</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ink:#1F1B16; --parchment:#F2E9D8; --paper:#FBF5EA;
+    --preserve:#B23A2C; --saffron:#C4801E; --bay:#4A5433; --clay:#7A5C43;
+    --text:#1F1B16; --text-dim:#5C5347; --bg:#F2E9D8; --surface:#FBF5EA;
+    --rule:rgba(31,27,22,.13); --rule-strong:rgba(31,27,22,.24);
+    --shadow: 0 1px 2px rgba(31,27,22,.06), 0 6px 20px rgba(31,27,22,.05);
+    --font-display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F2E9D8; --parchment:#1B1712; --paper:#242019;
+      --preserve:#E2604C; --saffron:#E8A93B; --bay:#8FA06A; --clay:#C4A98A;
+      --text:#F2E9D8; --text-dim:#B7AC9B; --bg:#1B1712; --surface:#242019;
+      --rule:rgba(242,233,216,.13); --rule-strong:rgba(242,233,216,.26);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F2E9D8; --parchment:#1B1712; --paper:#242019;
+    --preserve:#E2604C; --saffron:#E8A93B; --bay:#8FA06A; --clay:#C4A98A;
+    --text:#F2E9D8; --text-dim:#B7AC9B; --bg:#1B1712; --surface:#242019;
+    --rule:rgba(242,233,216,.13); --rule-strong:rgba(242,233,216,.26);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body);
+    font-size:15.5px; line-height:1.6;
+  }
+  .wrap{display:grid; grid-template-columns:260px minmax(0,1fr); max-width:1160px; margin:0 auto; min-height:100vh;}
+
+  /* ---- sidebar ---- */
+  .side{position:sticky; top:0; align-self:start; height:100vh; min-width:0; padding:34px 20px 24px 28px; display:flex; flex-direction:column; gap:26px; border-right:1px solid var(--rule); overflow-y:auto;}
+  .brand{display:flex; align-items:center; gap:9px;}
+  .brand svg{flex:none;}
+  .brand b{font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:.02em;}
+  .brand .tag{display:block; font-family:var(--font-mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-top:1px;}
+  nav.toc{display:flex; flex-direction:column; gap:1px;}
+  nav.toc a{
+    font-family:var(--font-mono); font-size:12px; color:var(--text-dim); text-decoration:none;
+    padding:8px 10px; border-radius:5px; display:flex; gap:10px; align-items:baseline;
+    letter-spacing:.02em;
+  }
+  nav.toc a .n{color:var(--preserve); font-weight:500; min-width:16px;}
+  nav.toc a:hover{background:var(--surface); color:var(--text);}
+  nav.toc a.on{background:var(--surface); color:var(--text); box-shadow:inset 2px 0 0 var(--preserve);}
+  .side-foot{margin-top:auto; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); line-height:1.7; border-top:1px solid var(--rule); padding-top:14px;}
+
+  /* ---- main ---- */
+  main{padding:56px 56px 120px; max-width:840px; min-width:0;}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--preserve); margin:0 0 14px;}
+  h1.title{font-family:var(--font-display); font-weight:700; font-size:44px; line-height:1.06; margin:0 0 16px; text-wrap:balance;}
+  .sub{font-size:17px; color:var(--text-dim); max-width:640px; margin:0 0 30px;}
+
+  .honesty{
+    display:flex; gap:14px; background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--bay);
+    border-radius:6px; padding:16px 20px; margin-bottom:52px; box-shadow:var(--shadow);
+  }
+  .honesty .ic{font-family:var(--font-mono); color:var(--bay); font-size:18px; line-height:1;}
+  .honesty p{margin:0; font-size:13.8px; color:var(--text-dim);}
+  .honesty b{color:var(--text); font-weight:600;}
+
+  section.block{margin-bottom:64px; scroll-margin-top:32px;}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:20px;}
+  .sec-num{
+    font-family:var(--font-mono); font-size:12px; color:var(--parchment); background:var(--ink);
+    width:26px; height:22px; border-radius:4px 4px 4px 0; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  h2.sec-title{font-family:var(--font-display); font-weight:700; font-size:25px; margin:0;}
+  .sec-note{font-size:14px; color:var(--text-dim); margin:-6px 0 20px 40px; max-width:600px;}
+
+  ol.qlist, ul.plain{margin:0; padding:0 0 0 40px;}
+  ol.qlist{counter-reset:q;}
+  ol.qlist li{list-style:none; counter-increment:q; position:relative; padding:0 0 18px 30px; font-size:15px;}
+  ol.qlist li::before{content:counter(q); position:absolute; left:-40px; top:1px; font-family:var(--font-mono); font-size:12px; color:var(--preserve); width:24px; text-align:right;}
+  ol.qlist li b{font-weight:600;}
+  ol.qlist li span.listen{display:block; font-size:13.3px; color:var(--text-dim); margin-top:4px;}
+
+  .pitch-ticket{
+    margin:8px 0 8px 40px; max-width:600px; background:var(--surface); border:1px solid var(--rule-strong);
+    border-radius:2px; padding:26px 28px; box-shadow:var(--shadow); position:relative;
+  }
+  .pitch-ticket::before{content:""; position:absolute; top:-1px; left:0; right:0; height:5px; background:repeating-linear-gradient(90deg,var(--bg) 0 7px, transparent 7px 13px);}
+  .pitch-ticket .say{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:10px;}
+  .pitch-ticket p{font-family:var(--font-display); font-size:17px; line-height:1.52; color:var(--text); margin:0; font-weight:500;}
+
+  table{width:100%; min-width:540px; border-collapse:collapse; margin:6px 0 8px 40px; max-width:720px; font-size:14px;}
+  .tbl-wrap{overflow-x:auto; margin-left:40px;}
+  .tbl-wrap table{margin-left:0;}
+  th{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-dim); text-align:left; padding:0 16px 10px 0; border-bottom:1px solid var(--rule-strong); font-weight:500;}
+  td{padding:14px 16px 14px 0; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--text);}
+  td.mech{color:var(--text-dim);}
+  tr:last-child td{border-bottom:none;}
+  td b, .obj{font-weight:600;}
+
+  .price-cols{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:8px 0 8px 40px; max-width:720px;}
+  .price-col h4{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--clay); margin:0 0 10px;}
+  .price-col ul{margin:0; padding-left:18px; font-size:14px; color:var(--text-dim);}
+  .price-col li{margin-bottom:8px;}
+  .price-col.now{border-left:2px solid var(--bay); padding-left:16px; margin-left:-18px;}
+
+  .script{margin:8px 0 0 40px; max-width:660px; display:flex; flex-direction:column; gap:14px;}
+  .line{display:grid; grid-template-columns:76px 1fr; gap:14px; font-size:14.5px;}
+  .line .who{font-family:var(--font-mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--preserve); padding-top:2px;}
+  .line.owner .who{color:var(--clay);}
+  .line p{margin:0; color:var(--text);}
+
+  .faq-item{margin:0 0 22px 40px; max-width:640px;}
+  .faq-item h4{font-family:var(--font-body); font-size:15px; font-weight:600; margin:0 0 5px;}
+  .faq-item p{margin:0; font-size:14px; color:var(--text-dim);}
+
+  .maintain{margin-left:40px; max-width:660px; display:flex; flex-direction:column; gap:22px;}
+  .maintain h4{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--bay); margin:0 0 8px;}
+  .maintain ul{margin:0; padding-left:18px; color:var(--text-dim); font-size:14px;}
+  .maintain li{margin-bottom:6px;}
+
+  footer.end{margin-left:40px; padding-top:30px; border-top:1px solid var(--rule); font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim);}
+
+  @media (max-width:820px){
+    .wrap{grid-template-columns:minmax(0,1fr);}
+    .side{position:static; height:auto; border-right:none; border-bottom:1px solid var(--rule);}
+    main{padding:36px 22px 100px;}
+    h1.title{font-size:32px;}
+    .sec-note, ol.qlist, table, .tbl-wrap, .pitch-ticket, .price-cols, .script, .faq-item, .maintain, footer.end{margin-left:0;}
+    .price-cols{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 72 72" aria-hidden="true"><path d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="var(--preserve)"/></svg>
+      <div><b>LARDER</b><span class="tag">Sales kit</span></div>
+    </div>
+    <nav class="toc" id="toc">
+      <a href="#qualify"><span class="n">01</span>Qualifying questions</a>
+      <a href="#pitch"><span class="n">02</span>The 30 second pitch</a>
+      <a href="#pain"><span class="n">03</span>Pain to mechanism</a>
+      <a href="#objections"><span class="n">04</span>Objection handling</a>
+      <a href="#pricing"><span class="n">05</span>Presenting pricing</a>
+      <a href="#script"><span class="n">06</span>Sample call</a>
+      <a href="#faq"><span class="n">07</span>FAQ</a>
+      <a href="#maintain"><span class="n">08</span>Keeping this current</a>
+    </nav>
+    <div class="side-foot">v1, hand delivered stage.<br>No ad funnel. No cold outreach.<br>One real conversation at a time.</div>
+  </aside>
+
+  <main>
+    <p class="kicker">Field guide, not a brochure</p>
+    <h1 class="title">Pitching Larder,<br>one real conversation<br>at a time.</h1>
+    <p class="sub">Read this once. Then go have the conversation, in person, by phone, or over coffee.</p>
+
+    <div class="honesty">
+      <span class="ic">&#9679;</span>
+      <p><b>There is no paying customer yet.</b> Nothing here contains a case study, a testimonial, or a "venues like yours" claim, because none of that exists yet and inventing it would break trust with the exact person we're trying to earn it from. Lean on the live demo, the mechanism, and the founder's own credibility instead.</p>
+    </div>
+
+    <section class="block" id="qualify">
+      <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">Qualifying questions</h2></div>
+      <p class="sec-note">Ask these before you pitch anything. Almost any independent venue with 10 to 30 staff is a fit, the goal is finding out which pain to lead with.</p>
+      <ol class="qlist">
+        <li><b>How many staff do you currently have, and how often do you hire?</b><span class="listen">Tells you the pricing tier, and how often the onboarding pain actually recurs.</span></li>
+        <li><b>Walk me through what happens on a new hire's first shift right now.</b><span class="listen">Listen for a folder, a PDF nobody reads, or a senior staff member pulled off the floor.</span></li>
+        <li><b>How do you currently track RSA, food handling, first aid, and Working with Children checks?</b><span class="listen">A spreadsheet, a wall calendar, someone's memory, or an honest "we don't, really."</span></li>
+        <li><b>When a staff member has a question mid shift and a manager isn't around, what do they do?</b><span class="listen">Listen for how often the same senior person gets pulled away from real work.</span></li>
+        <li><b>What's the most frustrating part of running training and onboarding here today?</b><span class="listen">Open ended. Let them talk. Don't lead with pricing or mechanism before you've heard this.</span></li>
+      </ol>
+    </section>
+
+    <section class="block" id="pitch">
+      <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">The 30 second pitch</h2></div>
+      <p class="sec-note">Say this out loud. Adjust the pain to whatever came out of qualifying.</p>
+      <div class="pitch-ticket">
+        <span class="say">Say it like this</span>
+        <p>"Larder turns your own SOPs, your own photos, and how your own staff actually work into training built specifically for your venue, not generic content. New hires get an always on chatbot that answers from your procedures only, so whoever currently gets interrupted isn't stuck re&#8203;explaining the same thing every week. You get a dashboard tracking who's finished training and when every certificate expires, with reminders before they lapse. Nothing goes live until you've reviewed it yourself. And it's month to month, no lock in, so there's no risk in trying it."</p>
+      </div>
+    </section>
+
+    <section class="block" id="pain">
+      <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Pain to mechanism</h2></div>
+      <p class="sec-note">Connect what the owner just said to the actual mechanism, not a marketing phrase.</p>
+      <div class="tbl-wrap"><table>
+        <tr><th>The real pain</th><th>What's actually happening</th><th>The Larder mechanism</th></tr>
+        <tr><td><b>New staff take too long to become useful</b></td><td class="mech">Training is verbal and inconsistent between shifts</td><td class="mech">Role specific modules built from the venue's own SOPs, photos, and interviews</td></tr>
+        <tr><td><b>Certificates lapse unnoticed</b></td><td class="mech">Expiry dates live in someone's head or an old spreadsheet</td><td class="mech">Dashboard tracks every expiry, automatic reminders before they lapse</td></tr>
+        <tr><td><b>Senior staff constantly interrupted</b></td><td class="mech">The person who knows the answer is also running the floor</td><td class="mech">Ask Larder answers from approved content only, no manager needed</td></tr>
+        <tr><td><b>SOPs live in someone's head</b></td><td class="mech">Never actually written down anywhere usable</td><td class="mech">The build itself becomes documentation, plus a printable SOP generator</td></tr>
+        <tr><td><b>Owner worries about liability</b></td><td class="mech">Unsupervised content creates unsigned&#8209;off risk</td><td class="mech">Every module needs owner approval; the fallback rule always defers physical access to a supervisor</td></tr>
+        <tr><td><b>No visibility into real gaps</b></td><td class="mech">Gaps only surface after a mistake on shift</td><td class="mech">Weekly digest of what staff actually asked the chatbot</td></tr>
+      </table></div>
+    </section>
+
+    <section class="block" id="objections">
+      <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">Objection handling</h2></div>
+      <p class="sec-note">Answer honestly, grounded in the real product and pricing. Don't deflect, don't oversell.</p>
+      <div class="tbl-wrap"><table>
+        <tr><th style="width:30%">Objection</th><th>Honest answer</th></tr>
+        <tr><td class="obj">"Too expensive for a small venue."</td><td class="mech">Setup scales with size, from $799 for one to five staff. The monthly retainer is $100 and includes tracking, reminders, and five edits a month. A discretionary founder's rate of $750 exists for a first venue.</td></tr>
+        <tr><td class="obj">"We already train staff fine informally."</td><td class="mech">That might be true while the same senior people are around. The question is what happens the day one of them is off, sick, or leaves.</td></tr>
+        <tr><td class="obj">"AI will just make things up."</td><td class="mech">It only answers from that venue's own approved content, filtered at the database level. It can't pull from another venue or invent an answer, and always defers keys, safes, and logins to a supervisor.</td></tr>
+        <tr><td class="obj">"What happens to our data if we cancel?"</td><td class="mech">Month to month, 30 days' written notice, full export of content and records. Nothing gets held hostage, by design.</td></tr>
+        <tr><td class="obj">"This feels like a big process change."</td><td class="mech">Built from SOPs, photos, and short interviews, not a long implementation. Nothing goes live until the owner approves every module.</td></tr>
+        <tr><td class="obj">"How do I know this works before committing?"</td><td class="mech">A real, live demo venue on the actual product, shareable as a link to try hands on right now.</td></tr>
+      </table></div>
+    </section>
+
+    <section class="block" id="pricing">
+      <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Presenting pricing</h2></div>
+      <p class="sec-note">A straightforward, honest number, not a reveal at the end of a script. Bring it up once the mechanism lands. State it, then stop talking.</p>
+      <div class="price-cols">
+        <div class="price-col now">
+          <h4>First conversation</h4>
+          <ul>
+            <li>The setup fee tier matching their staff count, stated plainly</li>
+            <li>The $100/month retainer, and exactly what it includes</li>
+            <li>Month to month, 30 days' notice, no lock in</li>
+            <li>The founder's rate, if they're a strong first client</li>
+          </ul>
+        </div>
+        <div class="price-col">
+          <h4>Can wait for follow up</h4>
+          <ul>
+            <li>The $15 per additional edit rate</li>
+            <li>The complimentary quiz add on</li>
+            <li>SOP generation quoting, after a walkthrough</li>
+            <li>The Large tier custom quote</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="script">
+      <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">Sample call</h2></div>
+      <p class="sec-note">One way it goes, not the only way.</p>
+      <div class="script">
+        <div class="line"><span class="who">John</span><p>How many staff have you got, and how often are you hiring?</p></div>
+        <div class="line owner"><span class="who">Owner</span><p>About eighteen, and honestly we're always onboarding someone.</p></div>
+        <div class="line"><span class="who">John</span><p>When someone new starts, what actually happens on their first shift?</p></div>
+        <div class="line owner"><span class="who">Owner</span><p>Whoever's on shows them around. It's fine, but not exactly consistent.</p></div>
+        <div class="line"><span class="who">John</span><p>That's really common, it's actually what got me building this. I'm a working chef, I built Larder because I needed exactly this. Thirty second version: it turns your own procedures into training built for your venue, with a chatbot that only answers from your own approved material, and nothing goes live until you've signed off on it.</p></div>
+        <div class="line owner"><span class="who">Owner</span><p>Won't the AI just make things up if someone asks it something it doesn't know?</p></div>
+        <div class="line"><span class="who">John</span><p>Good question, first thing I'd ask too. It's enforced at the database level, not a prompt telling it to behave. I can show you a live demo right now if you want to try asking it something.</p></div>
+        <div class="line owner"><span class="who">Owner</span><p>What's this cost?</p></div>
+        <div class="line"><span class="who">John</span><p>For eighteen staff you'd be mid tier, $1,999 setup and $100 a month. Since you'd be one of my first venues, I'd offer the founder's rate instead, $750, to get this proven out properly.</p></div>
+        <div class="line owner"><span class="who">Owner</span><p>Can I see it working first?</p></div>
+        <div class="line"><span class="who">John</span><p>Absolutely, best way to judge it. I'll send the demo link, have a play before we talk again.</p></div>
+      </div>
+    </section>
+
+    <section class="block" id="faq">
+      <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">FAQ</h2></div>
+      <div class="faq-item"><h4>Is this a full replacement for in person training?</h4><p>No. It supports in person training and hands off anything requiring physical access to a real supervisor.</p></div>
+      <div class="faq-item"><h4>Does the chatbot know things about other venues?</h4><p>No. Retrieval is filtered to that specific venue before anything reaches the chatbot.</p></div>
+      <div class="faq-item"><h4>Who writes the training content?</h4><p>Built from the venue's own SOPs, photos, and interviews. The owner approves every module before it goes live.</p></div>
+      <div class="faq-item"><h4>Does this work for a venue with nothing written down?</h4><p>Yes, that's a common starting point. The build process creates that documentation for the first time.</p></div>
+      <div class="faq-item"><h4>Is RSA or WWCC content the same everywhere in Australia?</h4><p>No. Requirements are state and territory specific, confirmed against that venue's actual state.</p></div>
+      <div class="faq-item"><h4>What's the e&#8209;signature actually for?</h4><p>A staff member typing their name to confirm completion, with timestamp and device recorded. A comprehension record, not a legal contract signature.</p></div>
+      <div class="faq-item"><h4>How long does setup actually take?</h4><p>Not yet standardised, there's no completed first client to benchmark against. Be honest about this if asked.</p></div>
+    </section>
+
+    <section class="block" id="maintain">
+      <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">Keeping this current</h2></div>
+      <p class="sec-note">A living document, updated on triggers, not a fixed schedule.</p>
+      <div class="maintain">
+        <div>
+          <h4>Once there's a real first client</h4>
+          <ul>
+            <li>Add one genuine, specific case study, only once a venue has gone live and used the product for a few weeks. Real words only, with permission.</li>
+            <li>Replace the honest "no case study yet" framing with a real before and after. Only real numbers, never projected ones.</li>
+            <li>Keep the founder's rate language until there's a defensible reason to phase it out.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>For a new tier, venue type, or region</h4>
+          <ul>
+            <li>Re run the qualifying questions with someone who actually represents that segment.</li>
+            <li>Re check every compliance claim against that region's actual regulator.</li>
+            <li>Re verify every price against the current Notion Decision Log before reusing this document.</li>
+            <li>Keep the same structure. It's what makes this usable in a real conversation.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="end">LARDER &middot; SALES KIT &middot; HAND DELIVERED SERVICE STAGE</footer>
+  </main>
+</div>
+
+<script>
+  const links = Array.from(document.querySelectorAll('#toc a'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting){
+        const id = '#' + e.target.id;
+        links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === id));
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px' });
+  sections.forEach(s => s && io.observe(s));
+</script>

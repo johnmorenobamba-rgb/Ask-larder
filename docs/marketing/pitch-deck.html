@@ -1,0 +1,388 @@
+<!doctype html>
+<title>Larder Pitch Deck</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Deliberate single visual world: a physical order-docket rail, always
+     rendered in Larder's own Ink/Parchment brand regardless of the
+     viewer's OS theme, the same way a designed slideshow doesn't repaint
+     itself for a projector's color settings. Background/colors are
+     painted explicitly throughout, so the page holds correctly either way. */
+  :root{
+    --ink:#1F1B16; --parchment:#F2E9D8; --paper:#FAF3E6;
+    --preserve:#B23A2C; --saffron:#E8A93B; --bay:#55603C; --clay:#7A5C43;
+    --ink-70: rgba(31,27,22,.7); --ink-45: rgba(31,27,22,.45);
+    --rule: rgba(31,27,22,.14);
+    --font-display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--ink); color:var(--ink);
+    font-family:var(--font-body);
+    overflow:hidden;
+  }
+  .deck{position:relative; width:100%; height:100vh; background:var(--parchment);}
+
+  /* ---- docket rail chrome ---- */
+  .rail{
+    position:fixed; top:0; left:0; right:0; height:64px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 28px; z-index:50; pointer-events:none;
+  }
+  .rail > *{pointer-events:auto;}
+  .brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--parchment); letter-spacing:.02em;}
+  .brand svg{display:block;}
+  .counter{font-family:var(--font-mono); font-size:12px; color:var(--parchment); opacity:.75; letter-spacing:.08em; font-variant-numeric:tabular-nums;}
+  .rail-top-bg{position:fixed; top:0; left:0; right:0; height:64px; background:var(--ink); z-index:40;}
+
+  .dots{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); display:flex; gap:7px; z-index:50;}
+  .dot{width:6px; height:6px; border-radius:50%; background:var(--ink-45); cursor:pointer; transition:transform .2s ease, background .2s ease;}
+  .dot[data-on="1"]{background:var(--preserve); transform:scale(1.5);}
+
+  .nav-btn{
+    position:fixed; top:50%; transform:translateY(-50%); z-index:50;
+    width:44px; height:44px; border-radius:50%; border:1.5px solid var(--ink-45);
+    background:var(--paper); color:var(--ink); font-family:var(--font-mono); font-size:18px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .nav-btn:hover{background:var(--ink); color:var(--parchment); border-color:var(--ink);}
+  .nav-btn:focus-visible{outline:2px solid var(--preserve); outline-offset:2px;}
+  .nav-btn.prev{left:20px;} .nav-btn.next{right:20px;}
+  .nav-btn[disabled]{opacity:.25; cursor:default;}
+  .nav-btn[disabled]:hover{background:var(--paper); color:var(--ink);}
+
+  .fs-btn{
+    position:fixed; bottom:20px; right:24px; z-index:50;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-70); background:transparent; border:1px solid var(--ink-45); border-radius:20px;
+    padding:7px 14px; cursor:pointer;
+  }
+  .fs-btn:hover{border-color:var(--ink); color:var(--ink);}
+
+  /* ---- slides ---- */
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column; justify-content:safe center;
+    padding:84px 24px 32px; opacity:0; visibility:hidden; transition:opacity .38s ease;
+    overflow-y:auto;
+  }
+  @media (min-width:720px){ .slide{ padding:104px 96px 96px; } }
+  .slide[data-active="1"]{opacity:1; visibility:visible;}
+  .slide-inner{max-width:1180px; margin:0 auto; width:100%;}
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--preserve); margin:0 0 18px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow .chit-no{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:18px; background:var(--ink); color:var(--parchment); border-radius:3px 3px 3px 0;
+    font-size:10px;
+  }
+  h1.slide-title{
+    font-family:var(--font-display); font-weight:700; color:var(--ink);
+    font-size:clamp(40px,5.4vw,74px); line-height:1.03; margin:0 0 20px; text-wrap:balance; letter-spacing:-.01em;
+  }
+  h1.slide-title em{font-style:normal; color:var(--preserve);}
+  .lede{font-size:clamp(17px,1.7vw,22px); line-height:1.5; color:var(--ink-70); max-width:640px; margin:0 0 8px;}
+  .stack{display:flex; flex-direction:column; gap:16px; margin-top:34px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:36px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:36px;}
+
+  /* docket / ticket card */
+  .ticket{
+    position:relative; background:var(--paper); border:1px solid var(--rule); border-radius:2px;
+    padding:22px 24px; box-shadow:0 1px 0 var(--rule);
+  }
+  .ticket::before{
+    content:""; position:absolute; left:-1px; right:-1px; top:0; height:4px;
+    background:repeating-linear-gradient(90deg,var(--parchment) 0 8px, transparent 8px 14px);
+  }
+  .ticket h3{font-family:var(--font-display); font-size:17px; margin:0 0 8px; color:var(--ink);}
+  .ticket p{font-size:14.5px; line-height:1.5; color:var(--ink-70); margin:0;}
+  .ticket .tag{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px;}
+
+  .kicker-num{font-family:var(--font-mono); font-size:13px; color:var(--clay); letter-spacing:.04em;}
+
+  /* diagram row (mechanism slide) */
+  .flow{display:flex; align-items:center; gap:0; margin-top:44px; flex-wrap:wrap;}
+  .flow-node{background:var(--paper); border:1px solid var(--rule); border-radius:3px; padding:18px 22px; min-width:170px;}
+  .flow-node .k{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--clay); display:block; margin-bottom:6px;}
+  .flow-node .v{font-family:var(--font-display); font-size:18px; color:var(--ink);}
+  .flow-arrow{font-family:var(--font-mono); color:var(--preserve); font-size:22px; padding:0 18px;}
+  .flow-node.hero{background:var(--ink); border-color:var(--ink);}
+  .flow-node.hero .k{color:var(--saffron);}
+  .flow-node.hero .v{color:var(--parchment);}
+
+  /* trust slide */
+  .rule-card{background:var(--ink); border-radius:4px; padding:26px 28px; color:var(--parchment);}
+  .rule-card .k{font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--saffron); display:block; margin-bottom:10px;}
+  .rule-card p{font-family:var(--font-display); font-size:22px; line-height:1.3; margin:0; color:var(--parchment);}
+  .rule-card small{display:block; margin-top:12px; font-family:var(--font-body); font-size:13.5px; color:rgba(242,233,216,.65); font-weight:400;}
+
+  /* dashboard mockup slide */
+  .mock{background:var(--ink); border-radius:8px; padding:20px 22px; margin-top:32px;}
+  .mock-bar{display:flex; gap:18px; font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:rgba(242,233,216,.5); border-bottom:1px solid rgba(242,233,216,.14); padding-bottom:14px; margin-bottom:16px;}
+  .mock-bar span.on{color:var(--parchment);}
+  .mock-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  .mock-cell{background:rgba(242,233,216,.06); border:1px solid rgba(242,233,216,.1); border-radius:5px; padding:14px;}
+  .mock-cell .num{font-family:var(--font-display); font-size:26px; color:var(--parchment);}
+  .mock-cell .lbl{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:rgba(242,233,216,.55); margin-top:4px;}
+  .mock-cell.warn .num{color:var(--saffron);}
+  .mock-cell.crit .num{color:var(--preserve);}
+
+  /* pricing slide */
+  .price-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:38px;}
+  .price-card{background:var(--paper); border:1px solid var(--rule); border-radius:4px; padding:20px 18px;}
+  .price-card .tier{font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; color:var(--clay); text-transform:uppercase;}
+  .price-card .staff{font-size:13px; color:var(--ink-70); margin-top:4px;}
+  .price-card .amt{font-family:var(--font-display); font-size:30px; color:var(--ink); margin-top:14px; font-variant-numeric:tabular-nums;}
+  .price-card.founder{background:var(--ink); border-color:var(--ink);}
+  .price-card.founder .tier{color:var(--saffron);} .price-card.founder .staff{color:rgba(242,233,216,.65);} .price-card.founder .amt{color:var(--parchment);}
+  .retainer-line{margin-top:22px; font-size:15px; color:var(--ink-70);}
+  .retainer-line b{color:var(--ink); font-weight:600;}
+
+  /* closing */
+  .cta-row{display:flex; gap:14px; margin-top:40px; align-items:center; flex-wrap:wrap;}
+  .cta-primary{font-family:var(--font-mono); font-size:13px; letter-spacing:.06em; text-transform:uppercase; background:var(--preserve); color:var(--parchment); padding:15px 26px; border-radius:3px;}
+  .cta-secondary{font-family:var(--font-mono); font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); border:1px solid var(--ink-45); padding:14px 24px; border-radius:3px;}
+
+  .title-mark{display:flex; align-items:center; gap:16px; margin-bottom:34px;}
+  .title-mark svg{width:52px; height:52px;}
+  .tagline-strip{font-family:var(--font-mono); font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--clay);}
+
+  @media (max-width:720px){ .nav-btn{display:none;} }
+  @media (max-width:900px){
+    .slide{padding:88px 28px 84px;}
+    .grid2,.grid3,.price-row,.mock-grid{grid-template-columns:1fr 1fr;}
+    .flow{flex-direction:column; align-items:flex-start;}
+    .flow-arrow{transform:rotate(90deg); padding:6px 0;}
+  }
+  @media (prefers-reduced-motion: reduce){ .slide{transition:none;} }
+</style>
+
+<div class="rail-top-bg"></div>
+<div class="rail">
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 72 72" aria-hidden="true"><path d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="#E8A93B"/></svg>
+    LARDER
+  </div>
+  <div class="counter"><span id="counter-cur">01</span> / <span id="counter-total">11</span></div>
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 : TITLE -->
+  <section class="slide" data-active="1">
+    <div class="slide-inner">
+      <div class="title-mark">
+        <svg viewBox="0 0 72 72" aria-hidden="true"><path d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="none" stroke="#B23A2C" stroke-width="3"/><path d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="#1F1B16" opacity=".08"/></svg>
+        <span class="tagline-strip">Your SOPs, always on shift</span>
+      </div>
+      <h1 class="slide-title">Training built from<br><em>how your venue</em> actually runs.</h1>
+      <p class="lede">Not a course library. A system built from this venue's own procedures, photos, and staff, that a new hire can actually use on a busy shift.</p>
+      <p class="kicker-num" style="margin-top:40px;">A working chef built this because he needed it himself.</p>
+    </div>
+  </section>
+
+  <!-- 2 : PROBLEM -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">02</span> The real cost</p>
+      <h1 class="slide-title">Binders don't<br>train anyone.</h1>
+      <div class="grid3">
+        <div class="ticket"><span class="tag">Chit 01</span><h3>One person's head</h3><p>Training lives with whoever's been there longest. When they're off, sick, or gone, so is the knowledge.</p></div>
+        <div class="ticket"><span class="tag">Chit 02</span><h3>A different version every time</h3><p>Every new hire learns a slightly different way of doing the same shift, depending on who trained them.</p></div>
+        <div class="ticket"><span class="tag">Chit 03</span><h3>Certificates, tracked by memory</h3><p>RSA, food safety, first aid, WWCC. Nobody notices a lapse until an inspection or an incident forces it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 : MECHANISM -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">03</span> How it actually works</p>
+      <h1 class="slide-title">Your SOPs in.<br>Trained staff out.</h1>
+      <div class="flow">
+        <div class="flow-node"><span class="k">Step one</span><span class="v">Your SOPs, photos, interviews</span></div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-node hero"><span class="k">Larder builds</span><span class="v">Role specific modules</span></div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-node"><span class="k">Owner approves</span><span class="v">Nothing goes live unreviewed</span></div>
+        <div class="flow-arrow">&#8594;</div>
+        <div class="flow-node"><span class="k">Staff use</span><span class="v">On the iPad already on site</span></div>
+      </div>
+      <p class="lede" style="margin-top:38px;">No new hardware. No app to install. No generic content bought off the shelf.</p>
+    </div>
+  </section>
+
+  <!-- 4 : TRUST / CHATBOT -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">04</span> The question every owner asks first</p>
+      <h1 class="slide-title">Won't the AI<br>just make things up?</h1>
+      <div class="grid2">
+        <div class="rule-card">
+          <span class="k">Rule one</span>
+          <p>It can only answer from this venue's own approved content.</p>
+          <small>Enforced at the database level before anything reaches the model. It cannot see another venue's data, and it cannot reach past what you've approved.</small>
+        </div>
+        <div class="rule-card">
+          <span class="k">Rule two</span>
+          <p>It never guesses at a key, a code, or a login.</p>
+          <small>Anything requiring physical or system access gets one answer: ask your supervisor. Locked. Not a suggestion to the model.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 : OWNER CONTROL -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">05</span> Liability stays where it belongs</p>
+      <h1 class="slide-title">Nothing reaches staff<br>without your sign off.</h1>
+      <p class="lede">Every module is built, then sent to you for approval. Nothing goes live until you say so, and every completion is signed.</p>
+      <div class="grid2" style="margin-top:40px;">
+        <div class="ticket"><span class="tag">Before</span><h3>Owner approval gate</h3><p>You review every module before a single staff member sees it. Draft, approved, live, in that order, always.</p></div>
+        <div class="ticket"><span class="tag">After</span><h3>Signed, timestamped record</h3><p>Typed name, timestamp, device. A real comprehension record showing exactly who was trained on exactly what.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 : DASHBOARD -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">06</span> One screen, not six spreadsheets</p>
+      <h1 class="slide-title">See the gaps before<br>they become a problem.</h1>
+      <div class="mock">
+        <div class="mock-bar"><span class="on">Dashboard</span><span>Staff</span><span>Certificates</span><span>Escalations</span><span>Near misses</span></div>
+        <div class="mock-grid">
+          <div class="mock-cell"><div class="num">14</div><div class="lbl">Staff completed</div></div>
+          <div class="mock-cell warn"><div class="num">3</div><div class="lbl">Certs expiring soon</div></div>
+          <div class="mock-cell"><div class="num">27</div><div class="lbl">Questions this week</div></div>
+          <div class="mock-cell crit"><div class="num">2</div><div class="lbl">Unanswered, flagged</div></div>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:24px;">The weekly digest even shows you what staff actually asked, a direct signal of where your own procedures are still unclear.</p>
+    </div>
+  </section>
+
+  <!-- 7 : SOP GENERATOR -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">07</span> A byproduct, not extra work</p>
+      <h1 class="slide-title">Most venues have<br>never written this down.</h1>
+      <p class="lede">The same approved content that trains your staff becomes a real, professional Standard Operating Procedure document, one click, ready to print.</p>
+      <div class="ticket" style="margin-top:32px; max-width:520px;">
+        <span class="tag">Generated document includes</span>
+        <p>Purpose, scope, who performs it, materials, procedure, safety critical callouts, definition of done, escalation contact.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 : NO LOCK IN -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">08</span> The risk, removed</p>
+      <h1 class="slide-title">Nothing holds your<br>venue hostage.</h1>
+      <div class="grid3">
+        <div class="ticket"><h3>Month to month</h3><p>No annual contract. No lock in period beyond the initial setup.</p></div>
+        <div class="ticket"><h3>Thirty days' notice</h3><p>Cancel any time with written notice. That's the whole process.</p></div>
+        <div class="ticket"><h3>Everything exports</h3><p>Your content and completion records leave with you, in a standard format.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 : PROOF / DEMO -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">09</span> Don't take our word for it</p>
+      <h1 class="slide-title">Try it yourself,<br>right now.</h1>
+      <p class="lede">A real, live demo venue, built on the actual product. Open it, click through the training, ask the chatbot something.</p>
+      <div class="ticket" style="margin-top:32px; max-width:460px;">
+        <span class="tag">Live demo</span>
+        <h3>Two Fires, a working demo venue</h3>
+        <p>The exact same system a real venue would use. Nothing staged, nothing simulated.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 : PRICING -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">10</span> Straightforward, sized to you</p>
+      <h1 class="slide-title">One setup fee.<br>One monthly rate.</h1>
+      <div class="price-row">
+        <div class="price-card"><div class="tier">Micro</div><div class="staff">1 to 5 staff</div><div class="amt">$799</div></div>
+        <div class="price-card"><div class="tier">Small</div><div class="staff">6 to 15 staff</div><div class="amt">$1,299</div></div>
+        <div class="price-card"><div class="tier">Medium</div><div class="staff">16 to 25 staff</div><div class="amt">$1,999</div></div>
+        <div class="price-card founder"><div class="tier">Founder's rate</div><div class="staff">First venue only</div><div class="amt">$750</div></div>
+      </div>
+      <p class="retainer-line">Then <b>$100 AUD a month</b>, covering the dashboard, completion tracking, certificate reminders, the weekly digest, and five content edits a month.</p>
+    </div>
+  </section>
+
+  <!-- 11 : CLOSE -->
+  <section class="slide">
+    <div class="slide-inner">
+      <p class="eyebrow"><span class="chit-no">11</span> Next step</p>
+      <h1 class="slide-title">Bring your SOPs,<br>however messy.</h1>
+      <p class="lede">One walkthrough. That's all it takes to start. We'll build the first modules from what you already have.</p>
+      <div class="cta-row">
+        <div class="cta-primary">Book a walkthrough</div>
+        <div class="cta-secondary">See the live demo</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<button class="nav-btn prev" id="prev" aria-label="Previous slide">&#8592;</button>
+<button class="nav-btn next" id="next" aria-label="Next slide">&#8594;</button>
+<div class="dots" id="dots"></div>
+<button class="fs-btn" id="fsbtn">Present fullscreen</button>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let cur = 0;
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', () => go(i));
+    dotsEl.appendChild(d);
+  });
+  const dotEls = Array.from(dotsEl.children);
+  const curEl = document.getElementById('counter-cur');
+  document.getElementById('counter-total').textContent = String(total).padStart(2,'0');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+
+  function render(){
+    slides.forEach((s,i) => s.setAttribute('data-active', i===cur ? '1':'0'));
+    dotEls.forEach((d,i) => d.setAttribute('data-on', i===cur ? '1':'0'));
+    curEl.textContent = String(cur+1).padStart(2,'0');
+    prevBtn.disabled = cur === 0;
+    nextBtn.disabled = cur === total-1;
+  }
+  function go(i){ cur = Math.max(0, Math.min(total-1, i)); render(); }
+
+  prevBtn.addEventListener('click', () => go(cur-1));
+  nextBtn.addEventListener('click', () => go(cur+1));
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { go(cur+1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { go(cur-1); e.preventDefault(); }
+  });
+
+  document.getElementById('fsbtn').addEventListener('click', () => {
+    const el = document.documentElement;
+    if (!document.fullscreenElement) el.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  });
+
+  render();
+</script>
