@@ -4,6 +4,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
 import { checkVerbatimOverlap } from "@/lib/ai/verbatimOverlapCheck";
+import { hasDashViolation, stripDashArtifacts } from "@/lib/ai/dashCheck";
 
 const MODEL = "claude-sonnet-5";
 const MAX_LOOP_TURNS = 8;
@@ -216,6 +217,7 @@ Your job:
 Non-negotiable rules:
 - Never present model-specific detail (an exact error code, a specific cycle time, a specific setting) unless you actually read it in a real source for this model. If you're falling back to generic content, keep it genuinely generic -- true of this equipment TYPE broadly, not invented specifics dressed up as fact.
 - Everything you write must be a genuine rewrite in your own words, in a plain, direct onboarding-training voice -- never copy or lightly edit sentences from a source. This is a real copyright requirement, not a style preference.
+- Never use a hyphen, en dash, or em dash as punctuation anywhere in sop_content, module_sections, faqs, or troubleshooting -- not as a standalone mark, not for an aside, not for a numeric range ("9am to 5pm," never "9am-5pm"). Rewrite the sentence structure around it; don't substitute a comma in the exact same spot. Genuine compound words (self-serve, e-signature) are fine -- that's spelling, not punctuation. Never write the literal text of a unicode escape sequence for a dash (like \\u2014) either -- if that string of characters would ever appear, that's the same violation as the character itself.
 - Call propose_equipment_content exactly once, when you're actually done researching -- don't call it prematurely just to end the conversation.`;
 
   const messages: Anthropic.MessageParam[] = [
@@ -330,30 +332,51 @@ Non-negotiable rules:
   const allFetchedText = fetchedTexts.join("\n\n");
   const withheldFields: string[] = [];
 
+  // Real bug found live (Fryer/Wash-up equipment content, 14 Sep): the
+  // fallback path (no real source found, allFetchedText empty) skipped this
+  // whole function via the early return below, so nothing ever caught a
+  // model-emitted dash -- and in a few rows the model didn't even emit a
+  // real em-dash character, it emitted the literal six-character text of
+  // its own unicode escape sequence ("—"), which rendered raw on
+  // screen. hasDashViolation/stripDashArtifacts (dashCheck.ts) are checked
+  // here independent of whether there's fetched text to compare against,
+  // since withholding real safety/how-to content over punctuation is the
+  // wrong trade-off (unlike a verbatim-overlap failure, a real copyright
+  // risk worth withholding for).
   async function verifyOrRewrite(fieldLabel: string, text: string, rewriteInstruction: string): Promise<string> {
-    if (!text.trim() || allFetchedText.length === 0) return text;
-    let candidate = text;
-    let overlap = checkVerbatimOverlap(candidate, allFetchedText);
-    if (!overlap.flagged) return candidate;
+    if (!text.trim()) return text;
+    const overlap = allFetchedText.length > 0 ? checkVerbatimOverlap(text, allFetchedText) : { flagged: false };
+    const dashViolation = hasDashViolation(text);
+    if (!overlap.flagged && !dashViolation) return text;
+
+    const problems: string[] = [];
+    if (overlap.flagged) problems.push("too close to verbatim to its source");
+    if (dashViolation) problems.push("used a dash character (or the literal text of a dash's unicode escape sequence), which this product's copy can never contain");
 
     // One retry: ask for a genuinely different rewrite of this exact field.
     const retryResponse = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      system: "You previously drafted content that was too close to verbatim to its source. Rewrite it substantially differently -- different sentence structure and phrasing -- while preserving the real meaning. Do not just swap a few synonyms.",
+      system: `You previously drafted content with a real problem: it was ${problems.join(" and ")}. Rewrite it${overlap.flagged ? ", substantially differently in sentence structure and phrasing, while preserving the real meaning -- do not just swap a few synonyms" : ""}. Never use a hyphen, en dash, or em dash as punctuation anywhere -- not standalone, not for an aside, not for a numeric range ("9am to 5pm," never "9am-5pm") -- rewrite the sentence structure instead of substituting a comma in the exact same spot. Never write the literal text of a unicode escape sequence for a dash either. Genuine compound words (self-serve, e-signature) are fine, that's spelling, not punctuation.`,
       messages: [
         {
           role: "user",
-          content: `Original source excerpt this was drawn from:\n"""${allFetchedText.slice(0, 4000)}"""\n\nYour previous ${fieldLabel} (too close to verbatim):\n"""${candidate}"""\n\n${rewriteInstruction}`,
+          content: overlap.flagged
+            ? `Original source excerpt this was drawn from:\n"""${allFetchedText.slice(0, 4000)}"""\n\nYour previous ${fieldLabel} (too close to verbatim):\n"""${text}"""\n\n${rewriteInstruction}`
+            : `Your previous ${fieldLabel}:\n"""${text}"""\n\n${rewriteInstruction}`,
         },
       ],
     });
     const retryText = retryResponse.content.find((b): b is Anthropic.TextBlock => b.type === "text")?.text ?? "";
-    overlap = checkVerbatimOverlap(retryText, allFetchedText);
-    if (!overlap.flagged && retryText.trim()) return retryText;
+    const retryOverlap = allFetchedText.length > 0 ? checkVerbatimOverlap(retryText, allFetchedText) : { flagged: false };
+    const retryDash = hasDashViolation(retryText);
 
-    withheldFields.push(fieldLabel);
-    return "";
+    if (retryOverlap.flagged) {
+      withheldFields.push(fieldLabel);
+      return "";
+    }
+    if (!retryText.trim()) return text;
+    return retryDash ? stripDashArtifacts(retryText) : retryText;
   }
 
   const sopContent = await verifyOrRewrite("sopContent", proposed.sop_content, "Rewrite the SOP content.");

@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
+import { hasDashViolationDeep, stripDashArtifacts } from "@/lib/ai/dashCheck";
 
 const MODEL = "claude-sonnet-5";
 
@@ -46,7 +47,9 @@ If a safety-honesty answer states real, specific risk (e.g. "yes, there's genuin
 
 Mark a section isRestricted=true only if it states an actual secret a staff member would need tiered access to see (a safe combination, an alarm code, a till override) -- never for ordinary procedural content, even safety-critical procedural content.
 
-For each section (except a restricted one -- a restricted section never gets a check question, since the question would have to reference the secret itself), write one multiple-choice check question with 2-4 options and mark which is correct. Questions should test whether someone actually read and understood the section, not trivia.`;
+For each section (except a restricted one -- a restricted section never gets a check question, since the question would have to reference the secret itself), write one multiple-choice check question with 2-4 options and mark which is correct. Questions should test whether someone actually read and understood the section, not trivia.
+
+Never use a hyphen, en dash, or em dash as punctuation anywhere -- not standalone, not for an aside, not for a numeric range ("9am to 5pm," never "9am-5pm"). Rewrite the sentence structure around it; don't substitute a comma in the exact same spot. Genuine compound words (self-serve, e-signature) are fine, that's spelling, not punctuation. Never write the literal text of a unicode escape sequence for a dash either (like \\u2014) -- that string of characters is the same violation as the character itself.`;
 
 const curateModuleTool: Anthropic.Tool = {
   name: "produce_module_content",
@@ -113,25 +116,47 @@ export async function curateModuleContent(
     .join("\n\n");
 
   const client = createAnthropicClient();
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 4096,
-    system: [
-      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-      { type: "text", text: `Venue: ${venueName}\nTopic: ${topicLabel}\n\nInterview transcript:\n\n${transcriptBlock}` },
-    ],
-    messages: [{ role: "user", content: "Produce the module content for this topic." }],
-    tools: [curateModuleTool],
-    tool_choice: { type: "tool", name: "produce_module_content" },
-    output_config: { effort: "high" },
-  });
+  const systemBlocks: Anthropic.TextBlockParam[] = [
+    { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+    { type: "text", text: `Venue: ${venueName}\nTopic: ${topicLabel}\n\nInterview transcript:\n\n${transcriptBlock}` },
+  ];
 
-  const toolUseBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-  if (!toolUseBlock || !isCurateModuleContentResult(toolUseBlock.input)) {
-    throw new Error("Model did not return the expected module content structure.");
+  async function produce(userMessage: string): Promise<CurateModuleContentResult> {
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 4096,
+      system: systemBlocks,
+      messages: [{ role: "user", content: userMessage }],
+      tools: [curateModuleTool],
+      tool_choice: { type: "tool", name: "produce_module_content" },
+      output_config: { effort: "high" },
+    });
+    const toolUseBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+    if (!toolUseBlock || !isCurateModuleContentResult(toolUseBlock.input)) {
+      throw new Error("Model did not return the expected module content structure.");
+    }
+    return toolUseBlock.input;
   }
 
-  const { sections, checkQuestions } = toolUseBlock.input;
+  let result = await produce("Produce the module content for this topic.");
+  if (hasDashViolationDeep(result)) {
+    result = await produce(
+      "Produce the module content for this topic again. Your previous attempt used a dash character (or the literal text of a dash's unicode escape sequence) somewhere, which this content can never contain -- rewrite every section and question so no hyphen, en dash, or em dash appears anywhere as punctuation, restructuring sentences instead of substituting a comma in the same spot. Genuine compound words are fine.",
+    );
+  }
+  if (hasDashViolationDeep(result)) {
+    result = {
+      sections: result.sections.map((s) => ({ ...s, content: stripDashArtifacts(s.content) })),
+      checkQuestions: result.checkQuestions.map((q) => ({
+        ...q,
+        question: stripDashArtifacts(q.question),
+        options: q.options.map(stripDashArtifacts),
+        correctiveText: q.correctiveText ? stripDashArtifacts(q.correctiveText) : q.correctiveText,
+      })),
+    };
+  }
+
+  const { sections, checkQuestions } = result;
   // Defensive, not trusting the model alone: a restricted section can never
   // carry a check question, matching persistModuleContent's own hard
   // validation -- drop rather than let a well-formed module fail to save

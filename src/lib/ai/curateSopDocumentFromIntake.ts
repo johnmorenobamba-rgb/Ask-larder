@@ -2,6 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
 import { isSopDocumentContent, type SopDocumentContent } from "@/lib/ai/sopDocumentContent";
 import type { IntakeAnswerForCuration } from "@/lib/ai/curateModuleContent";
+import { hasDashViolationDeep, stripDashArtifacts } from "@/lib/ai/dashCheck";
 
 const MODEL = "claude-sonnet-5";
 
@@ -29,7 +30,9 @@ Map each answer to its field directly -- the interview already asked for scope, 
 
 If the safety-critical or safety-honesty answer states real, specific risk, write it into safetyCriticalCallouts exactly that plainly -- never soften an honest "yes, there's real risk, here's what we can't guarantee" into vague reassurance.
 
-If the escalation/troubleshoot answer names a real EXTERNAL contact -- a tradesperson, a repair company, a supplier, a regulator, anyone outside this venue's own staff -- also return them as extractedContact with whatever name/phone/role details were actually given. Never return an internal staff member here (a Duty Manager, a chef, an owner, anyone already part of this venue's own team), even if they're named specifically -- an internal escalation contact isn't an "extracted contact" for this purpose. Return an empty name if only an internal staff member, or nobody at all, was mentioned.`;
+If the escalation/troubleshoot answer names a real EXTERNAL contact -- a tradesperson, a repair company, a supplier, a regulator, anyone outside this venue's own staff -- also return them as extractedContact with whatever name/phone/role details were actually given. Never return an internal staff member here (a Duty Manager, a chef, an owner, anyone already part of this venue's own team), even if they're named specifically -- an internal escalation contact isn't an "extracted contact" for this purpose. Return an empty name if only an internal staff member, or nobody at all, was mentioned.
+
+Never use a hyphen, en dash, or em dash as punctuation anywhere -- not standalone, not for an aside, not for a numeric range ("9am to 5pm," never "9am-5pm"). Rewrite the sentence structure around it; don't substitute a comma in the exact same spot. Genuine compound words (self-serve, e-signature) are fine, that's spelling, not punctuation. Never write the literal text of a unicode escape sequence for a dash either (like \\u2014) -- that string of characters is the same violation as the character itself.`;
 
 const curateDocumentTool: Anthropic.Tool = {
   name: "produce_sop_document_from_intake",
@@ -97,25 +100,49 @@ export async function curateSopDocumentFromIntake(
     .join("\n\n");
 
   const client = createAnthropicClient();
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 2048,
-    system: [
-      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-      { type: "text", text: `Venue: ${venueName}\nTopic: ${topicLabel}\n\nInterview transcript:\n\n${transcriptBlock}` },
-    ],
-    messages: [{ role: "user", content: "Produce the SOP document for this topic." }],
-    tools: [curateDocumentTool],
-    tool_choice: { type: "tool", name: "produce_sop_document_from_intake" },
-    output_config: { effort: "high" },
-  });
+  const systemBlocks: Anthropic.TextBlockParam[] = [
+    { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+    { type: "text", text: `Venue: ${venueName}\nTopic: ${topicLabel}\n\nInterview transcript:\n\n${transcriptBlock}` },
+  ];
 
-  const toolUseBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-  if (!toolUseBlock || !isToolResult(toolUseBlock.input)) {
-    throw new Error("Model did not return the expected SOP document structure.");
+  async function produce(userMessage: string): Promise<ToolResult> {
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 2048,
+      system: systemBlocks,
+      messages: [{ role: "user", content: userMessage }],
+      tools: [curateDocumentTool],
+      tool_choice: { type: "tool", name: "produce_sop_document_from_intake" },
+      output_config: { effort: "high" },
+    });
+    const toolUseBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+    if (!toolUseBlock || !isToolResult(toolUseBlock.input)) {
+      throw new Error("Model did not return the expected SOP document structure.");
+    }
+    return toolUseBlock.input;
   }
 
-  const { extractedContact, ...content } = toolUseBlock.input;
+  let result = await produce("Produce the SOP document for this topic.");
+  if (hasDashViolationDeep(result)) {
+    result = await produce(
+      "Produce the SOP document for this topic again. Your previous attempt used a dash character (or the literal text of a dash's unicode escape sequence) somewhere, which this document can never contain -- rewrite every field so no hyphen, en dash, or em dash appears anywhere as punctuation, restructuring sentences instead of substituting a comma in the same spot. Genuine compound words are fine.",
+    );
+  }
+  if (hasDashViolationDeep(result)) {
+    result = {
+      ...result,
+      purpose: stripDashArtifacts(result.purpose),
+      scope: stripDashArtifacts(result.scope),
+      whoPerformsIt: stripDashArtifacts(result.whoPerformsIt),
+      materials: result.materials.map(stripDashArtifacts),
+      procedure: result.procedure.map(stripDashArtifacts),
+      safetyCriticalCallouts: result.safetyCriticalCallouts.map(stripDashArtifacts),
+      definitionOfDone: stripDashArtifacts(result.definitionOfDone),
+      escalationContact: stripDashArtifacts(result.escalationContact),
+    };
+  }
+
+  const { extractedContact, ...content } = result;
   return {
     content,
     extractedContact: extractedContact.name.trim() ? { name: extractedContact.name.trim(), phone: extractedContact.phone.trim() || null, role: extractedContact.role.trim() || null } : null,
