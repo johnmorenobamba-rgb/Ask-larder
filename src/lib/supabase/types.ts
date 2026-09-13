@@ -1199,29 +1199,48 @@ export type Database = {
       stations: {
         Row: {
           created_at: string | null
+          equipment_manufacturer: string | null
+          equipment_model: string | null
+          equipment_serial: string | null
           id: string
           name: string
+          nameplate_photo_id: string | null
           primary_module_id: string | null
           qr_code_slug: string
           venue_id: string | null
         }
         Insert: {
           created_at?: string | null
+          equipment_manufacturer?: string | null
+          equipment_model?: string | null
+          equipment_serial?: string | null
           id?: string
           name: string
+          nameplate_photo_id?: string | null
           primary_module_id?: string | null
           qr_code_slug: string
           venue_id?: string | null
         }
         Update: {
           created_at?: string | null
+          equipment_manufacturer?: string | null
+          equipment_model?: string | null
+          equipment_serial?: string | null
           id?: string
           name?: string
+          nameplate_photo_id?: string | null
           primary_module_id?: string | null
           qr_code_slug?: string
           venue_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stations_nameplate_photo_id_fkey"
+            columns: ["nameplate_photo_id"]
+            isOneToOne: false
+            referencedRelation: "photo_library"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stations_primary_module_id_fkey"
             columns: ["primary_module_id"]

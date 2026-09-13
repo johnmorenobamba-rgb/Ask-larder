@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 
-const VALID_TAGS = ["station", "module", "general", "hero"];
+const VALID_TAGS = ["station", "nameplate", "module", "general", "hero"];
 
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();

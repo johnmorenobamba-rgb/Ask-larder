@@ -8,6 +8,7 @@ import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { DeleteStationButton } from "@/components/owner/DeleteStationButton";
 import { StationModuleSelect } from "@/components/owner/StationModuleSelect";
 import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
+import { NameplateCapture } from "@/components/owner/NameplateCapture";
 
 export default async function OwnerStationsPage({
   params,
@@ -21,7 +22,10 @@ export default async function OwnerStationsPage({
   const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
 
   const [{ data: stations }, { data: modules }] = await Promise.all([
-    supabase.from("stations").select("id, name, qr_code_slug, primary_module_id, modules(title)").order("name"),
+    supabase
+      .from("stations")
+      .select("id, name, qr_code_slug, primary_module_id, equipment_manufacturer, equipment_model, equipment_serial, modules(title)")
+      .order("name"),
     supabase.from("modules").select("id, title").eq("status", "live").order("title"),
   ]);
 
@@ -87,6 +91,25 @@ export default async function OwnerStationsPage({
                   </Link>
                   <DeleteStationButton stationId={s.id} />
                 </div>
+                {/*
+                  Wizard-adjacency fix (CLAUDE.md standing principle) --
+                  the equipment onboarding step covers this for a new
+                  venue going through the wizard, but Two Fires and every
+                  other already-onboarded venue only reach stations
+                  through this live page, so the same capture has to live
+                  here too, not just in onboarding.
+                */}
+                {s.equipment_model || s.equipment_manufacturer || s.equipment_serial ? (
+                  <p className="pt-1 font-mono text-xs text-bay-green">
+                    Equipment: {[s.equipment_manufacturer, s.equipment_model].filter(Boolean).join(" ") || "model not recorded"}
+                    {s.equipment_serial ? `, serial ${s.equipment_serial}` : ""}
+                  </p>
+                ) : (
+                  <div className="space-y-1 pt-1">
+                    <p className="font-sans text-xs text-ink/70">No nameplate on file yet.</p>
+                    <NameplateCapture venueId={staff!.venue_id!} stationId={s.id} />
+                  </div>
+                )}
               </div>
             </div>
           ))}

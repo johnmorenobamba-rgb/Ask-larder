@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
+import { NameplateCapture } from "@/components/owner/NameplateCapture";
 import { EquipmentContinueButton } from "@/components/onboarding/EquipmentContinueButton";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -25,7 +26,11 @@ export default async function EquipmentPage({ params }: { params: Promise<{ venu
   const supabase = await createClient();
 
   const [{ data: stations }, { data: modules }, { data: session }, { data: stationPhotos }] = await Promise.all([
-    supabase.from("stations").select("id, name, qr_code_slug").eq("venue_id", staff!.venue_id!).order("name"),
+    supabase
+      .from("stations")
+      .select("id, name, qr_code_slug, equipment_manufacturer, equipment_model, equipment_serial, nameplate_photo_id")
+      .eq("venue_id", staff!.venue_id!)
+      .order("name"),
     supabase.from("modules").select("id, title").eq("venue_id", staff!.venue_id!).order("title"),
     supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
     supabase.from("photo_library").select("station_id").eq("venue_id", staff!.venue_id!).eq("tag", "station"),
@@ -67,11 +72,37 @@ export default async function EquipmentPage({ params }: { params: Promise<{ venu
                 <p className="font-sans text-xs text-bay-green">Photo captured.</p>
               ) : (
                 <div className="space-y-1">
-                  <p className="font-sans text-xs text-ink/70">
-                    Take a photo of {s.name} and its serial number or model sticker now, while you&apos;re standing
-                    in front of it.
-                  </p>
+                  <p className="font-sans text-xs text-ink/70">Take a photo of {s.name} now, while you&apos;re standing in front of it.</p>
                   <StationPhotoUpload venueId={staff!.venue_id!} stationId={s.id} />
+                </div>
+              )}
+
+              {/*
+                Wizard-adjacency fix (CLAUDE.md standing principle) --
+                separate from the ambience photo above. This one is
+                specifically the nameplate/model sticker, OCR'd into
+                editable manufacturer/model/serial fields the owner
+                confirms, feeding the manufacturer-sourced content
+                pipeline. Shown whenever equipment_model isn't set yet,
+                regardless of whether the general station photo above
+                exists -- an existing "photo captured" flag never meant a
+                nameplate was actually photographed.
+              */}
+              {s.equipment_model || s.equipment_manufacturer || s.equipment_serial ? (
+                <div className="rounded-xl border-2 border-bay-green/40 bg-bay-green/10 px-3 py-2">
+                  <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Equipment on file</p>
+                  <p className="font-sans text-sm text-ink">
+                    {[s.equipment_manufacturer, s.equipment_model].filter(Boolean).join(" ") || "Model not recorded"}
+                    {s.equipment_serial ? `, serial ${s.equipment_serial}` : ""}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-ink/70">
+                    Now photograph {s.name}&apos;s nameplate or model sticker specifically, the equipment can look up
+                    its real manual once this is on file.
+                  </p>
+                  <NameplateCapture venueId={staff!.venue_id!} stationId={s.id} />
                 </div>
               )}
             </div>
