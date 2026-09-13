@@ -27,6 +27,10 @@ John has real full-stack ability but limited hands-on Claude Code experience. Pr
 - **Owner approval gate:** every module must be explicitly approved by the venue owner before it goes live. Liability stays with the business, not with Larder or the founder. Don't build a path that skips this.
 - **No lock-in:** month-to-month, 30-day cancellation notice. On cancellation, content/completion records are exportable by the venue; chatbot access ends. Build data export as a real function early, not bolted on under pressure later.
 
+## Standing working principles
+
+- **Wizard stays adjacent to software needs.** Whenever the product gains a new capability that depends on a piece of intake data, the onboarding wizard must be checked and updated to capture that data in the same pass, not discovered as a gap later. Example: the manufacturer-sourced content pipeline (station QR / troubleshooting work) cannot function without `equipment_manufacturer`/`model`/`serial`, so the wizard's equipment step had to be updated before that pipeline could be built, not after.
+
 ## Tech stack (see Tech Bible for full rationale)
 
 Next.js + TypeScript + Tailwind · Vercel hosting · Supabase (Postgres/Auth/Storage/pgvector) · Claude API (Sonnet) for module generation + chat · Voyage AI embeddings · Resend (transactional email) · Supabase Edge Functions + pg_cron (scheduled cert-expiry nudges) · Sentry (errors) · PostHog (analytics — instruments whether staff actually use the chatbot unprompted, the core success metric) · Playwright (E2E/agentic testing) · GitHub + Vercel auto-deploy.
