@@ -56,10 +56,16 @@ const proposeContentTool: Anthropic.Tool = {
         type: "string",
         description: "A 3-6 paragraph SOP-style procedure write-up for operating, cleaning, and maintaining this equipment, in Larder's own plain onboarding voice. Must be a genuine rewrite of anything sourced -- never copy sentences from the source, even lightly edited. If found_real_source is false, this must be generic best-practice content for this equipment TYPE, with no model-specific claims (no specific error codes, cycle times, or settings that could be wrong for this exact unit).",
       },
+      // minItems is only accepted by the API for values of 0 or 1 in strict
+      // mode (confirmed live: anything higher 400s the request), so it
+      // cannot structurally guarantee "3-5" here -- that's enforced by the
+      // post-generation count check + retry in researchEquipmentContent
+      // below instead. minItems:1 still catches a truly empty array.
       module_sections: {
         type: "array",
         items: { type: "string" },
-        description: "2-4 short training-module section texts (markdown, matching this app's module content style) breaking the SOP into digestible training content.",
+        minItems: 1,
+        description: "EXACTLY 2 to 4 short training-module section texts (markdown, matching this app's module content style) breaking the SOP into digestible training content. Never fewer than 2, regardless of how much or little source material you found -- a generic fallback still needs real, useful training content, not a token gesture.",
       },
       faqs: {
         type: "array",
@@ -69,7 +75,8 @@ const proposeContentTool: Anthropic.Tool = {
           required: ["question", "answer"],
           additionalProperties: false,
         },
-        description: "3-5 real FAQs a staff member would actually ask about this equipment (how-to and common confusion points).",
+        minItems: 1,
+        description: "EXACTLY 3 to 5 real FAQs a staff member would actually ask about this equipment (how-to and common confusion points). Never fewer than 3 -- if you found less model-specific material, use more generic-but-genuinely-useful FAQs about this equipment type to reach the minimum, don't just stop at 1.",
       },
       troubleshooting: {
         type: "array",
@@ -84,7 +91,8 @@ const proposeContentTool: Anthropic.Tool = {
           required: ["issue_title", "diagnosis_steps", "resolution_text", "escalation_required"],
           additionalProperties: false,
         },
-        description: "3-5 real troubleshooting entries. If found_real_source is true and the source mentions actual error codes, use them (reworded, not copied). If false, use only generic issues true of this equipment type (won't power on, not heating/cooling, unusual noise), never invented model-specific error codes.",
+        minItems: 1,
+        description: "EXACTLY 3 to 5 real troubleshooting entries. If found_real_source is true and the source mentions actual error codes, use them (reworded, not copied). If false, use only generic issues true of this equipment type (won't power on, not heating/cooling, unusual noise), never invented model-specific error codes. Never fewer than 3.",
       },
     },
     required: ["found_real_source", "citation_title", "citation_url", "sop_content", "module_sections", "faqs", "troubleshooting"],
@@ -140,6 +148,18 @@ async function fetchUrlContent(url: string): Promise<(Anthropic.TextBlockParam |
 // looks for the actual telltale markers.
 function looksCorrupted(text: string): boolean {
   return /<\/?(antml|parameter)[_:]/i.test(text) || /<parameter name=/i.test(text);
+}
+
+const MIN_MODULE_SECTIONS = 2;
+const MIN_FAQS = 3;
+const MIN_TROUBLESHOOTING = 3;
+
+function describeThinness(value: ProposedContent): string | null {
+  const issues: string[] = [];
+  if (value.module_sections.length < MIN_MODULE_SECTIONS) issues.push(`only ${value.module_sections.length} module section(s), need at least ${MIN_MODULE_SECTIONS}`);
+  if (value.faqs.length < MIN_FAQS) issues.push(`only ${value.faqs.length} FAQ(s), need at least ${MIN_FAQS}`);
+  if (value.troubleshooting.length < MIN_TROUBLESHOOTING) issues.push(`only ${value.troubleshooting.length} troubleshooting entry(ies), need at least ${MIN_TROUBLESHOOTING}`);
+  return issues.length > 0 ? issues.join("; ") : null;
 }
 
 function isProposedContent(value: unknown): value is ProposedContent {
@@ -239,11 +259,25 @@ Non-negotiable rules:
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
     if (proposeCall) {
+      const thinness = isProposedContent(proposeCall.input) ? describeThinness(proposeCall.input) : null;
       if (response.stop_reason === "max_tokens" || !isProposedContent(proposeCall.input)) {
         toolResults.push({
           type: "tool_result",
           tool_use_id: proposeCall.id,
           content: [{ type: "text", text: "That call didn't come through completely. Try again with a more concise draft." }],
+        });
+      } else if (thinness) {
+        // Real bug found live (Moretti Forni P110E, generic-fallback run):
+        // the model can return a structurally-valid but far-too-thin
+        // response (1 section/1 FAQ/1 issue against Bar/Cellar's 4-5 each
+        // on the exact same fallback path) -- strict mode's minItems can
+        // only enforce "at least 1" (confirmed: values above 1 400 the
+        // request), so this application-level check + forced retry is the
+        // real enforcement mechanism, not the schema description text.
+        toolResults.push({
+          type: "tool_result",
+          tool_use_id: proposeCall.id,
+          content: [{ type: "text", text: `Too thin: ${thinness}. Provide the full 2-4 module sections, 3-5 FAQs, and 3-5 troubleshooting entries as instructed, even on a generic fallback -- call propose_equipment_content again with the complete set.` }],
         });
       } else {
         proposed = proposeCall.input;
