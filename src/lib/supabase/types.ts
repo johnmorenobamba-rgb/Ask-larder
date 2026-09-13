@@ -503,6 +503,7 @@ export type Database = {
       }
       module_sections: {
         Row: {
+          citation: string | null
           content: string | null
           id: string
           is_restricted: boolean | null
@@ -513,6 +514,7 @@ export type Database = {
           video_ref: string | null
         }
         Insert: {
+          citation?: string | null
           content?: string | null
           id?: string
           is_restricted?: boolean | null
@@ -523,6 +525,7 @@ export type Database = {
           video_ref?: string | null
         }
         Update: {
+          citation?: string | null
           content?: string | null
           id?: string
           is_restricted?: boolean | null

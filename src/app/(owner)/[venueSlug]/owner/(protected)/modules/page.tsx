@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ModuleStatusActions } from "@/components/owner/ModuleStatusActions";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
 import { ModuleContentBlock } from "@/components/staff/ModuleContentBlock";
+import { ProvenanceBadge, type Provenance } from "@/components/owner/ProvenanceBadge";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -25,7 +26,7 @@ export default async function OwnerModulesPage({
 }) {
   const { venueSlug } = await params;
   const supabase = await createClient();
-  const { data: modules } = await supabase.from("modules").select("id, title, status, version").order("title");
+  const { data: modules } = await supabase.from("modules").select("id, title, status, version, topic_key").order("title");
 
   // Content preview for anything awaiting a decision -- an owner approving
   // a module is a real liability/trust gate (per CLAUDE.md's locked
@@ -36,16 +37,30 @@ export default async function OwnerModulesPage({
     pendingIds.length > 0
       ? await supabase
           .from("module_sections")
-          .select("id, module_id, section_order, content")
+          .select("id, module_id, section_order, content, provenance, citation")
           .in("module_id", pendingIds)
           .order("section_order")
       : { data: [] };
-  const sectionsByModule = new Map<string, { id: string; section_order: number; content: string | null }[]>();
+  const sectionsByModule = new Map<
+    string,
+    { id: string; section_order: number; content: string | null; provenance: string; citation: string | null }[]
+  >();
   for (const s of pendingSections ?? []) {
     const list = sectionsByModule.get(s.module_id!) ?? [];
     list.push(s);
     sectionsByModule.set(s.module_id!, list);
   }
+  // Manufacturer name for the ai_manual_sourced badge's "from the {X}
+  // manual" label -- equipment modules are keyed station_equipment_{slug},
+  // joined back to the station that owns that slug for this venue.
+  const { data: stations } = await supabase.from("stations").select("qr_code_slug, equipment_manufacturer");
+  const manufacturerBySlug = new Map((stations ?? []).map((s) => [s.qr_code_slug, s.equipment_manufacturer]));
+  function manufacturerForTopic(topicKey: string | null): string | null {
+    if (!topicKey?.startsWith("station_equipment_")) return null;
+    return manufacturerBySlug.get(topicKey.replace("station_equipment_", "")) ?? null;
+  }
+  const hasPendingRecommendation = (moduleId: string) =>
+    (sectionsByModule.get(moduleId) ?? []).some((s) => s.provenance === "ai_recommended_pending");
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
@@ -61,7 +76,11 @@ export default async function OwnerModulesPage({
                     {STATUS_LABEL[m.status ?? "draft"]} · v{m.version}
                   </p>
                 </div>
-                <ModuleStatusActions moduleId={m.id} status={m.status ?? "draft"} />
+                <ModuleStatusActions
+                  moduleId={m.id}
+                  status={m.status ?? "draft"}
+                  blockedReason={hasPendingRecommendation(m.id) ? "Confirm Larder's suggested content below before approving." : null}
+                />
               </div>
               {m.status === "pending_approval" && (
                 <div className="mt-4 space-y-4 rounded-2xl border-2 border-clay-brown/20 bg-parchment/60 p-4">
@@ -69,7 +88,15 @@ export default async function OwnerModulesPage({
                     What you&apos;re approving
                   </p>
                   {(sectionsByModule.get(m.id) ?? []).map((s) => (
-                    <ModuleContentBlock key={s.id} content={s.content ?? ""} />
+                    <div key={s.id} className="space-y-2">
+                      <ModuleContentBlock content={s.content ?? ""} />
+                      <ProvenanceBadge
+                        provenance={(s.provenance as Provenance) ?? "owner_sourced"}
+                        citation={s.citation}
+                        manufacturer={manufacturerForTopic(m.topic_key)}
+                        confirmUrl={`/api/owner/module-sections/${s.id}/confirm-recommendation`}
+                      />
+                    </div>
                   ))}
                   {(sectionsByModule.get(m.id) ?? []).length === 0 && (
                     <p className="font-sans text-sm text-clay-brown">No content written yet.</p>

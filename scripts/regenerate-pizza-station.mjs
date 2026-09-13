@@ -50,7 +50,7 @@ if (moduleError) throw new Error(moduleError.message);
 const moduleId = createdModule.id;
 
 const sectionsToInsert = result.moduleSections.length > 0 ? result.moduleSections : [result.sopContent];
-await supabase.from("module_sections").insert(sectionsToInsert.map((content, i) => ({ module_id: moduleId, section_order: i, content, provenance })));
+await supabase.from("module_sections").insert(sectionsToInsert.map((content, i) => ({ module_id: moduleId, section_order: i, content, provenance, citation })));
 
 await generateSopDocument(moduleId, supabase);
 console.log("SOP document generated.");

@@ -89,6 +89,12 @@ export default async function OwnerStationsPage({
                   >
                     View / print QR label
                   </Link>
+                  <Link
+                    href={`/${venueSlug}/owner/stations/${s.id}/content`}
+                    className="font-mono text-xs uppercase tracking-wide text-clay-brown underline"
+                  >
+                    FAQs & troubleshooting
+                  </Link>
                   <DeleteStationButton stationId={s.id} />
                 </div>
                 {/*

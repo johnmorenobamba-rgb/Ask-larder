@@ -76,7 +76,7 @@ for (const station of stations) {
   const moduleId = createdModule.id;
 
   const { error: sectionsError } = await supabase.from("module_sections").insert(
-    sectionsToInsert.map((content, i) => ({ module_id: moduleId, section_order: i, content, provenance })),
+    sectionsToInsert.map((content, i) => ({ module_id: moduleId, section_order: i, content, provenance, citation })),
   );
   if (sectionsError) console.error(`  FAILED sections insert: ${sectionsError.message}`);
 

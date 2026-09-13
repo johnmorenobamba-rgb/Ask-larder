@@ -10,6 +10,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   }
 
   const supabase = await createClient();
+
+  // Provenance-aware approval gate: an AI-suggested default (as opposed to
+  // Larder-standard-fill or manual-sourced content, both already treated as
+  // real drafted content) can't be waved through as part of a bulk
+  // approval -- the owner has to have actually looked at and confirmed it
+  // first. Checked here too, not just hidden in the UI, since the API is
+  // the real boundary.
+  const { data: pendingSections, error: pendingError } = await supabase
+    .from("module_sections")
+    .select("id")
+    .eq("module_id", moduleId)
+    .eq("provenance", "ai_recommended_pending")
+    .limit(1);
+  if (pendingError) return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+  if (pendingSections && pendingSections.length > 0) {
+    return NextResponse.json({ error: "Confirm all of Larder's suggested content in this module before approving it." }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("modules")
     .update({ status: "approved", approved_by: staff.id, approved_at: new Date().toISOString() })

@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function ModuleStatusActions({ moduleId, status }: { moduleId: string; status: string }) {
+export function ModuleStatusActions({
+  moduleId,
+  status,
+  blockedReason,
+}: {
+  moduleId: string;
+  status: string;
+  /** Non-null disables Approve and shows why -- an unconfirmed ai_recommended_pending section, per the provenance-aware approval gate. */
+  blockedReason?: string | null;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,14 +43,18 @@ export function ModuleStatusActions({ moduleId, status }: { moduleId: string; st
         </button>
       )}
       {status === "pending_approval" && (
-        <button
-          type="button"
-          onClick={() => transition("approve")}
-          disabled={loading}
-          className="rounded-full bg-preserve-red px-4 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
-        >
-          Approve
-        </button>
+        <div className="flex flex-col items-start gap-1">
+          <button
+            type="button"
+            onClick={() => transition("approve")}
+            disabled={loading || Boolean(blockedReason)}
+            title={blockedReason ?? undefined}
+            className="rounded-full bg-preserve-red px-4 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
+          >
+            Approve
+          </button>
+          {blockedReason && <p className="font-sans text-xs text-saffron">{blockedReason}</p>}
+        </div>
       )}
       {status === "approved" && (
         <button
