@@ -1,4 +1,8 @@
-import "server-only";
+// No `server-only` guard -- same reasoning as anthropic.ts/ingestModule.ts:
+// needs to stay importable from a standalone tsx script for headless
+// testing (the equipment-content pipeline calls this directly), and
+// server-only throws unconditionally outside Next's bundler rather than
+// only when actually reached from a client bundle.
 import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
