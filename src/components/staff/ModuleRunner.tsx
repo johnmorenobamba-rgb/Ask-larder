@@ -99,7 +99,20 @@ export function ModuleRunner({
           <Stamp label={`${moduleTitle} completed`} />
           <button
             type="button"
-            onClick={() => router.push(resolvedBackHref)}
+            onClick={() => {
+              // router.push() alone is a no-op when resolvedBackHref is the
+              // exact current pathname (the station entry point: it renders
+              // ModuleRunner directly at /venueSlug/station/slug, not at a
+              // separate module URL, so "back to station" pushes to the same
+              // URL the browser is already on -- Next's router treats that
+              // as nothing to navigate and never re-runs the server
+              // component to drop back out of this completion screen).
+              // router.refresh() forces that re-fetch regardless of whether
+              // the pathname actually changed; push() still does the real
+              // navigation for the modules-list case where the two differ.
+              router.push(resolvedBackHref);
+              router.refresh();
+            }}
             className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
           >
             {backLabel}

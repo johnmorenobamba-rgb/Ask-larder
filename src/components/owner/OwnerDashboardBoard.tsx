@@ -73,6 +73,19 @@ function EscalationGlyph({ color }: { color: string }) {
   );
 }
 
+// Weekly report glyph -- a simple bar chart, distinct from the escalation
+// speech-bubble language since this cell is a standing insight surface, not
+// an alert.
+function ReportGlyph({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <line x1="5" y1="19" x2="5" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="12" y1="19" x2="12" y2="6" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="19" y1="19" x2="19" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const GLYPHS: Record<FlagGlyphKey, (props: { color: string }) => React.JSX.Element> = {
   cert: CertGlyph,
   module: ModuleGlyph,
@@ -187,7 +200,7 @@ function NeedsAttentionCell({ flags }: { flags: FlagItem[] }) {
           glowColor={color}
           floatDurationS={5.6}
           depth="hero"
-          className="relative flex h-full min-h-[168px] flex-col justify-between rounded-2xl bg-parchment px-5 py-5"
+          className="relative flex h-full min-h-[168px] sm:min-h-[280px] flex-col justify-between rounded-2xl bg-parchment px-5 py-5"
         >
           <div className="flex items-start justify-between">
             <div
@@ -236,13 +249,13 @@ function NearMissCell({
   }, []);
 
   return (
-    <Link href={href} className="block w-full">
+    <Link href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-preserve-red)"
         floatDurationS={5.9}
         floatDelayS={0.3}
         depth="secondary"
-        className="flex items-center gap-3 rounded-2xl bg-parchment px-5 py-4"
+        className="bento-texture-hatch flex h-full items-center gap-3 rounded-2xl bg-parchment px-5 py-4"
       >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
@@ -262,6 +275,112 @@ function NearMissCell({
   );
 }
 
+// Escalations -- standing tile (unlike NearMissCell, always rendered, not
+// only when count > 0): "what staff needed a supervisor for" is ongoing
+// operational visibility, not just an alert pile. Bento-texture-dot marks it
+// as the second "alert-family" material after Near-miss's flat treatment, so
+// the two read as related but distinct rather than duplicates.
+function EscalationsCell({
+  count,
+  recentStation,
+  href,
+}: {
+  count: number;
+  recentStation: string | null;
+  href: string;
+}) {
+  const [entered, setEntered] = useState(false);
+  const color = count > 0 ? "var(--color-saffron)" : "var(--color-bay-green)";
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <Link href={href} className="block h-full w-full">
+      <ElevatedCell
+        glowColor={color}
+        floatDurationS={5.7}
+        floatDelayS={0.4}
+        depth="secondary"
+        className="bento-texture-dot flex h-full flex-col justify-between rounded-2xl bg-parchment px-4 py-4"
+      >
+        <div className="flex items-center gap-1.5">
+          <EscalationGlyph color={color} />
+          <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Escalations</p>
+        </div>
+        {count > 0 ? (
+          <p className="font-sans text-sm text-ink">
+            <span className="font-display text-2xl font-bold">
+              <AnimatedNumber value={count} animate={entered} />
+            </span>{" "}
+            unresolved{recentStation ? `, most recent at ${recentStation}` : ""}
+          </p>
+        ) : (
+          <p className="font-sans text-sm text-bay-green">Nothing unresolved</p>
+        )}
+      </ElevatedCell>
+    </Link>
+  );
+}
+
+// Weekly report -- standing tile, Ink flat treatment (matches staff
+// dashboard's one dark cell language, reserved for a single always-there
+// anchor point rather than an alert color). Gives owners the same "what
+// staff are asking" glance the weekly digest email already sends, without
+// waiting for Monday's email to see it.
+function WeeklyReportCell({
+  questionCount,
+  outOfScopeCount,
+  topQuestion,
+  href,
+}: {
+  questionCount: number;
+  outOfScopeCount: number;
+  topQuestion: string | null;
+  href: string;
+}) {
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <Link href={href} className="block h-full w-full">
+      <ElevatedCell
+        glowColor="var(--color-saffron)"
+        floatDurationS={6.1}
+        floatDelayS={0.55}
+        depth="secondary"
+        className="flex h-full flex-col justify-between rounded-2xl bg-ink px-5 py-4"
+      >
+        <div className="flex items-center gap-1.5">
+          <ReportGlyph color="var(--color-parchment)" />
+          <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Weekly report</p>
+        </div>
+        <div>
+          <p className="font-sans text-sm text-parchment">
+            <span className="font-display text-2xl font-bold">
+              <AnimatedNumber value={questionCount} animate={entered} />
+            </span>{" "}
+            question{questionCount === 1 ? "" : "s"} asked this week
+          </p>
+          {outOfScopeCount > 0 ? (
+            <p className="mt-1 truncate font-sans text-sm text-parchment/70">
+              {outOfScopeCount} not covered by any SOP{topQuestion ? `, including "${topQuestion}"` : ""}
+            </p>
+          ) : (
+            <p className="mt-1 font-sans text-sm text-parchment/70">Everything asked was covered</p>
+          )}
+        </div>
+      </ElevatedCell>
+    </Link>
+  );
+}
+
 // K5's quiet-state collapse: when there are truly no flags AND no
 // unresolved near-misses, one small confident cell replaces both, rather
 // than two mostly-empty cells taking up grid space.
@@ -271,7 +390,7 @@ function AllClearCell() {
       glowColor="var(--color-saffron)"
       floatDurationS={5.8}
       depth="hero"
-      className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-8 text-center"
+      className="flex h-full min-h-[168px] flex-col items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-8 text-center sm:min-h-[280px]"
     >
       <ChitMark size={36} fillColor="var(--color-parchment)" traceColor="var(--color-saffron)" />
       <p className="font-display text-lg text-parchment">Nothing needs attention.</p>
@@ -297,13 +416,13 @@ function StaffCompletionSummaryCell({ staff, href }: { staff: StaffCompletionRow
   }, []);
 
   return (
-    <Link href={href} className="block w-full">
+    <Link href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-bay-green)"
         floatDurationS={5.7}
         floatDelayS={0.15}
         depth="hero"
-        className="flex h-full min-h-[168px] flex-col items-center justify-center gap-2 rounded-2xl bg-parchment px-5 py-6 text-center"
+        className="flex h-full min-h-[168px] sm:min-h-[280px] flex-col items-center justify-center gap-2 rounded-2xl bg-parchment px-5 py-6 text-center"
       >
         <CompletionRing fraction={fraction} animate={entered} size={72} />
         <div>
@@ -325,6 +444,11 @@ export function OwnerDashboardBoard({
   nearMissRecentStation,
   staff,
   stations,
+  escalationCount,
+  escalationRecentStation,
+  weeklyQuestionCount,
+  weeklyOutOfScopeCount,
+  weeklyTopQuestion,
 }: {
   venueSlug: string;
   flags: FlagItem[];
@@ -332,6 +456,11 @@ export function OwnerDashboardBoard({
   nearMissRecentStation: string | null;
   staff: StaffCompletionRow[];
   stations: StationDisplay[];
+  escalationCount: number;
+  escalationRecentStation: string | null;
+  weeklyQuestionCount: number;
+  weeklyOutOfScopeCount: number;
+  weeklyTopQuestion: string | null;
 }) {
   const showQuietState = flags.length === 0 && nearMissCount === 0;
   const { needsIOSPermission, requestIOSPermission } = useViewportParallax();
@@ -340,25 +469,36 @@ export function OwnerDashboardBoard({
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <h1 className="font-display text-3xl font-bold text-ink">Dashboard</h1>
 
-      <div className="grid grid-cols-2 gap-4">
+      {/*
+        grid-cols-4 with real row-spans, matching the staff dashboard's own
+        bento treatment (BentoGrid.tsx) instead of a uniform grid-cols-2
+        where every cell only differed by glow color. Needs-attention and
+        Staff completion pair up as the two hero cells (2x2, flat Parchment,
+        same "genuinely bigger, not just brighter" language as staff's
+        Overall-progress hero); Near-miss/Escalations/Weekly report fill the
+        row underneath at 1/1/2 columns, each carrying a different material
+        (hatch texture, dot texture, flat Ink) so they read as distinct
+        surfaces rather than three copies of the same card.
+      */}
+      <div className="grid grid-cols-4 gap-4">
         {showQuietState ? (
-          <div className="col-span-2 sm:col-span-1">
+          <div className="col-span-4 sm:col-span-2 sm:row-span-2">
             <AllClearCell />
           </div>
         ) : (
           flags.length > 0 && (
-            <div className="col-span-2 sm:col-span-1">
+            <div className="col-span-4 sm:col-span-2 sm:row-span-2">
               <NeedsAttentionCell flags={flags} />
             </div>
           )
         )}
 
-        <div className={`col-span-2 ${showQuietState || flags.length > 0 ? "sm:col-span-1" : ""}`}>
+        <div className="col-span-4 sm:col-span-2 sm:row-span-2">
           <StaffCompletionSummaryCell staff={staff} href={`/${venueSlug}/owner/staff`} />
         </div>
 
         {!showQuietState && nearMissCount > 0 && (
-          <div className="col-span-2 sm:col-span-1">
+          <div className="col-span-4 sm:col-span-1">
             <NearMissCell
               count={nearMissCount}
               recentStation={nearMissRecentStation}
@@ -366,9 +506,26 @@ export function OwnerDashboardBoard({
             />
           </div>
         )}
+
+        <div className="col-span-4 sm:col-span-1">
+          <EscalationsCell
+            count={escalationCount}
+            recentStation={escalationRecentStation}
+            href={`/${venueSlug}/owner/escalations`}
+          />
+        </div>
+
+        <div className="col-span-4 sm:col-span-2">
+          <WeeklyReportCell
+            questionCount={weeklyQuestionCount}
+            outOfScopeCount={weeklyOutOfScopeCount}
+            topQuestion={weeklyTopQuestion}
+            href={`/${venueSlug}/owner/weekly-report`}
+          />
+        </div>
       </div>
 
-      <StationsGallery venueSlug={venueSlug} stations={stations} />
+      <StationsGallery venueSlug={venueSlug} stations={stations} viewerContext="owner" />
       <ParallaxPermissionPrompt visible={needsIOSPermission} onEnable={requestIOSPermission} />
     </div>
   );

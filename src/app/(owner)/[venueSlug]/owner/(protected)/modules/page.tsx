@@ -77,10 +77,10 @@ export default async function OwnerModulesPage({
                 </div>
               )}
               <Link
-                href={`/${venueSlug}/owner/modules/${m.id}/edit`}
+                href={`/${venueSlug}/owner/sops/${m.id}`}
                 className="mt-2 inline-block font-mono text-xs text-clay-brown underline"
               >
-                Edit content
+                View
               </Link>
               {m.status === "live" && (
                 <Link

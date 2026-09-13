@@ -7,7 +7,8 @@ export type FocusedStation = {
   number: string;
   photoUrl: string;
   qrDataUrl: string;
-  href: string;
+  /** null when opened for a viewer with no content session to send them to (see StationsGallery's viewerContext). */
+  href: string | null;
 };
 
 /**
@@ -70,12 +71,14 @@ export function StationFocusOverlay({
               it matches the right station.
             </p>
           </div>
-          <a
-            href={station.href}
-            className="mt-4 block rounded-full bg-ink px-5 py-3 text-center font-sans text-sm font-medium text-parchment"
-          >
-            Open station content
-          </a>
+          {station.href && (
+            <a
+              href={station.href}
+              className="mt-4 block rounded-full bg-ink px-5 py-3 text-center font-sans text-sm font-medium text-parchment"
+            >
+              Open station content
+            </a>
+          )}
         </div>
       </div>
     </div>

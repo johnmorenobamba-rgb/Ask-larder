@@ -157,18 +157,19 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
     await expect(page.getByText(/Expires in \d+ day\(s\)/)).toBeVisible();
   });
 
-  test("E4: approve a pending module, edit live module content, publish a version", async ({ page }) => {
+  test("E4: approve a pending module, then publish a new version", async ({ page }) => {
+    // Owners no longer get a raw content editor here -- self-serve edits
+    // bypassed the paid request-edit flow entirely. "Publish an update" is
+    // a formal version bump + changelog only; the actual content change
+    // happens out-of-band (founder-applied), which is why this test doesn't
+    // touch section content at all anymore.
     await loginAsOwner(page);
     await page.goto(`/${SLUG}/owner/modules`);
     await expect(page.getByText("Pending Smoke Module")).toBeVisible();
     await page.getByRole("button", { name: "Approve" }).click();
     await expect(page.getByText("Pending approval")).not.toBeVisible();
 
-    await page.goto(`/${SLUG}/owner/modules/${liveModuleId}/edit`);
-    await page.locator("textarea").fill("Edited smoke content");
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("button", { name: "Saved" })).toBeVisible();
-
+    await page.goto(`/${SLUG}/owner/modules/${liveModuleId}/versions`);
     await page.getByPlaceholder("What changed?").fill("Smoke test changelog");
     await page.getByRole("button", { name: "Publish update" }).click();
     await expect(page.getByText("Published.")).toBeVisible();

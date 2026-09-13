@@ -258,7 +258,25 @@ function CarouselCard({
  * divides by tan(pi/count), which is 0 at count<=2) -- those render as a
  * plain flat row instead, still fully featured (click-to-focus included).
  */
-export function StationsGallery({ venueSlug, stations }: { venueSlug: string; stations: Station[] }) {
+export function StationsGallery({
+  venueSlug,
+  stations,
+  viewerContext = "staff",
+}: {
+  venueSlug: string;
+  stations: Station[];
+  /**
+   * The owner dashboard reuses this exact gallery (Block K4), but an owner
+   * has no staff PIN session -- following the staff-only content href
+   * dropped them on the staff login page instead of any content ("Open
+   * station content" led to an odd login-page dead end, reported live).
+   * The focus overlay's own doc comment already says an owner's only real
+   * use of this modal is confirming a printed QR matches the right
+   * station, not consuming the training content itself -- "owner" omits
+   * the navigable href instead of pointing it at a login wall.
+   */
+  viewerContext?: "staff" | "owner";
+}) {
   const [focused, setFocused] = useState<FocusedStation | null>(null);
   const { rotationY, onPan, onPanEnd, activeIndex, goToIndex, anglePerCard } = useCylinderCarousel(stations.length);
 
@@ -270,7 +288,7 @@ export function StationsGallery({ venueSlug, stations }: { venueSlug: string; st
       number: visuals.number,
       photoUrl: station.photoUrl,
       qrDataUrl: station.qrDataUrl,
-      href: `/${venueSlug}/station/${station.qrCodeSlug}`,
+      href: viewerContext === "owner" ? null : `/${venueSlug}/station/${station.qrCodeSlug}`,
     });
   }
 

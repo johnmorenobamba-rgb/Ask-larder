@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { getNeedsAttention } from "@/lib/owner/needsAttention";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
+import { getWeeklyDigest } from "@/lib/reports/weeklyDigest";
 import { OwnerDashboardBoard, type FlagItem } from "@/components/owner/OwnerDashboardBoard";
 import type { StaffCompletionRow } from "@/components/owner/StaffCompletionList";
 
@@ -24,21 +25,38 @@ export default async function OwnerDashboardPage({
   const supabase = await createClient();
   const venueId = staff!.venue_id!;
 
-  const [needsAttention, { data: liveModules }, { data: staffList }, { data: progress }, stations] = await Promise.all([
-    getNeedsAttention(supabase, venueId),
-    supabase.from("modules").select("id").eq("status", "live"),
-    // Excludes the owner's own account -- the unfiltered query was listing
-    // it in "Staff completion" too (found live while seeding a realistic
-    // multi-staff venue for J6's screenshot pass: an owner row rendered
-    // "No role set" with a 0/N ring, which is real but semantically wrong
-    // to show at all -- pre-existing, just far more visible now that this
-    // is a prominent elevated ring instead of a plain text row). Managers
-    // stay included -- unlike the owner, they can carry a staff_role_id
-    // and go through the same training as everyone else.
-    supabase.from("app_users").select("id, name, staff_roles(name)").neq("role", "owner").is("deactivated_at", null).order("name"),
-    supabase.from("staff_module_progress").select("user_id, module_id, status"),
-    getStationsWithDisplay(supabase, venueId, venueSlug),
-  ]);
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const [needsAttention, { data: liveModules }, { data: staffList }, { data: progress }, stations, { data: escalationRows }, weeklyDigest] =
+    await Promise.all([
+      getNeedsAttention(supabase, venueId),
+      supabase.from("modules").select("id").eq("status", "live"),
+      // Excludes the owner's own account -- the unfiltered query was listing
+      // it in "Staff completion" too (found live while seeding a realistic
+      // multi-staff venue for J6's screenshot pass: an owner row rendered
+      // "No role set" with a 0/N ring, which is real but semantically wrong
+      // to show at all -- pre-existing, just far more visible now that this
+      // is a prominent elevated ring instead of a plain text row). Managers
+      // stay included -- unlike the owner, they can carry a staff_role_id
+      // and go through the same training as everyone else.
+      supabase.from("app_users").select("id, name, staff_roles(name)").neq("role", "owner").is("deactivated_at", null).order("name"),
+      supabase.from("staff_module_progress").select("user_id, module_id, status"),
+      getStationsWithDisplay(supabase, venueId, venueSlug),
+      // Fetched and filtered client-side rather than a .neq("escalation_status", "resolved")
+      // server-side filter -- Postgres's NULL comparison semantics mean <>
+      // 'resolved' silently excludes NULL rows (the actual default/unset
+      // state), which would have hidden every never-touched escalation.
+      supabase
+        .from("chat_messages")
+        .select("id, created_at, escalation_status, stations(name)")
+        .eq("venue_id", venueId)
+        .eq("is_escalation", true)
+        .order("created_at", { ascending: false }),
+      getWeeklyDigest(supabase, venueId, sevenDaysAgo.toISOString()),
+    ]);
+
+  const unresolvedEscalations = (escalationRows ?? []).filter((e) => e.escalation_status !== "resolved");
 
   const liveModuleCount = (liveModules ?? []).length;
   const completedByUser = new Map<string, number>();
@@ -113,6 +131,11 @@ export default async function OwnerDashboardPage({
         nearMissRecentStation={needsAttention.unresolvedNearMisses[0]?.stationName ?? null}
         staff={staffRows}
         stations={stations}
+        escalationCount={unresolvedEscalations.length}
+        escalationRecentStation={unresolvedEscalations[0]?.stations?.name ?? null}
+        weeklyQuestionCount={weeklyDigest.totalQuestions}
+        weeklyOutOfScopeCount={weeklyDigest.outOfScope.length}
+        weeklyTopQuestion={weeklyDigest.outOfScope[0]?.question ?? weeklyDigest.escalations[0]?.question ?? null}
       />
     </main>
   );
