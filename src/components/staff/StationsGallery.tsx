@@ -310,7 +310,13 @@ export function StationsGallery({
   // Cards visible at width, arranged so the front-facing one sits at
   // radius distance from the cylinder's central axis without overlapping
   // its neighbors -- the standard N-gon-inscribed-circle radius formula.
-  const radius = stations.length >= MIN_CYLINDER_COUNT ? CARD_WIDTH / 2 / Math.tan(Math.PI / stations.length) : 0;
+  // Rounded to 3 decimals: Math.tan's last few bits of precision can differ
+  // between the server's V8 (Node) and the browser's V8, which otherwise
+  // produces a real, reproducible hydration mismatch on this exact
+  // transform string (confirmed live, 14 Sep) -- a sub-thousandth-of-a-
+  // pixel difference is invisible anyway, so rounding buys determinism for
+  // free rather than papering over the warning.
+  const radius = stations.length >= MIN_CYLINDER_COUNT ? Math.round((CARD_WIDTH / 2 / Math.tan(Math.PI / stations.length)) * 1000) / 1000 : 0;
 
   if (stations.length < MIN_CYLINDER_COUNT) {
     return (
