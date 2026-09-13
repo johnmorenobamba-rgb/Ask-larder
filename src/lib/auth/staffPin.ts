@@ -58,6 +58,73 @@ export async function setStaffPin({ staffUserId, pin, callerVenueId }: SetPinInp
   }
 }
 
+/**
+ * Block U -- clears a staff member's PIN so their next login forces a real
+ * re-set, rather than an owner/manager choosing their new PIN for them
+ * (the same principle as never letting an admin see or set a password).
+ * Scoped to callerVenueId exactly like setStaffPin.
+ */
+export async function clearStaffPin(staffUserId: string, callerVenueId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("app_users")
+    .update({
+      pin_hash: null,
+      pin_set_at: null,
+      pin_failed_attempts: 0,
+      pin_locked_until: null,
+    })
+    .eq("id", staffUserId)
+    .eq("venue_id", callerVenueId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new PinAuthError(500, error.message);
+  if (!data) throw new PinAuthError(404, "Staff user not found.");
+}
+
+export interface SetOwnPinInput {
+  venueSlug: string;
+  staffUserId: string;
+  pin: string;
+}
+
+/**
+ * Block U -- the staff-facing half of "forces a re-set on next login": the
+ * credential holder chooses their own new PIN, never the owner. Only
+ * succeeds while pin_hash is genuinely unset (first-time setup, or right
+ * after an owner-triggered reset) -- this is deliberately not a general
+ * "change my PIN" endpoint, since that would let anyone who can reach this
+ * route overwrite an already-set PIN with no re-auth of their own.
+ */
+export async function setOwnPinIfUnset({ venueSlug, staffUserId, pin }: SetOwnPinInput): Promise<void> {
+  if (!PIN_PATTERN.test(pin)) {
+    throw new PinAuthError(400, "pin must be 4-6 digits.");
+  }
+
+  const admin = createAdminClient();
+  const { data: staff, error: lookupError } = await admin
+    .from("app_users")
+    .select("id, pin_hash, deactivated_at, venues!inner(slug)")
+    .eq("id", staffUserId)
+    .eq("venues.slug", venueSlug)
+    .maybeSingle();
+  if (lookupError) throw new PinAuthError(500, lookupError.message);
+  if (!staff || staff.deactivated_at) {
+    throw new PinAuthError(404, "Staff user not found for this venue.");
+  }
+  if (staff.pin_hash) {
+    throw new PinAuthError(409, "A PIN is already set. Ask your manager to reset it if you've forgotten it.");
+  }
+
+  const pinHash = await bcrypt.hash(pin, BCRYPT_COST);
+  const { error: updateError } = await admin
+    .from("app_users")
+    .update({ pin_hash: pinHash, pin_set_at: new Date().toISOString() })
+    .eq("id", staffUserId);
+  if (updateError) throw new PinAuthError(500, updateError.message);
+}
+
 export interface LoginWithPinInput {
   venueSlug: string;
   staffUserId: string;
@@ -89,7 +156,7 @@ export async function loginWithStaffPin({
 
   const { data: staff, error: lookupError } = await admin
     .from("app_users")
-    .select("id, auth_id, email, pin_hash, pin_failed_attempts, pin_locked_until, venues!inner(slug)")
+    .select("id, auth_id, email, pin_hash, pin_failed_attempts, pin_locked_until, deactivated_at, venues!inner(slug)")
     .eq("id", staffUserId)
     .eq("venues.slug", venueSlug)
     .maybeSingle();
@@ -97,11 +164,17 @@ export async function loginWithStaffPin({
   if (lookupError) {
     throw new PinAuthError(500, lookupError.message);
   }
-  if (!staff) {
+  // Block U -- a deactivated staff member gets the same 404 as a
+  // nonexistent id, matching setStaffPin's own "don't leak which case it
+  // is" convention.
+  if (!staff || staff.deactivated_at) {
     throw new PinAuthError(404, "Staff user not found for this venue.");
   }
   if (!staff.pin_hash) {
-    throw new PinAuthError(400, "PIN has not been set for this staff member.");
+    // 428 (Precondition Required), not 400/401 -- a distinct status the
+    // client branches on to show "set your PIN" instead of a plain error.
+    // See setOwnPinIfUnset, the staff-facing half of this reset flow.
+    throw new PinAuthError(428, "PIN has not been set for this staff member.");
   }
 
   const lockedUntil = staff.pin_locked_until ? new Date(staff.pin_locked_until) : null;

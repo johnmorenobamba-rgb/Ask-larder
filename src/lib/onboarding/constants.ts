@@ -31,6 +31,7 @@ export const CONTACT_TYPES = [
   { value: "regulator", label: "Regulator" },
   { value: "escalation", label: "Escalation contact" },
   { value: "fire_police_non_emergency", label: "Fire/police (non-emergency)" },
+  { value: "equipment_service", label: "Equipment service/repair" },
 ] as const;
 
 // Written from Page 5 (crowd control), not Page 10, but the same table/enum
@@ -91,13 +92,28 @@ export const MENU_CATEGORIES = [
 // SOP intake hub. "appliesWhen" is a best-effort UI hint only (dims a topic
 // that looks not-yet-relevant) — every topic stays reachable regardless, in
 // keeping with Q2 §1's "never gate a page" rule.
-export const PART_B_TOPICS: { key: string; label: string; appliesWhen?: (flags: { licensed?: boolean; crowd_control_required?: boolean; runs_happy_hour?: boolean; food_service_level?: string }) => boolean }[] = [
+export type PartBTopicFlags = {
+  licensed?: boolean;
+  crowd_control_required?: boolean;
+  runs_happy_hour?: boolean;
+  food_service_level?: string;
+  founder_escalation?: string[];
+};
+
+// T1 -- appliesWhen is now load-bearing (src/lib/onboarding/sopTopicRules.ts
+// promotes each predicate's result into a real high-confidence
+// sop_topic_decisions row), not just a UI-dimming hint. Kept as the single
+// source of truth for the rule pass rather than duplicating this logic.
+export const PART_B_TOPICS: { key: string; label: string; appliesWhen?: (flags: PartBTopicFlags) => boolean }[] = [
   { key: "welcome_and_how_we_work", label: "Welcome & how we work" },
   { key: "rsa_and_responsible_service", label: "RSA & responsible service", appliesWhen: (f) => f.licensed !== false },
   { key: "food_handling_and_allergens", label: "Food handling & allergens", appliesWhen: (f) => f.food_service_level !== "no_food_service" },
   { key: "food_safety_fundamentals", label: "Food safety fundamentals", appliesWhen: (f) => f.food_service_level === "full_kitchen" },
   { key: "equipment_operating_and_cleaning", label: "Equipment operating & cleaning" },
-  { key: "cellar_and_gas_safety", label: "Cellar & gas safety, keg/tap lines" },
+  // Q1's own rule-of-thumb for this topic ("no alcohol licence -> skip
+  // cellar/RSA modules") was never actually wired up before Block T --
+  // every other licensed-only topic already had this gate, this one didn't.
+  { key: "cellar_and_gas_safety", label: "Cellar & gas safety, keg/tap lines", appliesWhen: (f) => f.licensed !== false },
   { key: "workplace_health_and_safety", label: "Workplace health & safety" },
   { key: "cash_handling_and_reconciliation", label: "Cash handling & reconciliation" },
   { key: "closing_procedures_and_premises_security", label: "Closing procedures & premises security" },
@@ -107,6 +123,16 @@ export const PART_B_TOPICS: { key: string; label: string; appliesWhen?: (flags: 
   { key: "trading_hours_licence_and_capacity", label: "Trading hours, licence & capacity", appliesWhen: (f) => f.licensed !== false },
   { key: "restricted_content_safe_and_alarm_access", label: "Restricted: safe & alarm access" },
   { key: "display_cabinet_and_grab_and_go_safety", label: "Display cabinet & grab-and-go safety" },
+  // Gaming/EGM has no dedicated venue_type_flags column -- it's carried as
+  // the string "gaming_egm" inside the generic founder_escalation bucket
+  // (set by licence-detail/route.ts). Added here, Block T, so the SOP
+  // determination pass treats it like every other topic instead of a
+  // special case with no home in this list.
+  {
+    key: "gaming_machine_operation_and_responsible_gambling",
+    label: "Gaming machines & responsible gambling",
+    appliesWhen: (f) => f.founder_escalation?.includes("gaming_egm") ?? false,
+  },
 ] as const;
 
 export const COMMON_ALLERGENS = [

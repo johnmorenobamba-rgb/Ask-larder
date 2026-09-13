@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
+import { isSopDocumentContent, type SopDocumentContent } from "@/lib/ai/sopDocumentContent";
 
 const MODEL = "claude-sonnet-5";
 
@@ -12,17 +13,12 @@ const MODEL = "claude-sonnet-5";
 // Escalation). Distilled once per module, cached in sop_documents, never
 // regenerated on view (R2/R3). Check questions are never passed to this
 // generator at all -- not filtered out afterward -- so there is no path by
-// which quiz content could leak into the document.
-export interface SopDocumentContent {
-  purpose: string;
-  scope: string;
-  whoPerformsIt: string;
-  materials: string[];
-  procedure: string[];
-  safetyCriticalCallouts: string[];
-  definitionOfDone: string;
-  escalationContact: string;
-}
+// which quiz content could leak into the document. The shape itself and its
+// validation guard now live in sopDocumentContent.ts (Block T) so Block T's
+// curateSopDocumentFromIntake.ts can reuse them without pulling in this
+// file's `server-only` guard, which blocks headless-script testing --
+// re-exported here so every existing importer of this type is unaffected.
+export type { SopDocumentContent };
 
 const SYSTEM_PROMPT = `You turn a hospitality venue's raw, staff-facing training content into a professional Standard Operating Procedure document for the venue's own records.
 
@@ -90,24 +86,6 @@ const generateTool: Anthropic.Tool = {
     additionalProperties: false,
   },
 };
-
-function isSopDocumentContent(value: unknown): value is SopDocumentContent {
-  if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return (
-    typeof v.purpose === "string" &&
-    typeof v.scope === "string" &&
-    typeof v.whoPerformsIt === "string" &&
-    Array.isArray(v.materials) &&
-    v.materials.every((m) => typeof m === "string") &&
-    Array.isArray(v.procedure) &&
-    v.procedure.every((p) => typeof p === "string") &&
-    Array.isArray(v.safetyCriticalCallouts) &&
-    v.safetyCriticalCallouts.every((s) => typeof s === "string") &&
-    typeof v.definitionOfDone === "string" &&
-    typeof v.escalationContact === "string"
-  );
-}
 
 export interface GenerateSopDocumentResult {
   content: SopDocumentContent;

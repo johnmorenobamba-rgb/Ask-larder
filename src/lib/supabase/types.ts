@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           auth_id: string | null
           created_at: string | null
+          deactivated_at: string | null
           email: string | null
           has_seen_ask_larder_intro: boolean
           id: string
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           auth_id?: string | null
           created_at?: string | null
+          deactivated_at?: string | null
           email?: string | null
           has_seen_ask_larder_intro?: boolean
           id?: string
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           auth_id?: string | null
           created_at?: string | null
+          deactivated_at?: string | null
           email?: string | null
           has_seen_ask_larder_intro?: boolean
           id?: string
@@ -272,48 +275,6 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      edit_requests: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          request_month: string
-          requested_by: string | null
-          venue_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          request_month: string
-          requested_by?: string | null
-          venue_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          request_month?: string
-          requested_by?: string | null
-          venue_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "edit_requests_requested_by_fkey"
-            columns: ["requested_by"]
-            isOneToOne: false
-            referencedRelation: "app_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "edit_requests_venue_id_fkey"
-            columns: ["venue_id"]
-            isOneToOne: false
-            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
@@ -840,6 +801,7 @@ export type Database = {
           content: Json
           generated_at: string
           generated_from_hash: string
+          generated_via: string
           id: string
           module_id: string
         }
@@ -847,6 +809,7 @@ export type Database = {
           content: Json
           generated_at?: string
           generated_from_hash: string
+          generated_via?: string
           id?: string
           module_id: string
         }
@@ -854,6 +817,7 @@ export type Database = {
           content?: Json
           generated_at?: string
           generated_from_hash?: string
+          generated_via?: string
           id?: string
           module_id?: string
         }
@@ -869,6 +833,7 @@ export type Database = {
       }
       sop_edit_requests: {
         Row: {
+          billable: boolean
           created_at: string
           description: string
           id: string
@@ -878,6 +843,7 @@ export type Database = {
           venue_id: string
         }
         Insert: {
+          billable?: boolean
           created_at?: string
           description: string
           id?: string
@@ -887,6 +853,7 @@ export type Database = {
           venue_id: string
         }
         Update: {
+          billable?: boolean
           created_at?: string
           description?: string
           id?: string
@@ -919,12 +886,66 @@ export type Database = {
           },
         ]
       }
+      sop_intake_answers: {
+        Row: {
+          answer_source: string
+          answer_text: string | null
+          attachment_extracted_text: string | null
+          attachment_storage_path: string | null
+          created_at: string
+          extracted_contact: Json | null
+          id: string
+          question_key: string
+          question_type: string
+          topic_key: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          answer_source?: string
+          answer_text?: string | null
+          attachment_extracted_text?: string | null
+          attachment_storage_path?: string | null
+          created_at?: string
+          extracted_contact?: Json | null
+          id?: string
+          question_key: string
+          question_type: string
+          topic_key: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          answer_source?: string
+          answer_text?: string | null
+          attachment_extracted_text?: string | null
+          attachment_storage_path?: string | null
+          created_at?: string
+          extracted_contact?: Json | null
+          id?: string
+          question_key?: string
+          question_type?: string
+          topic_key?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_intake_answers_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_source_documents: {
         Row: {
           file_ref: string | null
           id: string
           processed_status: string | null
           raw_content: string | null
+          topic_key: string | null
           uploaded_at: string | null
           venue_id: string | null
         }
@@ -933,6 +954,7 @@ export type Database = {
           id?: string
           processed_status?: string | null
           raw_content?: string | null
+          topic_key?: string | null
           uploaded_at?: string | null
           venue_id?: string | null
         }
@@ -941,12 +963,70 @@ export type Database = {
           id?: string
           processed_status?: string | null
           raw_content?: string | null
+          topic_key?: string | null
           uploaded_at?: string | null
           venue_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "sop_source_documents_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_topic_decisions: {
+        Row: {
+          applicable: boolean
+          confidence: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          rationale: string | null
+          source: string
+          topic_key: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          applicable: boolean
+          confidence: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          rationale?: string | null
+          source: string
+          topic_key: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          applicable?: boolean
+          confidence?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          rationale?: string | null
+          source?: string
+          topic_key?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_topic_decisions_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_topic_decisions_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"

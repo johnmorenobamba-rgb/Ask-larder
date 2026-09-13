@@ -21,6 +21,26 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const FROM_EMAIL = "Larder <notifications@larder-updates.example>";
 
+// Duplicated (not imported) from src/lib/email/brandedEmail.ts -- this runs
+// in Deno and can't import a Next.js server module. Keep both in sync by
+// hand if the shell ever changes, same convention already used for
+// src/lib/reports/weeklyDigest.ts's query logic vs this function's own copy.
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderBrandedEmailHtml({ heading, bodyHtml }: { heading: string; bodyHtml: string }): string {
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background-color:#F2E9D8;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E9D8;"><tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" style="max-width:480px;" cellpadding="0" cellspacing="0">
+<tr><td style="padding-bottom:20px;border-bottom:3px solid #E8A93B;"><span style="font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:24px;color:#1F1B16;">Larder</span></td></tr>
+<tr><td style="padding:28px 0 4px 0;"><h1 style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#1F1B16;margin:0 0 16px 0;">${escapeHtml(heading)}</h1>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1F1B16;">${bodyHtml}</div></td></tr>
+<tr><td style="padding-top:28px;border-top:1px solid rgba(122,92,67,0.3);"><p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A5C43;margin:0;">Larder, staff onboarding and training built from your own SOPs.</p></td></tr>
+</table></td></tr></table></body></html>`;
+}
+
 interface ChatRow {
   message: string | null;
   exchange_id: string | null;
@@ -59,12 +79,23 @@ function formatSection(title: string, questions: DigestQuestion[]): string {
   return `${title}:\n${lines.join("\n")}`;
 }
 
+function formatSectionHtml(title: string, questions: DigestQuestion[]): string {
+  if (questions.length === 0) {
+    return `<p style="margin:0 0 16px 0;"><strong>${escapeHtml(title)}:</strong> none this week.</p>`;
+  }
+  const items = questions
+    .slice(0, 10)
+    .map((q) => `<li style="margin:0 0 4px 0;">&quot;${escapeHtml(q.question)}&quot; (asked ${q.count} time${q.count === 1 ? "" : "s"})</li>`)
+    .join("");
+  return `<p style="margin:0 0 4px 0;"><strong>${escapeHtml(title)}:</strong></p><ul style="margin:0 0 16px 0;padding-left:20px;">${items}</ul>`;
+}
+
 async function sendDigestEmail(to: string[], venueName: string, total: number, outOfScope: DigestQuestion[], escalations: DigestQuestion[]): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) throw new Error("RESEND_API_KEY is not set.");
 
   const body = [
-    `${venueName} — Ask Larder weekly report`,
+    `${venueName}, Ask Larder weekly report`,
     ``,
     `${total} question(s) asked this week.`,
     ``,
@@ -75,6 +106,13 @@ async function sendDigestEmail(to: string[], venueName: string, total: number, o
     `Full detail in the owner dashboard's Weekly report page.`,
   ].join("\n");
 
+  const bodyHtml = `
+    <p style="margin:0 0 16px 0;">${total} question(s) asked this week.</p>
+    ${formatSectionHtml("Not covered by any SOP", outOfScope)}
+    ${formatSectionHtml("Needed a supervisor", escalations)}
+    <p style="margin:0;">Full detail in the owner dashboard's Weekly report page.</p>
+  `;
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -83,6 +121,7 @@ async function sendDigestEmail(to: string[], venueName: string, total: number, o
       to,
       subject: `${venueName}: Ask Larder weekly report`,
       text: body,
+      html: renderBrandedEmailHtml({ heading: `${venueName}, Ask Larder weekly report`, bodyHtml }),
     }),
   });
   if (!res.ok) throw new Error(`Resend request failed (${res.status}): ${await res.text()}`);

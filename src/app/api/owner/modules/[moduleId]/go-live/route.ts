@@ -49,10 +49,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   // back over a generation failure. A missing document surfaces as a real
   // "Generate SOP document" action on the SOPs dashboard (R3), not a silent
   // gap, so this is safe to fail without blocking go-live.
-  try {
-    await generateSopDocument(moduleId, supabase);
-  } catch (sopError) {
-    console.error("go-live SOP document generation failed:", sopError instanceof Error ? sopError.message : sopError);
+  //
+  // Block T guard: if this module went through the guided-intake curation
+  // pipeline, sop_documents was already populated directly from structured
+  // interview answers (generated_via='intake_curation') -- richer source
+  // data than this module's own generated section prose. Re-extracting from
+  // that prose here would silently downgrade it, so this only runs
+  // generateSopDocument for a module that doesn't already have a
+  // curation-authored row. The manual dashboard "Generate/Regenerate"
+  // action is unaffected -- that stays an unconditional, explicit overwrite.
+  const { data: existingSopDoc } = await supabase.from("sop_documents").select("generated_via").eq("module_id", moduleId).maybeSingle();
+  if (existingSopDoc?.generated_via !== "intake_curation") {
+    try {
+      await generateSopDocument(moduleId, supabase);
+    } catch (sopError) {
+      console.error("go-live SOP document generation failed:", sopError instanceof Error ? sopError.message : sopError);
+    }
   }
 
   return NextResponse.json({ ok: true });

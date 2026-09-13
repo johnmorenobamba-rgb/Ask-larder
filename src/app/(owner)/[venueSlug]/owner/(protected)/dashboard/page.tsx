@@ -35,7 +35,7 @@ export default async function OwnerDashboardPage({
     // is a prominent elevated ring instead of a plain text row). Managers
     // stay included -- unlike the owner, they can carry a staff_role_id
     // and go through the same training as everyone else.
-    supabase.from("app_users").select("id, name, staff_roles(name)").neq("role", "owner").order("name"),
+    supabase.from("app_users").select("id, name, staff_roles(name)").neq("role", "owner").is("deactivated_at", null).order("name"),
     supabase.from("staff_module_progress").select("user_id, module_id, status"),
     getStationsWithDisplay(supabase, venueId, venueSlug),
   ]);

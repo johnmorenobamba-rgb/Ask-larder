@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
 import { buildVisionContentBlock, fetchOnboardingUpload } from "@/lib/ai/onboardingUpload";
+import { scanForSensitiveContent } from "@/lib/security/detectSensitiveContent";
 
 // Block Q5 -- wizard Page 12, intake step 1 (docs/block-q/q2-wizard-flow-and-schema.md
 // §3, "sop-ingest-and-chunk"). Writes a sop_source_documents row so the raw
@@ -105,6 +106,16 @@ export async function POST(request: Request) {
       console.error("parse-sop extraction error:", err instanceof Error ? err.message : err);
       return NextResponse.json({ error: "Couldn't read this document right now." }, { status: 502 });
     }
+  }
+
+  // Block V1 -- a card number or credential typed into the source document
+  // itself (a printed sheet, a handwritten note) must be caught here too,
+  // not just on live-typed answers -- this is the one place every uploaded
+  // document's extracted text passes through before it's ever persisted or
+  // handed back to the client for use.
+  const findings = scanForSensitiveContent(rawContent);
+  if (findings.length > 0) {
+    return NextResponse.json({ error: findings[0].message, sensitiveContentBlocked: true }, { status: 422 });
   }
 
   const supabase = await createClient();

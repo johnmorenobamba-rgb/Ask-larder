@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { StaffPinResetButton } from "@/components/owner/StaffPinResetButton";
+import { StaffLifecycleActions } from "@/components/owner/StaffLifecycleActions";
+import { ReactivateStaffButton } from "@/components/owner/ReactivateStaffButton";
+import { InviteStaffForm } from "@/components/owner/InviteStaffForm";
 import { StaffCompletionList, type StaffCompletionRow } from "@/components/owner/StaffCompletionList";
 
 // Block K3 — this is now also the "Staff completion" detail screen the
@@ -7,13 +9,31 @@ import { StaffCompletionList, type StaffCompletionRow } from "@/components/owner
 // ElevatedCell ring list (extracted into StaffCompletionList.tsx) sits
 // above the existing roster/PIN-reset rows, rather than living as a
 // separate third staff-related page.
+//
+// Block U1 — gained a real "Invite staff" action, PIN reset that clears
+// rather than sets, and deactivate/reactivate. The active roster and
+// completion tiles are filtered to `deactivated_at is null` (this is what
+// "removes them from active completion counts" means); a deactivated
+// staff member's historical record still shows in full on
+// completions/page.tsx, which deliberately has no such filter.
 export default async function OwnerStaffPage() {
   const supabase = await createClient();
 
   // app_users_select_own_venue (reconcile_schema_drift) scopes this to the
   // caller's own venue already -- no explicit venue_id filter needed.
-  const [{ data: staff }, { data: liveModules }, { data: progress }] = await Promise.all([
-    supabase.from("app_users").select("id, name, role, staff_roles(name, department)").neq("role", "owner").order("name"),
+  const [{ data: staff }, { data: deactivatedStaff }, { data: liveModules }, { data: progress }] = await Promise.all([
+    supabase
+      .from("app_users")
+      .select("id, name, role, staff_roles(name, department)")
+      .neq("role", "owner")
+      .is("deactivated_at", null)
+      .order("name"),
+    supabase
+      .from("app_users")
+      .select("id, name")
+      .neq("role", "owner")
+      .not("deactivated_at", "is", null)
+      .order("name"),
     supabase.from("modules").select("id").eq("status", "live"),
     supabase.from("staff_module_progress").select("user_id, module_id, status"),
   ]);
@@ -46,6 +66,7 @@ export default async function OwnerStaffPage() {
 
         <section className="space-y-3">
           <h2 className="font-mono text-xs uppercase tracking-wide text-clay-brown">Roster</h2>
+          <InviteStaffForm />
           <div className="space-y-3">
             {(staff ?? []).map((member) => (
               <div
@@ -60,7 +81,7 @@ export default async function OwnerStaffPage() {
                     {member.staff_roles?.department ? ` · ${member.staff_roles.department}` : ""}
                   </p>
                 </div>
-                <StaffPinResetButton staffUserId={member.id} />
+                <StaffLifecycleActions staffUserId={member.id} staffName={member.name} />
               </div>
             ))}
             {(staff ?? []).length === 0 && (
@@ -68,6 +89,26 @@ export default async function OwnerStaffPage() {
             )}
           </div>
         </section>
+
+        {(deactivatedStaff ?? []).length > 0 && (
+          <section className="space-y-3">
+            <h2 className="font-mono text-xs uppercase tracking-wide text-clay-brown">Deactivated</h2>
+            <p className="font-sans text-xs text-ink/60">
+              Their completion history stays on record. See the Completion tracking page for full detail.
+            </p>
+            <div className="space-y-3">
+              {(deactivatedStaff ?? []).map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between rounded-2xl border-2 border-clay-brown/20 px-4 py-4 opacity-70"
+                >
+                  <p className="font-display text-ink">{member.name}</p>
+                  <ReactivateStaffButton staffUserId={member.id} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

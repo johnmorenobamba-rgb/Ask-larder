@@ -8,6 +8,7 @@ export function RequestEditForm({ moduleId }: { moduleId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [billing, setBilling] = useState<{ billable: boolean; freeEditsRemaining: number } | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,12 +20,13 @@ export function RequestEditForm({ moduleId }: { moduleId: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description }),
     });
+    const body = await res.json().catch(() => null);
     setBusy(false);
     if (!res.ok) {
-      const body = await res.json().catch(() => null);
       setError(body?.error ?? "Couldn't submit the edit request.");
       return;
     }
+    setBilling({ billable: body?.billable ?? false, freeEditsRemaining: body?.freeEditsRemaining ?? 0 });
     setDone(true);
   }
 
@@ -45,12 +47,18 @@ export function RequestEditForm({ moduleId }: { moduleId: string }) {
       {done ? (
         <div className="space-y-2">
           <p className="font-sans text-ink">Edit request submitted. The founder has been notified.</p>
+          <p className="font-sans text-sm text-clay-brown">
+            {billing?.billable
+              ? "This is beyond your 5 free edits this month, billed at $15 AUD."
+              : `Free edit, ${billing?.freeEditsRemaining ?? 0} free ${billing?.freeEditsRemaining === 1 ? "edit" : "edits"} remaining this month.`}
+          </p>
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               setDone(false);
               setDescription("");
+              setBilling(null);
             }}
             className="font-mono text-xs uppercase tracking-wide text-clay-brown"
           >

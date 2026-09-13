@@ -1,82 +1,90 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
-import { SopIntakeHub } from "@/components/onboarding/SopIntakeHub";
+import { SopInterview, type TopicEntry } from "@/components/onboarding/SopInterview";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { PART_B_TOPICS } from "@/lib/onboarding/constants";
-import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
+import { getQuestionsForTopic } from "@/lib/onboarding/sopQuestions";
+import { determineSopTopics } from "@/lib/ai/sopTopicDetermination";
+import { getPreviousStep } from "@/lib/onboarding/steps";
 
+// Block T4 -- replaces SopIntakeHub's free-authoring hub with the guided
+// intake flow. Ensures sop_topic_decisions exist for this venue (running
+// T1's determination pass once, synchronously, the first time this page is
+// visited with none yet -- a few seconds of load time on a founder-run,
+// once-per-venue setup step is the right tradeoff against a separate
+// client-side polling state machine), then builds the flattened
+// topic+question queue SopInterview renders.
 export default async function ContentIntakePage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
+  const venueId = staff!.venue_id!;
   const supabase = await createClient();
 
-  const [{ data: session }, { data: checks }, { data: modules }] = await Promise.all([
-    supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
+  let { data: decisions } = await supabase
+    .from("sop_topic_decisions")
+    .select("topic_key, applicable, confidence, source, rationale")
+    .eq("venue_id", venueId);
+
+  if (!decisions || decisions.length === 0) {
+    const fresh = await determineSopTopics(venueId, supabase);
+    decisions = fresh.map((d) => ({
+      topic_key: d.topicKey,
+      applicable: d.applicable,
+      confidence: d.confidence,
+      source: d.source,
+      rationale: d.rationale,
+    }));
+  }
+  const decisionsByTopic = new Map(decisions.map((d) => [d.topic_key, d]));
+
+  const [{ data: answerRows }, { data: modules }] = await Promise.all([
     supabase
-      .from("onboarding_content_checks")
-      .select("id, topic_key, test_question, answer, could_answer")
-      .eq("venue_id", staff!.venue_id!)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("modules")
-      .select(
-        "id, title, topic_key, module_sections(content, is_restricted, section_order), check_questions(question, section_order, options, correct_option_index, expected_answer_context)",
-      )
-      .eq("venue_id", staff!.venue_id!),
+      .from("sop_intake_answers")
+      .select("topic_key, question_key, answer_text, attachment_extracted_text, answer_source")
+      .eq("venue_id", venueId),
+    supabase.from("modules").select("id, topic_key").eq("venue_id", venueId),
   ]);
 
-  const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
+  const topics: TopicEntry[] = PART_B_TOPICS.map((topic) => {
+    const decision = decisionsByTopic.get(topic.key);
+    // A topic determination somehow never wrote (shouldn't happen once the
+    // pass above has run) defaults to applicable/high so it's never
+    // silently hidden.
+    const resolvedDecision = decision
+      ? {
+          applicable: decision.applicable,
+          confidence: decision.confidence as "high" | "low",
+          source: decision.source as "rule" | "ai" | "specialist_confirmed",
+          rationale: decision.rationale ?? "",
+        }
+      : { applicable: true, confidence: "high" as const, source: "rule" as const, rationale: "Applies to every venue regardless of type." };
 
-  // Match by topic_key first — a module saved through this hub always
-  // carries it (module-sections/route.ts sets it on every create and
-  // update). Falls back to exact title match only for legacy rows saved
-  // before topic_key existed and never revisited since; matching by title
-  // alone was the original design and is fragile (confirmed live: 13 of
-  // 14 modules on a real venue used stylistic title variants like "RSA and
-  // responsible service" vs the canonical "RSA & responsible service" and
-  // were invisible to this exact match, which would have caused a revisit
-  // to silently create a duplicate module instead of updating the
-  // existing one).
-  const existingModulesByTopic: Record<
-    string,
-    {
-      moduleId: string;
-      sections: { content: string; isRestricted: boolean }[];
-      checkQuestions: { question: string; sectionIndex: number; options: string[]; correctOptionIndex: number; correctiveText: string }[];
+    const answers: Record<string, { answerText: string; attachmentExtractedText: string | null; answerSource: "specialist" | "document" }> = {};
+    for (const row of answerRows ?? []) {
+      if (row.topic_key !== topic.key) continue;
+      answers[row.question_key] = {
+        answerText: row.answer_text ?? "",
+        attachmentExtractedText: row.attachment_extracted_text,
+        answerSource: (row.answer_source as "specialist" | "document" | null) ?? "specialist",
+      };
     }
-  > = {};
-  for (const topic of PART_B_TOPICS) {
-    const match = (modules ?? []).find((m) => m.topic_key === topic.key) ?? (modules ?? []).find((m) => !m.topic_key && m.title === topic.label);
-    if (!match) continue;
-    const sortedSections = [...(match.module_sections ?? [])].sort((a, b) => a.section_order - b.section_order);
-    existingModulesByTopic[topic.key] = {
-      moduleId: match.id,
-      sections: sortedSections.map((s) => ({ content: s.content ?? "", isRestricted: s.is_restricted ?? false })),
-      checkQuestions: (match.check_questions ?? []).map((q) => ({
-        question: q.question,
-        sectionIndex: q.section_order ?? 0,
-        // Options/correct_option_index didn't exist in this route's request
-        // shape until the fix round (11 Sep 2026) -- a question saved before
-        // that resumes here with an empty options array, same as any other
-        // pre-fix row, so the specialist is prompted to fill them in rather
-        // than the page silently pretending they're already set.
-        options: (q.options as string[] | null) ?? [],
-        correctOptionIndex: q.correct_option_index ?? 0,
-        correctiveText: q.expected_answer_context ?? "",
-      })),
+
+    const existingModule = (modules ?? []).find((m) => m.topic_key === topic.key);
+
+    return {
+      topicKey: topic.key,
+      label: topic.label,
+      decision: resolvedDecision,
+      questions: getQuestionsForTopic(topic.key),
+      answers,
+      moduleId: existingModule?.id ?? null,
     };
-  }
+  }).filter((t) => t.decision.applicable || t.decision.confidence === "low");
 
   return (
     <>
       <WizardBackLink venueSlug={venueSlug} previousStep={getPreviousStep("content-intake", {})} />
-      <SopIntakeHub
-        venueSlug={venueSlug}
-        venueId={staff!.venue_id!}
-        flags={flags}
-        checks={checks ?? []}
-        existingModulesByTopic={existingModulesByTopic}
-      />
+      <SopInterview venueSlug={venueSlug} venueId={venueId} topics={topics} />
     </>
   );
 }

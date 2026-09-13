@@ -18,10 +18,16 @@ export async function getCurrentStaff(): Promise<CurrentStaff | null> {
 
   if (!user) return null;
 
+  // Block U -- the one real enforcement point for staff deactivation.
+  // Filtering here (not just at PIN login) is what makes deactivation
+  // "immediate": an already-issued Supabase session/JWT would otherwise
+  // keep authenticating successfully until it naturally expires, no matter
+  // how thoroughly login itself is blocked.
   const { data: appUser } = await supabase
     .from("app_users")
     .select("*")
     .eq("auth_id", user.id)
+    .is("deactivated_at", null)
     .maybeSingle();
 
   return appUser;

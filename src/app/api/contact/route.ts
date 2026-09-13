@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { renderBrandedEmailHtml, escapeHtml } from "@/lib/email/brandedEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -36,6 +37,16 @@ export async function POST(request: Request) {
     ]
       .filter(Boolean)
       .join("\n"),
+    html: renderBrandedEmailHtml({
+      heading: "New enquiry",
+      bodyHtml: `
+        <p style="margin:0 0 4px 0;"><strong>Name:</strong> ${escapeHtml(name)}</p>
+        ${venueName ? `<p style="margin:0 0 4px 0;"><strong>Venue:</strong> ${escapeHtml(venueName)}</p>` : ""}
+        <p style="margin:0 0 4px 0;"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${phone ? `<p style="margin:0 0 16px 0;"><strong>Phone:</strong> ${escapeHtml(phone)}</p>` : ""}
+        <p style="margin:16px 0 0 0;white-space:pre-wrap;">${escapeHtml(message)}</p>
+      `,
+    }),
   });
 
   if (error) {
