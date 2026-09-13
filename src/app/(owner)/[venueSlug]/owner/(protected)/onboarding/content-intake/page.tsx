@@ -59,13 +59,13 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
         }
       : { applicable: true, confidence: "high" as const, source: "rule" as const, rationale: "Applies to every venue regardless of type." };
 
-    const answers: Record<string, { answerText: string; attachmentExtractedText: string | null; answerSource: "specialist" | "document" }> = {};
+    const answers: Record<string, { answerText: string; attachmentExtractedText: string | null; answerSource: "specialist" | "document" | "document_inferred" }> = {};
     for (const row of answerRows ?? []) {
       if (row.topic_key !== topic.key) continue;
       answers[row.question_key] = {
         answerText: row.answer_text ?? "",
         attachmentExtractedText: row.attachment_extracted_text,
-        answerSource: (row.answer_source as "specialist" | "document" | null) ?? "specialist",
+        answerSource: (row.answer_source as "specialist" | "document" | "document_inferred" | null) ?? "specialist",
       };
     }
 

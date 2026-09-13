@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { PART_B_TOPICS } from "@/lib/onboarding/constants";
 import { getQuestionsForTopic } from "@/lib/onboarding/sopQuestions";
-import { detectSopGaps } from "@/lib/ai/detectSopGaps";
+import { detectSopGapsTwoPass } from "@/lib/ai/detectSopGaps";
 import { scanForSensitiveContent } from "@/lib/security/detectSensitiveContent";
 
 // Block U2 -- the upload-first half of guided intake. The client already
@@ -58,7 +58,13 @@ export async function POST(request: Request) {
   const questions = getQuestionsForTopic(topicKey);
   let gaps;
   try {
-    gaps = await detectSopGaps(topic.label, rawContent, questions);
+    // Two-pass: strict verbatim extraction first (answer_source='document'),
+    // then a structural-coverage pass over whatever's left uncovered
+    // (answer_source='document_inferred') -- catches real signal in
+    // reference-style material (hazard/control-measure bullet lists, most
+    // government safety guidance) that the verbatim-only pass correctly
+    // refuses to fabricate from. See detectSopGaps.ts's doc comment.
+    gaps = await detectSopGapsTwoPass(topic.label, rawContent, questions);
   } catch (err) {
     console.error("analyze-document gap detection error:", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "Couldn't analyze this document. Try again." }, { status: 502 });
@@ -71,9 +77,9 @@ export async function POST(request: Request) {
   // it's stored. A question that trips this never silently disappears: it's
   // demoted back to a gap so the specialist is asked directly, rather than
   // being dropped from both `covered` and `gapKeys` and never asked at all.
-  const coveredAll = gaps.filter((g) => g.covered && g.extractedAnswer?.trim());
-  const covered = coveredAll.filter((g) => scanForSensitiveContent(g.extractedAnswer).length === 0);
-  const sensitiveKeys = new Set(coveredAll.filter((g) => scanForSensitiveContent(g.extractedAnswer).length > 0).map((g) => g.questionKey));
+  const coveredAll = gaps.filter((g) => g.covered && g.answerText?.trim());
+  const covered = coveredAll.filter((g) => scanForSensitiveContent(g.answerText).length === 0);
+  const sensitiveKeys = new Set(coveredAll.filter((g) => scanForSensitiveContent(g.answerText).length > 0).map((g) => g.questionKey));
   if (covered.length > 0) {
     const questionsByKey = new Map(questions.map((q) => [q.key, q]));
     const { error: answersError } = await supabase.from("sop_intake_answers").upsert(
@@ -82,8 +88,8 @@ export async function POST(request: Request) {
         topic_key: topicKey,
         question_key: g.questionKey,
         question_type: questionsByKey.get(g.questionKey)?.type ?? "universal",
-        answer_text: g.extractedAnswer,
-        answer_source: "document",
+        answer_text: g.answerText,
+        answer_source: g.source ?? "document",
         attachment_storage_path: storagePath,
         updated_at: new Date().toISOString(),
       })),
@@ -97,7 +103,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    covered: covered.map((g) => ({ questionKey: g.questionKey, answerText: g.extractedAnswer })),
+    covered: covered.map((g) => ({ questionKey: g.questionKey, answerText: g.answerText, source: g.source })),
     gapKeys: gaps.filter((g) => !g.covered || sensitiveKeys.has(g.questionKey)).map((g) => g.questionKey),
   });
 }

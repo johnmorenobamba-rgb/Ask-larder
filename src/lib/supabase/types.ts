@@ -508,6 +508,7 @@ export type Database = {
           is_restricted: boolean | null
           module_id: string | null
           photo_refs: string[] | null
+          provenance: string
           section_order: number
           video_ref: string | null
         }
@@ -517,6 +518,7 @@ export type Database = {
           is_restricted?: boolean | null
           module_id?: string | null
           photo_refs?: string[] | null
+          provenance?: string
           section_order: number
           video_ref?: string | null
         }
@@ -526,6 +528,7 @@ export type Database = {
           is_restricted?: boolean | null
           module_id?: string | null
           photo_refs?: string[] | null
+          provenance?: string
           section_order?: number
           video_ref?: string | null
         }
@@ -1196,6 +1199,100 @@ export type Database = {
           },
         ]
       }
+      station_faqs: {
+        Row: {
+          answer: string
+          citation: string | null
+          created_at: string
+          id: string
+          provenance: string
+          question: string
+          station_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          citation?: string | null
+          created_at?: string
+          id?: string
+          provenance: string
+          question: string
+          station_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          citation?: string | null
+          created_at?: string
+          id?: string
+          provenance?: string
+          question?: string
+          station_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_faqs_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      station_troubleshooting_issues: {
+        Row: {
+          citation: string | null
+          created_at: string
+          diagnosis_steps: string
+          escalation_required: boolean
+          id: string
+          issue_title: string
+          provenance: string
+          resolution_text: string
+          station_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          citation?: string | null
+          created_at?: string
+          diagnosis_steps: string
+          escalation_required?: boolean
+          id?: string
+          issue_title: string
+          provenance: string
+          resolution_text: string
+          station_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          citation?: string | null
+          created_at?: string
+          diagnosis_steps?: string
+          escalation_required?: boolean
+          id?: string
+          issue_title?: string
+          provenance?: string
+          resolution_text?: string
+          station_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_troubleshooting_issues_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stations: {
         Row: {
           created_at: string | null
@@ -1250,6 +1347,105 @@ export type Database = {
           },
           {
             foreignKeyName: "stations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_gap_checklists: {
+        Row: {
+          created_at: string
+          id: string
+          source_notes: string
+          sub_procedures: Json
+          title: string
+          topic_key: string
+          updated_at: string
+          venue_type: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_notes: string
+          sub_procedures: Json
+          title: string
+          topic_key: string
+          updated_at?: string
+          venue_type?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_notes?: string
+          sub_procedures?: Json
+          title?: string
+          topic_key?: string
+          updated_at?: string
+          venue_type?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      topic_gap_reports: {
+        Row: {
+          checklist_version: number
+          created_at: string
+          evidence_quote: string | null
+          id: string
+          material_source: string
+          module_id: string | null
+          recommended_action: string
+          recommended_mechanism: string
+          standard_coverage: string
+          sub_procedure_key: string
+          topic_key: string
+          venue_id: string
+          venue_specific_coverage: string
+        }
+        Insert: {
+          checklist_version: number
+          created_at?: string
+          evidence_quote?: string | null
+          id?: string
+          material_source: string
+          module_id?: string | null
+          recommended_action: string
+          recommended_mechanism: string
+          standard_coverage: string
+          sub_procedure_key: string
+          topic_key: string
+          venue_id: string
+          venue_specific_coverage: string
+        }
+        Update: {
+          checklist_version?: number
+          created_at?: string
+          evidence_quote?: string | null
+          id?: string
+          material_source?: string
+          module_id?: string | null
+          recommended_action?: string
+          recommended_mechanism?: string
+          standard_coverage?: string
+          sub_procedure_key?: string
+          topic_key?: string
+          venue_id?: string
+          venue_specific_coverage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_gap_reports_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_gap_reports_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"

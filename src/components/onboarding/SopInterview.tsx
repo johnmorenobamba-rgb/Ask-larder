@@ -21,7 +21,7 @@ export interface TopicEntry {
   label: string;
   decision: TopicDecisionInfo;
   questions: SopQuestionDef[];
-  answers: Record<string, { answerText: string; attachmentExtractedText: string | null; answerSource: "specialist" | "document" }>;
+  answers: Record<string, { answerText: string; attachmentExtractedText: string | null; answerSource: "specialist" | "document" | "document_inferred" }>;
   moduleId: string | null;
 }
 
@@ -49,7 +49,7 @@ interface TopicState {
   uploadChoice: "pending" | "yes" | "no";
   sourceDocument: { storagePath: string; rawContent: string } | null;
   coveredKeys: Set<string>;
-  answers: Record<string, { text: string; attachmentText: string | null; source: "specialist" | "document" }>;
+  answers: Record<string, { text: string; attachmentText: string | null; source: "specialist" | "document" | "document_inferred" }>;
   moduleId: string | null;
   generated: boolean;
   pendingContact: ExtractedContact | null;
@@ -77,7 +77,7 @@ export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string
         // prior visit -- treat the upload choice as already made, and its
         // covered keys as already known, rather than asking again.
         const documentKeys = Object.entries(answers)
-          .filter(([, v]) => v.source === "document")
+          .filter(([, v]) => v.source === "document" || v.source === "document_inferred")
           .map(([k]) => k);
         return [
           t.topicKey,
@@ -251,10 +251,10 @@ export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string
       const analyzeBody = await analyzeRes.json().catch(() => null);
       if (!analyzeRes.ok) throw new Error(analyzeBody?.error ?? "Couldn't analyze that document.");
 
-      const covered: { questionKey: string; answerText: string }[] = analyzeBody.covered ?? [];
+      const covered: { questionKey: string; answerText: string; source?: "document" | "document_inferred" }[] = analyzeBody.covered ?? [];
       const mergedAnswers = { ...topicState[step.topicKey].answers };
       for (const c of covered) {
-        mergedAnswers[c.questionKey] = { text: c.answerText, attachmentText: null, source: "document" };
+        mergedAnswers[c.questionKey] = { text: c.answerText, attachmentText: null, source: c.source ?? "document" };
       }
 
       patchTopic(step.topicKey, {
