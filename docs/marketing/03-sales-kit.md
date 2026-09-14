@@ -53,12 +53,12 @@ Real objections a skeptical small business owner will actually raise. Answer the
 
 | Objection | Honest answer |
 |---|---|
-| "This is too expensive for a small venue." | The setup fee scales with venue size, a five person venue pays a different price than a twenty five person one, it's $799 for one to five staff, and the monthly retainer is $100, which includes tracking, reminders, and five content edits a month. For a first venue, there's a discretionary founder's rate of $750 to make trying it lower risk. Compare that to the cost of one missed inspection or one bad shift caused by a new hire who was never properly shown what to do. |
+| "This is too expensive for a small venue." | The setup fee scales with venue size: $799 for one to five staff, $1,299 for six to fifteen, $1,999 for sixteen to twenty five, and a custom quote for anything larger. The monthly retainer is a flat $100 regardless of tier, which includes tracking, reminders, and five content edits a month. For a first venue, there's a discretionary founder's rate of $750 to make trying it lower risk. Compare that to the cost of one missed inspection or one bad shift caused by a new hire who was never properly shown what to do. |
 | "We already train staff fine informally." | That might be true today, while the same two or three senior people are around to answer everything. The question is what happens on the day one of them is off, sick, or leaves. Larder doesn't replace how the venue trains, it captures how the venue already does things and makes sure that knowledge doesn't live only in one person's head. |
 | "AI will just make things up." | That's a fair concern and it's the first thing to address directly. Ask Larder only answers from that specific venue's own approved content, retrieval is filtered at the database level before anything reaches the chatbot, it can't pull from another venue's information and it can't invent an answer outside what's been approved. For anything involving keys, safes, alarms, or logins, it's built to always say to ask a supervisor rather than guess. That's a locked rule, not a suggestion to the AI. |
 | "What happens to our data if we cancel?" | Nothing gets held hostage. It's month to month with thirty days' written notice, and on cancellation the venue's own content and completion records export in a standard format. Chatbot access ends when the notice period closes. There's no lock in by design, because getting trapped in software is the single biggest reason small business owners avoid signing up for it in the first place. |
 | "This feels like a big process change for a busy kitchen." | The build work happens on the venue's side without disrupting a shift, it's built from SOPs, photos, and short interviews, not a long implementation project. And nothing goes live until the owner has reviewed and approved every module, so there's no surprise rollout to staff. It's designed to fit around a busy kitchen, not add a project on top of it. |
-| "How do I know this actually works before I commit?" | There's a real, live demo venue built on the actual product, not a mockup or a slide deck. It can be shown right now or sent as a link to explore hands on, including trying the chatbot directly. That's the strongest proof available at this stage, because it's real and interactive rather than a claim. |
+| "How do I know this actually works before I commit?" | There's a real, live demo venue built on the actual product, not a mockup or a slide deck. It can be shown right now, or a link and a login can be sent together so it can be explored hands on afterward, including trying the chatbot directly. The link alone won't get anyone in; a login always goes with it. That's the strongest proof available at this stage, because it's real and interactive rather than a claim. |
 
 ---
 
@@ -118,7 +118,7 @@ A realistic call flow, not a wall of copy. This is one way it goes, not the only
 >
 > **Owner:** Can I actually see it working first?
 >
-> **John:** Absolutely, that's the best way to judge it. Let me send you the link to the live demo venue, have a play with it yourself before we talk again.
+> **John:** Absolutely, that's the best way to judge it. Let me send you the link and a login for the live demo venue, have a play with it yourself before we talk again.
 
 ---
 
