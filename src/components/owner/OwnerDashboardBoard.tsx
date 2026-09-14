@@ -10,6 +10,7 @@ import { useViewportParallax } from "@/lib/hooks/useViewportParallax";
 import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
 import { StationsGallery } from "@/components/staff/StationsGallery";
 import { CompletionRing, type StaffCompletionRow } from "@/components/owner/StaffCompletionList";
+import { ExportDataButton } from "@/components/owner/ExportDataButton";
 import type { StationDisplay } from "@/lib/stations/getStationsWithDisplay";
 
 export type FlagTier = "red" | "saffron" | "brown";
@@ -467,7 +468,10 @@ export function OwnerDashboardBoard({
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      <h1 className="font-display text-3xl font-bold text-ink">Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-bold text-ink">Dashboard</h1>
+        <ExportDataButton />
+      </div>
 
       {/*
         grid-cols-4 with real row-spans, matching the staff dashboard's own
