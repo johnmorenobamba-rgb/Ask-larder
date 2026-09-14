@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
 import { onAskLarderOverlayStateChange } from "@/lib/askLarderBus";
+import { compressImageFile } from "@/lib/photos/compressImageFile";
 
 /**
  * Persistent, low-friction "something felt unsafe" report — fire-and-forget,
@@ -53,14 +54,15 @@ export function NearMissReportButton({
       let photoRef: string | null = null;
 
       if (file) {
+        const compressed = await compressImageFile(file);
         const supabase = createClient();
         // Venue-scoped only, deliberately no user id segment — keeps an
         // anonymous report anonymous at the storage layer too, not just in
         // the near_miss_reports row.
-        const path = `${venueId}/${crypto.randomUUID()}-${file.name}`;
+        const path = `${venueId}/${crypto.randomUUID()}-${compressed.name}`;
         const { error: uploadError } = await supabase.storage
           .from("near-miss-photos")
-          .upload(path, file);
+          .upload(path, compressed);
         if (uploadError) throw new Error(uploadError.message);
         photoRef = path;
       }

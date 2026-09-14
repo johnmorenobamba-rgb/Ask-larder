@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Stamp } from "./Stamp";
 import { PassSlide } from "./PassSlide";
 import { SyncingIndicator } from "./SyncingIndicator";
+import { compressImageFile } from "@/lib/photos/compressImageFile";
 
 export function CertUploadForm({
   venueSlug,
@@ -45,9 +46,10 @@ export function CertUploadForm({
       let photoRef = existingPhotoRef;
 
       if (file) {
+        const compressed = await compressImageFile(file);
         const supabase = createClient();
-        const path = `${venueId}/${userId}/${certTypeId}/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage.from("certs").upload(path, file, {
+        const path = `${venueId}/${userId}/${certTypeId}/${Date.now()}-${compressed.name}`;
+        const { error: uploadError } = await supabase.storage.from("certs").upload(path, compressed, {
           upsert: true,
         });
         if (uploadError) throw new Error(uploadError.message);

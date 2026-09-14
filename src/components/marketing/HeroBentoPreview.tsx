@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
@@ -130,8 +131,11 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
           <div className="relative h-full w-full">
             {previewStations.map((s, i) => (
               <div key={s.id} className="absolute inset-0 transition-opacity duration-500" style={{ opacity: i === stationIndex ? 1 : 0 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- static real photo, no benefit from next/image at this tiny preview scale */}
-                <img src={s.photoUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                {/* Genuine next/image candidate, unlike the app's other raw <img> spots --
+                    this is a local /public static asset (see two-fires-stations.json), not a
+                    short-lived Supabase signed URL, so none of next/image's caching/remote-
+                    pattern issues apply. */}
+                <Image src={s.photoUrl} alt="" fill sizes="(max-width: 768px) 50vw, 200px" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
               </div>
             ))}

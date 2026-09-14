@@ -32,6 +32,13 @@ export function NameplateCapture({ venueId, stationId }: { venueId: string; stat
     setStage("uploading");
     setError(null);
     try {
+      // Deliberately NOT run through compressImageFile (see other upload
+      // components) -- this photo goes straight into Claude Vision OCR to
+      // read small printed text off an equipment nameplate, feeding the
+      // manufacturer-sourced content pipeline. Downscaling/re-encoding
+      // risks degrading exactly the fine detail OCR accuracy depends on,
+      // for a comparatively small file-size win on a one-off capture (not
+      // something staff load repeatedly like module/station photos).
       const supabase = createClient();
       const path = `${venueId}/${crypto.randomUUID()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from("photo-library").upload(path, file);

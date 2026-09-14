@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { compressImageFile } from "@/lib/photos/compressImageFile";
 
 // Same upload mechanism as UploadPhotoForm.tsx (Storage upload, then a
 // photo_library insert), just scoped to one station and always tag
@@ -19,9 +20,10 @@ export function StationPhotoUpload({ venueId, stationId }: { venueId: string; st
     setUploading(true);
     setError(null);
     try {
+      const compressed = await compressImageFile(file);
       const supabase = createClient();
-      const path = `${venueId}/${crypto.randomUUID()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("photo-library").upload(path, file);
+      const path = `${venueId}/${crypto.randomUUID()}-${compressed.name}`;
+      const { error: uploadError } = await supabase.storage.from("photo-library").upload(path, compressed);
       if (uploadError) throw new Error(uploadError.message);
 
       const res = await fetch("/api/owner/photo-library", {
