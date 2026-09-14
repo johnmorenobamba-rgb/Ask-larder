@@ -33,7 +33,14 @@ const SHORT_ANSWER_CHARS = 60;
  * not an oversight.
  *
  * Each question is a fresh, self-contained exchange per spec — no
- * persistent thread history in the overlay. Reopening always starts clean.
+ * persistent thread history in the overlay (no scrollback, no accumulated
+ * log). Reopening always starts clean. Fixed 14 Sep 2026: that used to
+ * mean a follow-up question required closing and reopening the whole
+ * sheet, since the input only rendered pre-answer -- "Ask another
+ * question" now resets the exchange in place instead, staying inside the
+ * "fresh exchange, no thread history" rule (the previous Q&A is cleared,
+ * not appended to) while letting a real back-to-back mid-shift lookup
+ * happen without the extra open/close round trip.
  */
 export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: string }) {
   const [iconState, setIconState] = useState<IconState>("idle");
@@ -99,6 +106,12 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
     setError(null);
     setIsEscalation(false);
     setQuestion("");
+  }
+
+  function askAnother() {
+    track("ask_larder_ask_another");
+    resetExchange();
+    setIconState("idle");
   }
 
   const openTextOverlay = useCallback(() => {
@@ -354,6 +367,16 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
                       {answer}
                     </p>
                   </div>
+                )}
+
+                {answer && !error && (
+                  <button
+                    type="button"
+                    onClick={askAnother}
+                    className="font-mono text-xs uppercase tracking-wide text-clay-brown underline"
+                  >
+                    Ask another question
+                  </button>
                 )}
               </div>
             )}

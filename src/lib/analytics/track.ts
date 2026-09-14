@@ -5,7 +5,8 @@ type EventName =
   | "ask_larder_question_submitted"
   | "ask_larder_answer_shown"
   | "ask_larder_fallback_shown"
-  | "ask_larder_error_shown";
+  | "ask_larder_error_shown"
+  | "ask_larder_ask_another";
 
 let posthogPromise: Promise<typeof import("posthog-js").default> | null = null;
 
