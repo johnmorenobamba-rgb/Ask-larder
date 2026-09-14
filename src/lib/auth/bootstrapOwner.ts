@@ -25,6 +25,27 @@ export class BootstrapOwnerError extends Error {
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
+// Basic shape check, not full RFC 5322 -- good enough to catch a
+// fat-fingered or missing @, not meant to validate every edge case.
+const EMAIL_SHAPE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// RFC 2606 reserves these domains (and the .test/.example/.invalid/
+// .localhost TLDs generally) specifically for documentation and testing --
+// there is no legitimate real-venue owner email on any of them. Confirmed
+// gap during the 14 Sep pre-launch audit: Two Fires' owner account is
+// two-fires-owner@example.com with nothing here to have caught it, and
+// this function had zero email-format checking at all beyond truthiness.
+const RESERVED_TEST_DOMAINS = new Set(["example.com", "example.org", "example.net", "example.edu"]);
+const RESERVED_TEST_TLDS = [".test", ".example", ".invalid", ".localhost"];
+
+function looksLikeRealEmail(email: string): boolean {
+  if (!EMAIL_SHAPE_RE.test(email)) return false;
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  if (RESERVED_TEST_DOMAINS.has(domain)) return false;
+  if (RESERVED_TEST_TLDS.some((tld) => domain.endsWith(tld))) return false;
+  return true;
+}
+
 /**
  * Creates a Supabase Auth user, then a venue + owner app_users row
  * atomically via the public.bootstrap_owner DB function. Compensates
@@ -43,6 +64,9 @@ export async function bootstrapOwner(
   }
   if (!SLUG_PATTERN.test(venueSlug)) {
     throw new BootstrapOwnerError(400, "venueSlug must contain only lowercase letters, numbers, and hyphens.");
+  }
+  if (!looksLikeRealEmail(ownerEmail)) {
+    throw new BootstrapOwnerError(400, "ownerEmail doesn't look like a real address the owner can actually receive mail at.");
   }
   if (ownerPassword.length < 8) {
     throw new BootstrapOwnerError(400, "ownerPassword must be at least 8 characters.");

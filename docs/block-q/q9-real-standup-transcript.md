@@ -1,5 +1,7 @@
 # Block Q9 — Real Standup: The Coachman's Arms Hotel (wizard-built)
 
+> **Historical transcript, not a live credentials reference.** Any login/password mentioned below was true only on the day this was written and is very likely stale now (this is exactly what cost a real session an hour on 14 Sep 2026). For the current, actually-correct demo venue login, check the Notion "Demo Venue Access" page under Larder HQ, not this file.
+
 **Status: a real venue, created entirely through the actual Q4/Q5 wizard UI, not a seed script.** This is the Notion Decision Log's (6 Sep 2026) mandatory capstone: "one real live Ask Larder instance from one of the validated results (pub or cafe) as the first real product of the wizard, not just another research artifact." This document reports exactly what happened, including a genuine, previously-undiscovered blocking bug this run surfaced in the module go-live pipeline.
 
 **A prior attempt at this exact task was interrupted by a weekly API rate limit after only creating the venue, licence profile, and 4 stations** (slug `coachmans-arms-wizard`). That partial state was deleted (venue + orphaned auth user) before this run started. This document describes a completely fresh run, start to finish.
