@@ -18,9 +18,18 @@ export default async function OwnerPhotoLibraryPage({
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
+  // Real bug found live (data-provenance audit, 14 Sep): plain `stations(name)`
+  // is an ambiguous embed now that stations has TWO foreign keys touching
+  // photo_library (station_id, plus the newer nameplate_photo_id from the
+  // nameplate-capture feature) -- PostgREST throws PGRST201, and this
+  // page's `const [{ data: photos }] = await Promise.all([query, ...])`
+  // destructured `data` without checking `error`, so a real query failure
+  // rendered as a clean, confident "No photos yet." with 10 real Two Fires
+  // photos sitting in the table the whole time. Naming the FK explicitly
+  // resolves the ambiguity.
   let query = supabase
     .from("photo_library")
-    .select("id, storage_path, tag, stations(name), modules(title), created_at")
+    .select("id, storage_path, tag, stations!photo_library_station_id_fkey(name), modules(title), created_at")
     .order("created_at", { ascending: false });
   if (tag) query = query.eq("tag", tag);
 

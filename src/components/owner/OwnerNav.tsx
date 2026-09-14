@@ -15,6 +15,7 @@ const SECTIONS = [
   { href: "near-misses", label: "Near-misses" },
   { href: "stations", label: "Stations" },
   { href: "photo-library", label: "Photos" },
+  { href: "settings", label: "Settings" },
 ];
 
 export function OwnerNav({ venueSlug, venueName }: { venueSlug: string; venueName: string }) {

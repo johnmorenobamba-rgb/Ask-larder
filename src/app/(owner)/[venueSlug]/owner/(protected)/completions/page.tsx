@@ -9,7 +9,11 @@ export default async function OwnerCompletionsPage() {
     .eq("status", "live")
     .order("title");
 
-  const { data: staff } = await supabase.from("app_users").select("id, name").order("name");
+  // Excludes the owner's own account -- same fix as the main dashboard's
+  // staff-completion query (dashboard/page.tsx): an owner row otherwise
+  // shows "Not started" across every module here too, real data but
+  // semantically wrong to display as if it were staff training progress.
+  const { data: staff } = await supabase.from("app_users").select("id, name").neq("role", "owner").order("name");
 
   const { data: progress } = await supabase
     .from("staff_module_progress")
