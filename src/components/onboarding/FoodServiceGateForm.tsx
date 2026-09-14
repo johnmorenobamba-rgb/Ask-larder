@@ -108,12 +108,12 @@ export function FoodServiceGateForm({
               <legend className={labelClass}>Roles that require Food Handling certification</legend>
               {staffRoles.length === 0 && (
                 <p className="font-sans text-sm text-ink/70">
-                  No staff roles yet. You can still save the Food Safety Supervisor's details above and continue — add
+                  No staff roles yet. You can still save the Food Safety Supervisor's details above and continue. Add
                   staff roles on that page later, then come back here to pick who needs Food Handling certification.
                 </p>
               )}
               {staffRoles.length > 0 && foodHandlingRoleIds.length === 0 && (
-                <p className="font-sans text-sm text-preserve-red">No roles selected yet — at least one is needed before this venue's onboarding is complete.</p>
+                <p className="font-sans text-sm text-preserve-red">No roles selected yet. At least one is needed before this venue's onboarding is complete.</p>
               )}
               {staffRoles.map((r) => (
                 <label key={r.id} className="flex items-center gap-2 font-sans text-sm text-ink">

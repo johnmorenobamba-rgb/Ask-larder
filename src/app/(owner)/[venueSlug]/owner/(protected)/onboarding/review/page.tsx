@@ -52,11 +52,11 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
   for (const role of keyRoles) {
     if (!role.app_user_id) {
       const label = role.role_type === "rsa_marshal" ? "RSA marshal" : "Food Safety Supervisor";
-      outstandingItems.push(`${label} ${role.name} doesn't have a Larder login yet — invite them under Staff and link it.`);
+      outstandingItems.push(`${label} ${role.name} doesn't have a Larder login yet. Invite them under Staff and link it.`);
     }
   }
   if (flags.licensed && flags.capacity_sourced_from_document !== true) {
-    outstandingItems.push("Licensed capacity and trading hours are unconfirmed against the actual licence document — verify before relying on them.");
+    outstandingItems.push("Licensed capacity and trading hours are unconfirmed against the actual licence document. Verify before relying on them.");
   }
 
   return (

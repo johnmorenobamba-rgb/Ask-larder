@@ -75,12 +75,12 @@ export function RsaMarshalForm({
           <legend className={labelClass}>Roles that require RSA</legend>
           {staffRoles.length === 0 && (
             <p className="font-sans text-sm text-ink/70">
-              No staff roles yet. You can still save the RSA marshal's details below and continue — add staff roles on
+              No staff roles yet. You can still save the RSA marshal's details below and continue. Add staff roles on
               that page later, then come back here to pick which roles need RSA.
             </p>
           )}
           {staffRoles.length > 0 && roleIds.length === 0 && (
-            <p className="font-sans text-sm text-preserve-red">No roles selected yet — at least one is needed before this venue's onboarding is complete.</p>
+            <p className="font-sans text-sm text-preserve-red">No roles selected yet. At least one is needed before this venue's onboarding is complete.</p>
           )}
           {staffRoles.map((r) => (
             <label key={r.id} className="flex items-center gap-2 font-sans text-sm text-ink">

@@ -17,7 +17,7 @@ export default async function WeeklyReportPage() {
         <div>
           <h1 className="font-display text-3xl font-bold text-ink">Weekly report</h1>
           <p className="font-sans text-sm text-clay-brown">
-            What staff asked Ask Larder in the last 7 days — use the gaps below to update your SOPs.
+            What staff asked Ask Larder in the last 7 days. Use the gaps below to update your SOPs.
           </p>
         </div>
 
@@ -28,7 +28,7 @@ export default async function WeeklyReportPage() {
 
         <Section
           title="Not covered by any SOP"
-          empty="No unanswered questions this week — Ask Larder covered everything staff asked."
+          empty="No unanswered questions this week. Ask Larder covered everything staff asked."
           questions={digest.outOfScope}
           accent="border-preserve-red"
         />
