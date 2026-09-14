@@ -8,15 +8,14 @@
 // on file (a synthetic staff-${id}@venue.internal), and compliance tracking
 // is explicitly the owner dashboard's job per the product description.
 //
-// FROM_EMAIL below is a placeholder -- update it once a real domain is
-// verified in Resend (create-domain / verify-domain). RESEND_API_KEY is
-// now set as a function secret and the send pipeline is confirmed working
-// end-to-end (verified 2026-08-28 via Resend's onboarding@resend.dev
-// sandbox sender) -- domain verification is the only remaining blocker.
+// asklarder.com.au is now verified and DNS-wired in the shared Resend
+// account (confirmed live 14 Sep 2026) -- this was still pointing at the
+// pre-verification ".example" placeholder because nobody had come back to
+// update it after verification landed, not because of any other blocker.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const FROM_EMAIL = "Larder <notifications@larder-updates.example>";
+const FROM_EMAIL = "Larder <hello@asklarder.com.au>";
 
 // Duplicated (not imported) from src/lib/email/brandedEmail.ts -- this runs
 // in Deno and can't import a Next.js server module. Keep both in sync by
@@ -92,6 +91,7 @@ Deno.serve(async () => {
   let sent = 0;
   let skipped = 0;
   const failed: string[] = [];
+  const errors: string[] = [];
 
   for (const venue of venues ?? []) {
     const cadence = venue.cert_nudge_cadence ?? [30, 14, 7];
@@ -148,9 +148,10 @@ Deno.serve(async () => {
       } catch (err) {
         console.error(`cert-nudge send failed for certificate ${cert.id}:`, err);
         failed.push(cert.id);
+        errors.push(err instanceof Error ? err.message : String(err));
       }
     }
   }
 
-  return new Response(JSON.stringify({ sent, skipped, failed }), { headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({ sent, skipped, failed, errors }), { headers: { "Content-Type": "application/json" } });
 });

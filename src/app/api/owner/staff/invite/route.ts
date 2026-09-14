@@ -5,10 +5,10 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { renderBrandedEmailHtml, escapeHtml } from "@/lib/email/brandedEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-// rolechamp.com.au is the one domain actually verified in the shared Resend
-// account (asklarder.com.au isn't yet DNS-verified) -- same convention as
-// request-edit/route.ts, so this send actually delivers.
-const FROM_EMAIL = "Larder <notifications@rolechamp.com.au>";
+// asklarder.com.au is now verified and DNS-wired in the shared Resend
+// account (confirmed live 14 Sep 2026) -- swapped off the rolechamp.com.au
+// stopgap now that the real domain works.
+const FROM_EMAIL = "Larder <hello@asklarder.com.au>";
 
 // Block U1 -- the live, owner-dashboard version of staff-invite. Same
 // app_users insert shape as the onboarding wizard's staff-invite/route.ts

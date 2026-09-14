@@ -11,15 +11,14 @@
 // Node/Next.js server module, the two runtimes can't share it directly.
 // Keep them in sync by hand if the grouping logic ever changes.
 //
-// FROM_EMAIL below is the same placeholder as cert-nudge/index.ts and has
-// the identical blocker: asklarder.com.au is not yet a verified sending
-// domain in the shared Resend account (only rolechamp.com.au is, confirmed
-// 6 Sep 2026) -- this will 403 until that domain is added and DNS-verified
-// in the Resend dashboard, a manual step only the founder can do.
+// asklarder.com.au is now verified and DNS-wired in the shared Resend
+// account (confirmed live 14 Sep 2026) -- this was still pointing at the
+// pre-verification ".example" placeholder because nobody had come back to
+// update it after verification landed, not because of any other blocker.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const FROM_EMAIL = "Larder <notifications@larder-updates.example>";
+const FROM_EMAIL = "Larder <hello@asklarder.com.au>";
 
 // Duplicated (not imported) from src/lib/email/brandedEmail.ts -- this runs
 // in Deno and can't import a Next.js server module. Keep both in sync by

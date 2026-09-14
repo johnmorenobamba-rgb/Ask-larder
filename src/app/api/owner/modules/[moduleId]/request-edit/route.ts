@@ -13,16 +13,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // the row (`billable`) rather than derived later -- see the migration
 // comment on sop_edit_requests.billable for why.
 //
-// FROM_EMAIL deliberately does NOT follow cert-nudge/weekly-digest's
-// notifications@larder-updates.example placeholder pattern -- that domain
-// is a known dead end (asklarder.com.au isn't yet DNS-verified in the
-// shared Resend account, confirmed 6 Sep 2026, same blocker noted in both
-// of those files) and using it here would make this feature untestable
-// end-to-end, which R5 explicitly requires. rolechamp.com.au is the one
-// domain actually verified in the account, so this send uses it for real
-// delivery now. Swap to an asklarder.com.au address once that domain is
-// verified -- same open item as cert-nudge and weekly-digest.
-const FROM_EMAIL = "Larder <sop-requests@rolechamp.com.au>";
+// asklarder.com.au is now verified and DNS-wired in the shared Resend
+// account (confirmed live 14 Sep 2026) -- swapped off the rolechamp.com.au
+// stopgap now that the real domain works.
+const FROM_EMAIL = "Larder <hello@asklarder.com.au>";
 const FOUNDER_EMAIL = process.env.FOUNDER_NOTIFICATION_EMAIL;
 
 export async function POST(request: Request, { params }: { params: Promise<{ moduleId: string }> }) {
