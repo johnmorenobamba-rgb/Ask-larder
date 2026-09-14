@@ -55,6 +55,25 @@ export default async function SopDocumentPage({
           </Link>
           <p className="font-sans text-ink">No curated SOP document exists for this module yet.</p>
           <GenerateSopButton moduleId={moduleId} hasExisting={false} />
+          {/* Fixed 14 Sep 2026: provenance was previously only shown below,
+              inside the "has a curated document" branch -- a module whose
+              document generation never ran or failed (a real, best-effort
+              step on go-live) lost this entirely, even though its sections'
+              provenance is already known here. */}
+          {distinctProvenance.size > 0 && (
+            <div className="space-y-2 rounded-2xl border-2 border-clay-brown/20 bg-parchment/60 px-4 py-3">
+              <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">This module includes content added by Larder</p>
+              {Array.from(distinctProvenance.values()).map((p) => (
+                <ProvenanceBadge
+                  key={p.sectionId}
+                  provenance={p.provenance as Provenance}
+                  citation={p.citation}
+                  manufacturer={manufacturer}
+                  confirmUrl={`/api/owner/module-sections/${p.sectionId}/confirm-recommendation`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     );
