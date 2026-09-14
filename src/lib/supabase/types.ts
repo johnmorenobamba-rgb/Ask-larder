@@ -150,18 +150,27 @@ export type Database = {
       }
       certificate_types: {
         Row: {
+          cert_kind: string | null
           id: string
           name: string
+          tracking_type: string
+          validity_years: number
           venue_id: string | null
         }
         Insert: {
+          cert_kind?: string | null
           id?: string
           name: string
+          tracking_type?: string
+          validity_years?: number
           venue_id?: string | null
         }
         Update: {
+          cert_kind?: string | null
           id?: string
           name?: string
+          tracking_type?: string
+          validity_years?: number
           venue_id?: string | null
         }
         Relationships: [

@@ -19,7 +19,7 @@ export default async function CertUploadPage({
 
   const { data: certType, error: certTypeError } = await supabase
     .from("certificate_types")
-    .select("id, name, certificate_type_roles(role_id)")
+    .select("id, name, tracking_type, validity_years, certificate_type_roles(role_id)")
     .eq("id", certTypeId)
     .single();
   logQueryError(`[${venueSlug}] cert upload certType`, certTypeError);
@@ -49,8 +49,9 @@ export default async function CertUploadPage({
       userId={staff.id}
       certTypeId={certType.id}
       certTypeName={certType.name}
+      trackingType={certType.tracking_type as "hard_expiry" | "recommended_refresher"}
+      validityYears={certType.validity_years}
       existingIssuedDate={existing?.issued_date ?? null}
-      existingExpiryDate={existing?.expiry_date ?? null}
       existingPhotoRef={existing?.photo_ref ?? null}
       existingPhotoUrl={existingPhotoUrl}
     />

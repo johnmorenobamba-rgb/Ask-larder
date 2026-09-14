@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
-  const certificateTypeId = await findOrCreateCertificateType(supabase, staff.venue_id, "RSA");
+  const certificateTypeId = await findOrCreateCertificateType(supabase, staff.venue_id, "RSA", "rsa");
   await replaceCertificateTypeRoles(supabase, certificateTypeId, roleIds);
 
   const { data: existingMarshal } = await supabase

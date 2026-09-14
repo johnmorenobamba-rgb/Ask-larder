@@ -7,6 +7,7 @@ import { Stamp } from "./Stamp";
 import { PassSlide } from "./PassSlide";
 import { SyncingIndicator } from "./SyncingIndicator";
 import { compressImageFile } from "@/lib/photos/compressImageFile";
+import { computeCertDueDate, type TrackingType } from "@/lib/certs/certTracking";
 
 export function CertUploadForm({
   venueSlug,
@@ -14,8 +15,9 @@ export function CertUploadForm({
   userId,
   certTypeId,
   certTypeName,
+  trackingType,
+  validityYears,
   existingIssuedDate,
-  existingExpiryDate,
   existingPhotoRef,
   existingPhotoUrl,
 }: {
@@ -24,21 +26,24 @@ export function CertUploadForm({
   userId: string;
   certTypeId: string;
   certTypeName: string;
+  trackingType: TrackingType;
+  validityYears: number;
   existingIssuedDate: string | null;
-  existingExpiryDate: string | null;
   existingPhotoRef: string | null;
   existingPhotoUrl: string | null;
 }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [issuedDate, setIssuedDate] = useState(existingIssuedDate ?? "");
-  const [expiryDate, setExpiryDate] = useState(existingExpiryDate ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  const dueDate = issuedDate ? computeCertDueDate(issuedDate, validityYears) : null;
+  const dueDateLabel = trackingType === "hard_expiry" ? "Expires" : "Refresher recommended by";
+
   async function submit() {
-    if (!issuedDate || !expiryDate || (!file && !existingPhotoRef)) return;
+    if (!issuedDate || (!file && !existingPhotoRef)) return;
     setLoading(true);
     setError(null);
 
@@ -59,7 +64,7 @@ export function CertUploadForm({
       const res = await fetch("/api/staff/upload-cert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ certificateTypeId: certTypeId, photoRef, issuedDate, expiryDate }),
+        body: JSON.stringify({ certificateTypeId: certTypeId, photoRef, issuedDate }),
       });
       const resBody = await res.json();
       if (!res.ok) throw new Error(resBody.error ?? "Couldn't save this certificate.");
@@ -125,14 +130,11 @@ export function CertUploadForm({
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="font-mono text-xs text-clay-brown">Expiry date</label>
-            <input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full rounded-2xl border-2 border-clay-brown/40 px-4 py-3 font-mono text-ink focus:border-preserve-red outline-none"
-            />
+          <div className="space-y-1">
+            <p className="font-mono text-xs text-clay-brown">{dueDateLabel}</p>
+            <p className="font-sans text-ink">
+              {dueDate ? `${dueDate} (${validityYears} year(s) from the issued date)` : "Enter the issued date to see this"}
+            </p>
           </div>
 
           {error && <p className="text-preserve-red font-sans text-sm">{error}</p>}
@@ -140,7 +142,7 @@ export function CertUploadForm({
           <button
             type="button"
             onClick={submit}
-            disabled={loading || !issuedDate || !expiryDate || (!file && !existingPhotoRef)}
+            disabled={loading || !issuedDate || (!file && !existingPhotoRef)}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
             {loading && <SyncingIndicator />}

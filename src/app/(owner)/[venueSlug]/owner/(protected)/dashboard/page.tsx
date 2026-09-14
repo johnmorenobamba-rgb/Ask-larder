@@ -83,26 +83,53 @@ export default async function OwnerDashboardPage({
   // spec's "most urgent should visually dominate before Saffron/Clay Brown
   // items." Near-misses are deliberately NOT included here (Block K2):
   // they're their own dedicated cell now, not folded into this pile.
+  //
+  // Cert flags split by tracking_type (15 Sep 2026, VIC cert refresher
+  // model): a hard_expiry cert (WWCC) is a real legal deadline and keeps
+  // the red/"expired" treatment. A recommended_refresher cert (RSA, Food
+  // Handling, Food Safety Supervisor, First Aid) is never a compliance
+  // breach, so it never gets red or "expired" wording -- overdue refreshers
+  // read as Saffron (same urgency tier as "expiring soon"), not Red.
   const flags: FlagItem[] = [
     ...needsAttention.expiredCerts.map(
-      (c): FlagItem => ({
-        key: `expired-${c.id}`,
-        tier: "red",
-        href: `/${venueSlug}/owner/certs`,
-        glyph: "cert",
-        primary: `${c.staffName}’s ${c.certTypeName} expired`,
-        secondary: `${Math.abs(c.daysUntil)} day(s) ago`,
-      }),
+      (c): FlagItem =>
+        c.trackingType === "hard_expiry"
+          ? {
+              key: `expired-${c.id}`,
+              tier: "red",
+              href: `/${venueSlug}/owner/certs`,
+              glyph: "cert",
+              primary: `${c.staffName}’s ${c.certTypeName} expired`,
+              secondary: `${Math.abs(c.daysUntil)} day(s) ago`,
+            }
+          : {
+              key: `expired-${c.id}`,
+              tier: "saffron",
+              href: `/${venueSlug}/owner/certs`,
+              glyph: "cert",
+              primary: `${c.staffName}’s ${c.certTypeName} refresher recommended`,
+              secondary: `overdue by ${Math.abs(c.daysUntil)} day(s)`,
+            },
     ),
     ...needsAttention.expiringCerts.map(
-      (c): FlagItem => ({
-        key: `expiring-${c.id}`,
-        tier: "saffron",
-        href: `/${venueSlug}/owner/certs`,
-        glyph: "cert",
-        primary: `${c.staffName}’s ${c.certTypeName} expires soon`,
-        secondary: `${c.daysUntil} day(s) left`,
-      }),
+      (c): FlagItem =>
+        c.trackingType === "hard_expiry"
+          ? {
+              key: `expiring-${c.id}`,
+              tier: "saffron",
+              href: `/${venueSlug}/owner/certs`,
+              glyph: "cert",
+              primary: `${c.staffName}’s ${c.certTypeName} expires soon`,
+              secondary: `${c.daysUntil} day(s) left`,
+            }
+          : {
+              key: `expiring-${c.id}`,
+              tier: "saffron",
+              href: `/${venueSlug}/owner/certs`,
+              glyph: "cert",
+              primary: `${c.staffName}’s ${c.certTypeName} refresher recommended soon`,
+              secondary: `${c.daysUntil} day(s) left`,
+            },
     ),
     ...needsAttention.escalationSpikes.map(
       (s): FlagItem => ({

@@ -1,11 +1,13 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
+import type { TrackingType } from "@/lib/certs/certTracking";
 
 export type ExpiringCertFlag = {
   id: string;
   staffName: string;
   certTypeName: string;
+  trackingType: TrackingType;
   daysUntil: number;
 };
 
@@ -60,7 +62,7 @@ export async function getNeedsAttention(
     await Promise.all([
       supabase
         .from("staff_certificates")
-        .select("id, expiry_date, app_users(name), certificate_types(name)")
+        .select("id, expiry_date, app_users(name), certificate_types(name, tracking_type)")
         .order("expiry_date"),
       supabase.from("venues").select("cert_nudge_cadence").eq("id", venueId).single(),
       supabase.from("modules").select("id, title").eq("status", "pending_approval").order("title"),
@@ -88,6 +90,7 @@ export async function getNeedsAttention(
       id: c.id,
       staffName: c.app_users?.name ?? "Unknown staff",
       certTypeName: c.certificate_types?.name ?? "Unknown cert",
+      trackingType: (c.certificate_types?.tracking_type ?? "recommended_refresher") as TrackingType,
       daysUntil: days,
     };
     if (days < 0) expiredCerts.push(flag);

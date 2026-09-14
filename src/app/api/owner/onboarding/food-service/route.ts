@@ -44,8 +44,8 @@ export async function POST(request: Request) {
   const supabase = await createClient();
 
   if (triggered) {
-    await findOrCreateCertificateType(supabase, staff.venue_id, "Food Safety Supervisor");
-    const foodHandlingTypeId = await findOrCreateCertificateType(supabase, staff.venue_id, "Food Handling");
+    await findOrCreateCertificateType(supabase, staff.venue_id, "Food Safety Supervisor", "food_safety_supervisor");
+    const foodHandlingTypeId = await findOrCreateCertificateType(supabase, staff.venue_id, "Food Handling", "food_handling");
     await replaceCertificateTypeRoles(supabase, foodHandlingTypeId, foodHandlingRoleIds);
 
     const { data: existingFss } = await supabase

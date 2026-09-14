@@ -33,14 +33,14 @@ export function CertificateTypesForm({
   const hasWwcc = existing.some((c) => c.name.toLowerCase().includes("working with children") || c.name.toLowerCase().includes("wwcc"));
   const hasFirstAid = existing.some((c) => c.name === "First Aid");
 
-  async function addType(name: string) {
+  async function addType(name: string, certKind: "wwcc" | "first_aid") {
     if (!name.trim() || loading) return;
     setLoading(name);
     setError(null);
     const res = await fetch("/api/owner/onboarding/certificate-types", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, certKind }),
     });
     const body = await res.json().catch(() => null);
     setLoading(null);
@@ -79,7 +79,7 @@ export function CertificateTypesForm({
         {hasWwcc ? (
           <p className="font-sans text-sm text-ink/70">Already added.</p>
         ) : state === "VIC" ? (
-          <button type="button" onClick={() => addType(VIC_WWCC_LABEL)} disabled={loading === VIC_WWCC_LABEL} className={secondaryButtonClass}>
+          <button type="button" onClick={() => addType(VIC_WWCC_LABEL, "wwcc")} disabled={loading === VIC_WWCC_LABEL} className={secondaryButtonClass}>
             {loading === VIC_WWCC_LABEL ? "Adding…" : `Add ${VIC_WWCC_LABEL}`}
           </button>
         ) : (
@@ -96,7 +96,7 @@ export function CertificateTypesForm({
             />
             <button
               type="button"
-              onClick={() => addType(customWwccName)}
+              onClick={() => addType(customWwccName, "wwcc")}
               disabled={!customWwccName.trim() || loading === customWwccName}
               className={secondaryButtonClass}
             >
@@ -111,7 +111,7 @@ export function CertificateTypesForm({
         {hasFirstAid ? (
           <p className="font-sans text-sm text-ink/70">Already added.</p>
         ) : (
-          <button type="button" onClick={() => addType("First Aid")} disabled={loading === "First Aid"} className={secondaryButtonClass}>
+          <button type="button" onClick={() => addType("First Aid", "first_aid")} disabled={loading === "First Aid"} className={secondaryButtonClass}>
             {loading === "First Aid" ? "Adding…" : "Add First Aid"}
           </button>
         )}

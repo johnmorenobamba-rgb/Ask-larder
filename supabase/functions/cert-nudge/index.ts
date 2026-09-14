@@ -40,7 +40,7 @@ function renderBrandedEmailHtml({ heading, bodyHtml }: { heading: string; bodyHt
 interface StaffCertificateRow {
   id: string;
   expiry_date: string | null;
-  certificate_types: { name: string } | null;
+  certificate_types: { name: string; tracking_type: string | null } | null;
   app_users: { name: string } | null;
 }
 
@@ -61,9 +61,32 @@ function daysUntil(dateStr: string): number {
   return Math.round((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
 }
 
-async function sendNudgeEmail(to: string[], staffName: string, certName: string, days: number): Promise<void> {
+// VIC-specific cert tracking distinction (15 Sep 2026 build session, kept in
+// sync by hand with src/lib/certs/certTracking.ts -- this Deno function
+// can't import a Next.js server module, same convention already used
+// elsewhere in this file). WWCC (hard_expiry) is a real legal deadline and
+// keeps "expiring"/"expires" wording. RSA/Food Handling/Food Safety
+// Supervisor/First Aid (recommended_refresher) read as a refresher
+// recommendation, never as non-compliance. MUST be re-verified per state
+// before any interstate venue onboards.
+async function sendNudgeEmail(
+  to: string[],
+  staffName: string,
+  certName: string,
+  trackingType: string | null,
+  days: number,
+): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) throw new Error("RESEND_API_KEY is not set.");
+
+  const isRefresher = trackingType === "recommended_refresher";
+  const subject = isRefresher
+    ? `${certName} refresher recommended for ${staffName} in ${days} day(s)`
+    : `${certName} expiring for ${staffName} in ${days} day(s)`;
+  const bodyText = isRefresher
+    ? `${staffName}'s ${certName} refresher is recommended in ${days} day(s). This is a recommended refresher, not a mandatory renewal. Check the certificates page in the owner dashboard.`
+    : `${staffName}'s ${certName} expires in ${days} day(s). Check the certificates page in the owner dashboard.`;
+  const heading = isRefresher ? "Certificate refresher recommended soon" : "Certificate expiring soon";
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -71,11 +94,11 @@ async function sendNudgeEmail(to: string[], staffName: string, certName: string,
     body: JSON.stringify({
       from: FROM_EMAIL,
       to,
-      subject: `${certName} expiring for ${staffName} in ${days} day(s)`,
-      text: `${staffName}'s ${certName} expires in ${days} day(s). Check the certificates page in the owner dashboard.`,
+      subject,
+      text: bodyText,
       html: renderBrandedEmailHtml({
-        heading: "Certificate expiring soon",
-        bodyHtml: `<p style="margin:0;">${escapeHtml(staffName)}'s ${escapeHtml(certName)} expires in ${days} day(s). Check the certificates page in the owner dashboard.</p>`,
+        heading,
+        bodyHtml: `<p style="margin:0;">${escapeHtml(bodyText)}</p>`,
       }),
     }),
   });
@@ -111,7 +134,7 @@ Deno.serve(async () => {
     // come back, only which nested object shape they'd have.
     const { data: certs } = await supabase
       .from("staff_certificates")
-      .select("id, expiry_date, certificate_types(name), app_users!inner(name)")
+      .select("id, expiry_date, certificate_types(name, tracking_type), app_users!inner(name)")
       .not("expiry_date", "is", null)
       .eq("app_users.venue_id", venue.id)
       .returns<StaffCertificateRow[]>();
@@ -141,6 +164,7 @@ Deno.serve(async () => {
           recipients,
           cert.app_users?.name ?? "A staff member",
           cert.certificate_types?.name ?? "A certificate",
+          cert.certificate_types?.tracking_type ?? null,
           days,
         );
         await supabase.from("cert_nudge_log").insert({ staff_certificate_id: cert.id, cadence_days: days });
