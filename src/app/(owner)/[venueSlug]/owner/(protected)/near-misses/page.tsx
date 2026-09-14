@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getNearMissPhotoUrl } from "@/lib/owner/nearMissPhotoUrl";
 import { ResolveNearMissButton } from "@/components/owner/ResolveNearMissButton";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerNearMissesPage({
   params,
@@ -20,7 +21,8 @@ export default async function OwnerNearMissesPage({
     .select("id, description, photo_ref, status, created_at, is_anonymous, app_users(name), stations(name)")
     .order("created_at", { ascending: false });
   if (status === "unresolved") query = query.eq("status", "open");
-  const { data: reports } = await query;
+  const { data: reports, error: reportsError } = await query;
+  logQueryError(`[${venueSlug}] near-misses`, reportsError);
 
   const withPhotoUrls = await Promise.all(
     (reports ?? []).map(async (r) => ({

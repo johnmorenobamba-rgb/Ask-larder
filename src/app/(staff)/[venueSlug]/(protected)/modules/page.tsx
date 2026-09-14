@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { ModuleStateChip } from "@/components/staff/ModuleStateChip";
 import { PressableLink } from "@/components/shared/PressableLink";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,12 @@ export default async function ModulesPage({
 
   const supabase = await createClient();
 
-  const { data: modules } = await supabase
+  const { data: modules, error: modulesError } = await supabase
     .from("modules")
     .select("id, title, status, module_roles(role_id)")
     .eq("venue_id", staff.venue_id!)
     .in("status", ["approved", "live"]);
+  logQueryError(`[${venueSlug}] staff modules list`, modulesError);
 
   // A module with zero module_roles rows is unrestricted (visible to every
   // role) — the exact semantics the old nullable modules.role_id column had.
@@ -34,14 +36,15 @@ export default async function ModulesPage({
   );
 
   const moduleIds = visibleModules.map((m) => m.id);
-  const { data: progress } =
+  const { data: progress, error: progressError } =
     moduleIds.length > 0
       ? await supabase
           .from("staff_module_progress")
           .select("module_id, status")
           .eq("user_id", staff.id)
           .in("module_id", moduleIds)
-      : { data: [] };
+      : { data: [], error: null };
+  logQueryError(`[${venueSlug}] staff modules progress`, progressError);
 
   const progressByModule = new Map((progress ?? []).map((p) => [p.module_id, p.status]));
 

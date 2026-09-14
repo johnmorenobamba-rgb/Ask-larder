@@ -3,6 +3,7 @@ import { requireStationContext } from "@/lib/stations/requireStationContext";
 import { createClient } from "@/lib/supabase/server";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function StationFaqsPage({
   params,
@@ -14,12 +15,13 @@ export default async function StationFaqsPage({
   const { staff, station } = await requireStationContext(venueSlug, qrCodeSlug, `${hubPath}/faqs`);
 
   const supabase = await createClient();
-  const { data: faqs } = await supabase
+  const { data: faqs, error: faqsError } = await supabase
     .from("station_faqs")
     .select("id, question, answer")
     .eq("station_id", station.id)
     .eq("status", "approved")
     .order("created_at");
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] faqs`, faqsError);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">

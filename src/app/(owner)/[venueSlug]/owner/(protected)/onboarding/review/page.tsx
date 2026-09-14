@@ -3,6 +3,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { ReviewAndActivateStep } from "@/components/onboarding/ReviewAndActivateStep";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function ReviewPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -10,8 +11,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
   const supabase = await createClient();
 
   const [
-    { data: venue },
-    { data: session },
+    { data: venue, error: venueError },
+    { data: session, error: sessionError },
     staffCount,
     staffRoleCount,
     moduleRows,
@@ -31,6 +32,19 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
     supabase.from("venue_key_roles").select("role_type, name, app_user_id").eq("venue_id", staff!.venue_id!),
   ]);
 
+  // This page's summary directly informs an owner's decision to activate
+  // the venue -- a silent query failure rendering as all-zero counts could
+  // let a venue go live looking "complete" when it actually isn't. Every
+  // one of the 9 queries above is checked, not just logged for the record.
+  logQueryError(`[${venueSlug}] review venue`, venueError);
+  logQueryError(`[${venueSlug}] review session`, sessionError);
+  logQueryError(`[${venueSlug}] review staffCount`, staffCount.error);
+  logQueryError(`[${venueSlug}] review staffRoleCount`, staffRoleCount.error);
+  logQueryError(`[${venueSlug}] review moduleRows`, moduleRows.error);
+  logQueryError(`[${venueSlug}] review certTypeRows`, certTypeRows.error);
+  logQueryError(`[${venueSlug}] review menuItemCount`, menuItemCount.error);
+  logQueryError(`[${venueSlug}] review contactCount`, contactCount.error);
+  logQueryError(`[${venueSlug}] review keyRoleRows`, keyRoleRows.error);
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
   const modules = moduleRows.data ?? [];
   const certTypes = certTypeRows.data ?? [];

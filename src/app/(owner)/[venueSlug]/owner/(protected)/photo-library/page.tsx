@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { UploadPhotoForm } from "@/components/owner/UploadPhotoForm";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 const TAGS = ["station", "module", "general", "hero"] as const;
 
@@ -33,11 +34,15 @@ export default async function OwnerPhotoLibraryPage({
     .order("created_at", { ascending: false });
   if (tag) query = query.eq("tag", tag);
 
-  const [{ data: photos }, { data: stations }, { data: modules }] = await Promise.all([
-    query,
-    supabase.from("stations").select("id, name").order("name"),
-    supabase.from("modules").select("id, title").order("title"),
-  ]);
+  const [{ data: photos, error: photosError }, { data: stations, error: stationsError }, { data: modules, error: modulesError }] =
+    await Promise.all([
+      query,
+      supabase.from("stations").select("id, name").order("name"),
+      supabase.from("modules").select("id, title").order("title"),
+    ]);
+  logQueryError(`[${venueSlug}] photo-library photos`, photosError);
+  logQueryError(`[${venueSlug}] photo-library stations`, stationsError);
+  logQueryError(`[${venueSlug}] photo-library modules`, modulesError);
 
   const withUrls = await Promise.all(
     (photos ?? []).map(async (p) => ({ ...p, url: await getPhotoLibraryUrl(p.storage_path) })),

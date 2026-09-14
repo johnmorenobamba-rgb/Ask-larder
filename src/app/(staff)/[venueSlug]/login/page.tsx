@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PinLoginForm } from "@/components/staff/PinLoginForm";
 import { LoginBackdrop } from "@/components/shared/LoginBackdrop";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 type VenueRoster = {
   venue: { id: string; name: string; branding: Record<string, unknown> } | null;
@@ -18,9 +19,17 @@ export default async function LoginPage({
   const { redirectTo } = await searchParams;
 
   const supabase = await createClient();
-  const { data } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  const { data, error } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  logQueryError(`[${venueSlug}] staff login venue_roster`, error);
   const roster = data as VenueRoster | null;
 
+  if (error) {
+    return (
+      <main className="min-h-screen bg-parchment flex items-center justify-center px-6">
+        <p className="font-sans text-ink">Something went wrong loading this page. Try again in a moment.</p>
+      </main>
+    );
+  }
   if (!roster?.venue) {
     return (
       <main className="min-h-screen bg-parchment flex items-center justify-center px-6">

@@ -3,6 +3,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { RoleSelectGrid } from "@/components/staff/RoleSelectGrid";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function RolesPage({
   params,
@@ -23,11 +24,12 @@ export default async function RolesPage({
   }
 
   const supabase = await createClient();
-  const { data: roles } = await supabase
+  const { data: roles, error: rolesError } = await supabase
     .from("staff_roles")
     .select("id, name, department")
     .eq("venue_id", staff.venue_id!)
     .order("name");
+  logQueryError(`[${venueSlug}] staff roles`, rolesError);
 
   return (
     <main className="min-h-screen bg-parchment flex items-center justify-center px-6">

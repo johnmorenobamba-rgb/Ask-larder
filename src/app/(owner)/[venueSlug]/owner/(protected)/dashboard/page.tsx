@@ -5,6 +5,7 @@ import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { getWeeklyDigest } from "@/lib/reports/weeklyDigest";
 import { OwnerDashboardBoard, type FlagItem } from "@/components/owner/OwnerDashboardBoard";
 import type { StaffCompletionRow } from "@/components/owner/StaffCompletionList";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Owner Admin Panel spec, home screen — Block K: v2 revision of J6's linear
 // list into an actual bento grid (Owner Admin Panel spec v2 "Overview" —
@@ -28,8 +29,15 @@ export default async function OwnerDashboardPage({
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const [needsAttention, { data: liveModules }, { data: staffList }, { data: progress }, stations, { data: escalationRows }, weeklyDigest] =
-    await Promise.all([
+  const [
+    needsAttention,
+    { data: liveModules, error: liveModulesError },
+    { data: staffList, error: staffListError },
+    { data: progress, error: progressError },
+    stations,
+    { data: escalationRows, error: escalationRowsError },
+    weeklyDigest,
+  ] = await Promise.all([
       getNeedsAttention(supabase, venueId),
       supabase.from("modules").select("id").eq("status", "live"),
       // Excludes the owner's own account -- the unfiltered query was listing
@@ -55,6 +63,10 @@ export default async function OwnerDashboardPage({
         .order("created_at", { ascending: false }),
       getWeeklyDigest(supabase, venueId, sevenDaysAgo.toISOString()),
     ]);
+  logQueryError(`[${venueSlug}] dashboard liveModules`, liveModulesError);
+  logQueryError(`[${venueSlug}] dashboard staffList`, staffListError);
+  logQueryError(`[${venueSlug}] dashboard progress`, progressError);
+  logQueryError(`[${venueSlug}] dashboard escalationRows`, escalationRowsError);
 
   const unresolvedEscalations = (escalationRows ?? []).filter((e) => e.escalation_status !== "resolved");
 

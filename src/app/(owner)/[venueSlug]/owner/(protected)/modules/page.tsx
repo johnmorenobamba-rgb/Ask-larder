@@ -4,6 +4,7 @@ import { ModuleStatusActions } from "@/components/owner/ModuleStatusActions";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
 import { ModuleContentBlock } from "@/components/staff/ModuleContentBlock";
 import { ProvenanceBadge, type Provenance } from "@/components/owner/ProvenanceBadge";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -26,21 +27,23 @@ export default async function OwnerModulesPage({
 }) {
   const { venueSlug } = await params;
   const supabase = await createClient();
-  const { data: modules } = await supabase.from("modules").select("id, title, status, version, topic_key").order("title");
+  const { data: modules, error: modulesError } = await supabase.from("modules").select("id, title, status, version, topic_key").order("title");
+  logQueryError(`[${venueSlug}] owner modules list`, modulesError);
 
   // Content preview for anything awaiting a decision -- an owner approving
   // a module is a real liability/trust gate (per CLAUDE.md's locked
   // approval-gate rule), so the content it covers needs to actually be
   // visible right where the Approve button is, not one click away.
   const pendingIds = (modules ?? []).filter((m) => m.status === "pending_approval").map((m) => m.id);
-  const { data: pendingSections } =
+  const { data: pendingSections, error: pendingSectionsError } =
     pendingIds.length > 0
       ? await supabase
           .from("module_sections")
           .select("id, module_id, section_order, content, provenance, citation")
           .in("module_id", pendingIds)
           .order("section_order")
-      : { data: [] };
+      : { data: [], error: null };
+  logQueryError(`[${venueSlug}] owner modules pendingSections`, pendingSectionsError);
   const sectionsByModule = new Map<
     string,
     { id: string; section_order: number; content: string | null; provenance: string; citation: string | null }[]
@@ -53,7 +56,8 @@ export default async function OwnerModulesPage({
   // Manufacturer name for the ai_manual_sourced badge's "from the {X}
   // manual" label -- equipment modules are keyed station_equipment_{slug},
   // joined back to the station that owns that slug for this venue.
-  const { data: stations } = await supabase.from("stations").select("qr_code_slug, equipment_manufacturer");
+  const { data: stations, error: stationsError } = await supabase.from("stations").select("qr_code_slug, equipment_manufacturer");
+  logQueryError(`[${venueSlug}] owner modules stations`, stationsError);
   const manufacturerBySlug = new Map((stations ?? []).map((s) => [s.qr_code_slug, s.equipment_manufacturer]));
   function manufacturerForTopic(topicKey: string | null): string | null {
     if (!topicKey?.startsWith("station_equipment_")) return null;

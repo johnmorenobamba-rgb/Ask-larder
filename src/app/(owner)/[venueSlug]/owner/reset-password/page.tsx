@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ResetPasswordForm } from "@/components/owner/ResetPasswordForm";
 import { LoginBackdrop } from "@/components/shared/LoginBackdrop";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 type VenueRoster = {
   venue: { id: string; name: string; branding: Record<string, unknown> } | null;
@@ -14,9 +15,17 @@ export default async function OwnerResetPasswordPage({ params }: { params: Promi
   const { venueSlug } = await params;
 
   const supabase = await createClient();
-  const { data } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  const { data, error } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  logQueryError(`[${venueSlug}] owner reset-password venue_roster`, error);
   const roster = data as VenueRoster | null;
 
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-parchment px-6">
+        <p className="font-sans text-ink">Something went wrong loading this page. Try again in a moment.</p>
+      </main>
+    );
+  }
   if (!roster?.venue) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-parchment px-6">

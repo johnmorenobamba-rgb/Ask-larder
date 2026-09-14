@@ -4,6 +4,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { fetchSopDocumentData } from "@/lib/sop/fetchSopDocumentData";
 import { SopDocumentView } from "@/components/owner/SopDocumentView";
 import { PrintButton } from "@/components/owner/PrintButton";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Block R3 -- concatenates every module's cached sop_documents row into one
 // continuous print job (cover page, table of contents, one SOP per page),
@@ -17,10 +18,12 @@ export default async function PrintAllSopsPage({ params }: { params: Promise<{ v
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: venue }, { data: modules }] = await Promise.all([
+  const [{ data: venue, error: venueError }, { data: modules, error: modulesError }] = await Promise.all([
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
     supabase.from("modules").select("id, title").eq("venue_id", staff!.venue_id!).order("title"),
   ]);
+  logQueryError(`[${venueSlug}] print-all venue`, venueError);
+  logQueryError(`[${venueSlug}] print-all modules`, modulesError);
 
   const rows = modules ?? [];
   const withDocs = await Promise.all(

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import type { VenueTypeFlags } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 /**
  * Wizard shell for every /onboarding/<step> page. Auth/role/venue-slug are
@@ -21,10 +22,12 @@ export default async function OnboardingLayout({
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: venue }, { data: session }] = await Promise.all([
+  const [{ data: venue, error: venueError }, { data: session, error: sessionError }] = await Promise.all([
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
     supabase.from("wizard_sessions").select("current_step, venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
+  logQueryError(`[${venueSlug}] onboarding layout venue`, venueError);
+  logQueryError(`[${venueSlug}] onboarding layout session`, sessionError);
 
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 

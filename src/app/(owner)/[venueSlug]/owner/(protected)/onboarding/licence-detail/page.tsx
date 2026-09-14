@@ -3,13 +3,14 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { LicenceDetailForm } from "@/components/onboarding/LicenceDetailForm";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function LicenceDetailPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: session }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: session, error: sessionError }] = await Promise.all([
     supabase
       .from("venue_licence_profile")
       .select("licence_type, licence_number, licensed_capacity, late_night_endorsement, conditions, approved_trading_hours")
@@ -17,6 +18,8 @@ export default async function LicenceDetailPage({ params }: { params: Promise<{ 
       .maybeSingle(),
     supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
+  logQueryError(`[${venueSlug}] onboarding licence-detail profile`, profileError);
+  logQueryError(`[${venueSlug}] onboarding licence-detail session`, sessionError);
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 
   return (

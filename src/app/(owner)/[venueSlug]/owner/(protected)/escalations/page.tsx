@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ResolveEscalationButton } from "@/components/owner/ResolveEscalationButton";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerEscalationsPage({
   params,
@@ -19,7 +20,8 @@ export default async function OwnerEscalationsPage({
     .eq("is_escalation", true)
     .order("created_at", { ascending: false });
   if (station) query = query.eq("station_id", station);
-  const { data: escalations } = await query;
+  const { data: escalations, error: escalationsError } = await query;
+  logQueryError(`[${venueSlug}] escalations`, escalationsError);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">

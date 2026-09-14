@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 function daysUntil(dateStr: string): number {
   const ms = new Date(dateStr).getTime() - Date.now();
@@ -12,13 +13,15 @@ export default async function OwnerCertsPage() {
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: certs }, { data: venue }] = await Promise.all([
+  const [{ data: certs, error: certsError }, { data: venue, error: venueError }] = await Promise.all([
     supabase
       .from("staff_certificates")
       .select("id, expiry_date, app_users(name), certificate_types(name)")
       .order("expiry_date"),
     supabase.from("venues").select("cert_nudge_cadence").eq("id", staff!.venue_id!).single(),
   ]);
+  logQueryError("owner certs certs", certsError);
+  logQueryError("owner certs venue", venueError);
 
   const cadence = (venue?.cert_nudge_cadence ?? [30, 14, 7]).sort((a, b) => a - b);
   const soonestThreshold = cadence[cadence.length - 1];

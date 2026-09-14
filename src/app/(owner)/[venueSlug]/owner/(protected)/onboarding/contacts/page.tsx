@@ -4,6 +4,7 @@ import { VenueContactsForm } from "@/components/onboarding/VenueContactsForm";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { CONTACT_TYPES } from "@/lib/onboarding/constants";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 const BUSINESS_CONTINUITY_TYPES = CONTACT_TYPES.map((t) => t.value);
 
@@ -12,7 +13,7 @@ export default async function ContactsPage({ params }: { params: Promise<{ venue
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: contacts }, { data: session }] = await Promise.all([
+  const [{ data: contacts, error: contactsError }, { data: session, error: sessionError }] = await Promise.all([
     supabase
       .from("venue_contacts")
       .select("id, contact_type, name, phone, email, notes")
@@ -25,6 +26,8 @@ export default async function ContactsPage({ params }: { params: Promise<{ venue
     // flags before this fix.
     supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
+  logQueryError(`[${venueSlug}] onboarding contacts contacts`, contactsError);
+  logQueryError(`[${venueSlug}] onboarding contacts session`, sessionError);
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
 
   return (

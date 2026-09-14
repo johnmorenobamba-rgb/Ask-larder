@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProvenanceBadge, type Provenance } from "@/components/owner/ProvenanceBadge";
 import { ApproveFaqButton } from "@/components/owner/ApproveFaqButton";
 import { ApproveTroubleshootingButton } from "@/components/owner/ApproveTroubleshootingButton";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Provenance-aware approval UI, third surface (Modules list and the SOP
 // view are the other two): station_faqs and station_troubleshooting_issues
@@ -19,11 +20,15 @@ export default async function StationContentPage({
   const { venueSlug, stationId } = await params;
   const supabase = await createClient();
 
-  const [{ data: station }, { data: faqs }, { data: issues }] = await Promise.all([
-    supabase.from("stations").select("name, equipment_manufacturer, equipment_model").eq("id", stationId).maybeSingle(),
-    supabase.from("station_faqs").select("*").eq("station_id", stationId).order("created_at"),
-    supabase.from("station_troubleshooting_issues").select("*").eq("station_id", stationId).order("created_at"),
-  ]);
+  const [{ data: station, error: stationError }, { data: faqs, error: faqsError }, { data: issues, error: issuesError }] =
+    await Promise.all([
+      supabase.from("stations").select("name, equipment_manufacturer, equipment_model").eq("id", stationId).maybeSingle(),
+      supabase.from("station_faqs").select("*").eq("station_id", stationId).order("created_at"),
+      supabase.from("station_troubleshooting_issues").select("*").eq("station_id", stationId).order("created_at"),
+    ]);
+  logQueryError(`[${venueSlug}] station content station`, stationError);
+  logQueryError(`[${venueSlug}] station content faqs`, faqsError);
+  logQueryError(`[${venueSlug}] station content issues`, issuesError);
 
   if (!station) {
     return (

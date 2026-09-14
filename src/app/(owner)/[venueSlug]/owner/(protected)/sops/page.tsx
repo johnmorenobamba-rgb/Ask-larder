@@ -2,17 +2,19 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { GenerateSopButton } from "@/components/owner/GenerateSopButton";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function SopsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const { data: modules } = await supabase
+  const { data: modules, error: modulesError } = await supabase
     .from("modules")
     .select("id, title, status, sop_documents(generated_at)")
     .eq("venue_id", staff!.venue_id!)
     .order("title");
+  logQueryError(`[${venueSlug}] sops list`, modulesError);
 
   const rows = modules ?? [];
   const withDoc = rows.filter((m) => m.sop_documents !== null).length;

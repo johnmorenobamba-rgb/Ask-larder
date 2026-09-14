@@ -7,6 +7,7 @@ import { NameplateCapture } from "@/components/owner/NameplateCapture";
 import { EquipmentContinueButton } from "@/components/onboarding/EquipmentContinueButton";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Q2 Page 8c — equipment/station inventory. Reuses the existing
 // CreateStationForm/POST /api/owner/stations route unchanged, per the Block
@@ -25,7 +26,12 @@ export default async function EquipmentPage({ params }: { params: Promise<{ venu
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: stations }, { data: modules }, { data: session }, { data: stationPhotos }] = await Promise.all([
+  const [
+    { data: stations, error: stationsError },
+    { data: modules, error: modulesError },
+    { data: session, error: sessionError },
+    { data: stationPhotos, error: stationPhotosError },
+  ] = await Promise.all([
     supabase
       .from("stations")
       .select("id, name, qr_code_slug, equipment_manufacturer, equipment_model, equipment_serial, nameplate_photo_id")
@@ -35,6 +41,10 @@ export default async function EquipmentPage({ params }: { params: Promise<{ venu
     supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
     supabase.from("photo_library").select("station_id").eq("venue_id", staff!.venue_id!).eq("tag", "station"),
   ]);
+  logQueryError(`[${venueSlug}] onboarding equipment stations`, stationsError);
+  logQueryError(`[${venueSlug}] onboarding equipment modules`, modulesError);
+  logQueryError(`[${venueSlug}] onboarding equipment session`, sessionError);
+  logQueryError(`[${venueSlug}] onboarding equipment stationPhotos`, stationPhotosError);
   const flags = (session?.venue_type_flags as VenueTypeFlags | null) ?? {};
   const stationsWithPhotos = new Set((stationPhotos ?? []).map((p) => p.station_id));
 

@@ -9,6 +9,7 @@ import { DeleteStationButton } from "@/components/owner/DeleteStationButton";
 import { StationModuleSelect } from "@/components/owner/StationModuleSelect";
 import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
 import { NameplateCapture } from "@/components/owner/NameplateCapture";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerStationsPage({
   params,
@@ -21,16 +22,18 @@ export default async function OwnerStationsPage({
   const headerList = await headers();
   const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
 
-  const [{ data: stations }, { data: modules }] = await Promise.all([
+  const [{ data: stations, error: stationsError }, { data: modules, error: modulesError }] = await Promise.all([
     supabase
       .from("stations")
       .select("id, name, qr_code_slug, primary_module_id, equipment_manufacturer, equipment_model, equipment_serial, modules(title)")
       .order("name"),
     supabase.from("modules").select("id, title").eq("status", "live").order("title"),
   ]);
+  logQueryError(`[${venueSlug}] owner stations stations`, stationsError);
+  logQueryError(`[${venueSlug}] owner stations modules`, modulesError);
 
   const stationIds = (stations ?? []).map((s) => s.id);
-  const { data: stationPhotos } =
+  const { data: stationPhotos, error: stationPhotosError } =
     stationIds.length > 0
       ? await supabase
           .from("photo_library")
@@ -38,7 +41,8 @@ export default async function OwnerStationsPage({
           .eq("tag", "station")
           .in("station_id", stationIds)
           .order("created_at", { ascending: false })
-      : { data: [] as { station_id: string | null; storage_path: string; created_at: string | null }[] };
+      : { data: [] as { station_id: string | null; storage_path: string; created_at: string | null }[], error: null };
+  logQueryError(`[${venueSlug}] owner stations stationPhotos`, stationPhotosError);
   // Most recent photo per station -- rows are already newest-first, so the
   // first one seen per station_id wins.
   const photoPathByStation = new Map<string, string>();

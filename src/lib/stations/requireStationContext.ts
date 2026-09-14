@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentStaff, type CurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export type StationSummary = { id: string; name: string; primary_module_id: string | null };
 
@@ -31,15 +32,19 @@ export async function requireStationContext(
   if (outstanding.length > 0) redirect(`/${venueSlug}/module-updates`);
 
   const supabase = await createClient();
-  const { data: station } = await supabase
+  const { data: station, error: stationError } = await supabase
     .from("stations")
     .select("id, name, primary_module_id")
     .eq("qr_code_slug", qrCodeSlug)
     .eq("venue_id", staff.venue_id!)
     .maybeSingle();
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] station lookup`, stationError);
   // Station truly doesn't exist for this venue/slug (wrong QR, deleted
   // station) -- a genuine 404, not any of the "nothing here yet" states
   // the sub-screens render for a station that exists but has no content.
+  // A real query error hits this same branch (logged above first) rather
+  // than a distinct path -- can't show a different message from a shared
+  // guard called before any page has rendered anything yet.
   if (!station) notFound();
 
   return { staff, station };

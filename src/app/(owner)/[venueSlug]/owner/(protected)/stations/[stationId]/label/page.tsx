@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { PrintButton } from "@/components/owner/PrintButton";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Block S3 -- a dedicated, printable QR label per station: station name,
 // the real QR code, Larder branding. Same browser-print pattern as Block R
@@ -19,10 +20,12 @@ export default async function StationLabelPage({
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: station }, { data: venue }] = await Promise.all([
+  const [{ data: station, error: stationError }, { data: venue, error: venueError }] = await Promise.all([
     supabase.from("stations").select("id, name, qr_code_slug").eq("id", stationId).eq("venue_id", staff!.venue_id!).maybeSingle(),
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
   ]);
+  logQueryError(`[${venueSlug}] station label station`, stationError);
+  logQueryError(`[${venueSlug}] station label venue`, venueError);
   if (!station) notFound();
 
   const headerList = await headers();

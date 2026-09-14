@@ -1,16 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { ShiftWindowsForm } from "@/components/owner/ShiftWindowsForm";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerSettingsPage() {
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const { data: venue } = await supabase
+  const { data: venue, error: venueError } = await supabase
     .from("venues")
     .select("shift_windows")
     .eq("id", staff!.venue_id!)
     .maybeSingle();
+  logQueryError("owner settings venue", venueError);
 
   const shiftWindows = (venue?.shift_windows as Record<string, string> | null) ?? {};
 

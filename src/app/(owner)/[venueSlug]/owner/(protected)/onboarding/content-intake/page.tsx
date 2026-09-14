@@ -6,6 +6,7 @@ import { PART_B_TOPICS } from "@/lib/onboarding/constants";
 import { getQuestionsForTopic } from "@/lib/onboarding/sopQuestions";
 import { determineSopTopics } from "@/lib/ai/sopTopicDetermination";
 import { getPreviousStep } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Block T4 -- replaces SopIntakeHub's free-authoring hub with the guided
 // intake flow. Ensures sop_topic_decisions exist for this venue (running
@@ -20,10 +21,17 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
   const venueId = staff!.venue_id!;
   const supabase = await createClient();
 
-  let { data: decisions } = await supabase
+  let { data: decisions, error: decisionsError } = await supabase
     .from("sop_topic_decisions")
     .select("topic_key, applicable, confidence, source, rationale")
     .eq("venue_id", venueId);
+  logQueryError(`[${venueSlug}] onboarding content-intake decisions`, decisionsError);
+  // A query error must not trigger determineSopTopics() below the same way
+  // "genuinely no decisions exist yet" does -- that's a real AI call, not
+  // free, and re-running it over a transient failure both wastes it and
+  // risks overwriting a venue's already-determined topics with a fresh
+  // pass that may disagree.
+  if (decisionsError) throw new Error(`Failed to load SOP topic decisions: ${decisionsError.message}`);
 
   if (!decisions || decisions.length === 0) {
     const fresh = await determineSopTopics(venueId, supabase);
@@ -37,13 +45,15 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
   }
   const decisionsByTopic = new Map(decisions.map((d) => [d.topic_key, d]));
 
-  const [{ data: answerRows }, { data: modules }] = await Promise.all([
+  const [{ data: answerRows, error: answerRowsError }, { data: modules, error: modulesError }] = await Promise.all([
     supabase
       .from("sop_intake_answers")
       .select("topic_key, question_key, answer_text, attachment_extracted_text, answer_source")
       .eq("venue_id", venueId),
     supabase.from("modules").select("id, topic_key").eq("venue_id", venueId),
   ]);
+  logQueryError(`[${venueSlug}] onboarding content-intake answerRows`, answerRowsError);
+  logQueryError(`[${venueSlug}] onboarding content-intake modules`, modulesError);
 
   const topics: TopicEntry[] = PART_B_TOPICS.map((topic) => {
     const decision = decisionsByTopic.get(topic.key);

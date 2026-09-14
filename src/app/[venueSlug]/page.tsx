@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LoginBackdrop } from "@/components/shared/LoginBackdrop";
 import { VenueEntryGateway } from "@/components/venue/VenueEntryGateway";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 type VenueRoster = {
   venue: { id: string; name: string; branding: Record<string, unknown> } | null;
@@ -21,9 +22,21 @@ export default async function VenueGatewayPage({
   const { venueSlug } = await params;
 
   const supabase = await createClient();
-  const { data } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  const { data, error } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
+  logQueryError(`[${venueSlug}] venue gateway venue_roster`, error);
   const roster = data as VenueRoster | null;
 
+  // A real RPC failure and a genuinely nonexistent slug used to render the
+  // exact same "check the link" message -- a real outage looked identical
+  // to a bad link, which cost real debugging time this session (see the
+  // 14 Sep pre-launch audit). Distinguished here, not just logged.
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-parchment px-6">
+        <p className="font-sans text-ink">Something went wrong loading this page. Try again in a moment.</p>
+      </main>
+    );
+  }
   if (!roster?.venue) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-parchment px-6">

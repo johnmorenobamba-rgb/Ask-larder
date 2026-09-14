@@ -4,6 +4,7 @@ import { ModuleRunner } from "@/components/staff/ModuleRunner";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
 import { getModuleStationPhoto } from "@/lib/stations/getModuleStationPhoto";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 function stripAnswerPrefix(context: string | null): string | null {
   if (!context) return null;
@@ -23,11 +24,12 @@ export default async function StationTrainingPage({
 
   let module: { id: string; title: string; status: string | null } | null = null;
   if (station.primary_module_id) {
-    const { data } = await supabase
+    const { data, error: moduleError } = await supabase
       .from("modules")
       .select("id, title, status")
       .eq("id", station.primary_module_id)
       .maybeSingle();
+    logQueryError(`[${venueSlug}/${qrCodeSlug}] training module`, moduleError);
     if (data && ["approved", "live"].includes(data.status ?? "")) module = data;
   }
 
@@ -47,16 +49,18 @@ export default async function StationTrainingPage({
     );
   }
 
-  const { data: sections } = await supabase
+  const { data: sections, error: sectionsError } = await supabase
     .from("module_sections")
     .select("id, section_order, content")
     .eq("module_id", module.id)
     .order("section_order");
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] training sections`, sectionsError);
 
-  const { data: questions } = await supabase
+  const { data: questions, error: questionsError } = await supabase
     .from("check_questions")
     .select("id, question, options, correct_option_index, expected_answer_context, section_order")
     .eq("module_id", module.id);
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] training questions`, questionsError);
 
   const stationPhoto = await getModuleStationPhoto(supabase, module.id);
 

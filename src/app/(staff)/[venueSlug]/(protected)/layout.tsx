@@ -6,6 +6,7 @@ import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
 import { StaffTopBar } from "@/components/staff/StaffTopBar";
 import { StaffHeader } from "@/components/staff/StaffHeader";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
@@ -34,7 +35,8 @@ export default async function ProtectedStaffLayout({
   let venueName = "";
   if (staff.venue_id) {
     const supabase = await createClient();
-    const { data: venue } = await supabase.from("venues").select("name").eq("id", staff.venue_id).maybeSingle();
+    const { data: venue, error: venueError } = await supabase.from("venues").select("name").eq("id", staff.venue_id).maybeSingle();
+    logQueryError(`[${venueSlug}] staff protected layout venues`, venueError);
     venueName = venue?.name ?? "";
   }
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function WelcomePage({
   params,
@@ -20,11 +21,12 @@ export default async function WelcomePage({
   if (staff.onboarding_completed_at) redirect(`/${venueSlug}/home`);
 
   const supabase = await createClient();
-  const { data: venue } = await supabase
+  const { data: venue, error: venueError } = await supabase
     .from("venues")
     .select("name")
     .eq("id", staff.venue_id!)
     .single();
+  logQueryError(`[${venueSlug}] welcome venue`, venueError);
 
   const venueName = venue?.name ?? "the team";
   const firstName = staff.name.split(" ")[0];

@@ -3,6 +3,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { PressableLink } from "@/components/shared/PressableLink";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function CertsPage({
   params,
@@ -16,11 +17,12 @@ export default async function CertsPage({
 
   const supabase = await createClient();
 
-  const { data: certTypes } = await supabase
+  const { data: certTypes, error: certTypesError } = await supabase
     .from("certificate_types")
     .select("id, name, certificate_type_roles(role_id)")
     .eq("venue_id", staff.venue_id!)
     .order("name");
+  logQueryError(`[${venueSlug}] staff certs certTypes`, certTypesError);
 
   // Same "zero rows = unrestricted" convention as module_roles (see
   // modules/page.tsx) — a cert type with no certificate_type_roles rows
@@ -31,10 +33,11 @@ export default async function CertsPage({
       ct.certificate_type_roles.some((r) => r.role_id === staff.staff_role_id),
   );
 
-  const { data: certs } = await supabase
+  const { data: certs, error: certsError } = await supabase
     .from("staff_certificates")
     .select("certificate_type_id, expiry_date")
     .eq("user_id", staff.id);
+  logQueryError(`[${venueSlug}] staff certs certs`, certsError);
 
   const certByType = new Map((certs ?? []).map((c) => [c.certificate_type_id, c.expiry_date]));
 

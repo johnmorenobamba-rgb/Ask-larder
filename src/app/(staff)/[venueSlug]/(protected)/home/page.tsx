@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { BentoGrid } from "@/components/staff/BentoGrid";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Forces a fresh read every request. Found live during Block O roleplay QA
 // (2026-09-04): this page's module-completion count disagreed with the
@@ -87,13 +88,13 @@ export default async function StaffHomePage({
   const now = new Date();
 
   const [
-    { data: venue },
-    { data: modules },
-    { data: progress },
-    { data: certTypes },
-    { data: certs },
+    { data: venue, error: venueError },
+    { data: modules, error: modulesError },
+    { data: progress, error: progressError },
+    { data: certTypes, error: certTypesError },
+    { data: certs, error: certsError },
     stationsWithQr,
-    { count: fallbackCount },
+    { count: fallbackCount, error: fallbackCountError },
   ] = await Promise.all([
     supabase.from("venues").select("name, cert_nudge_cadence, shift_windows").eq("id", staff.venue_id!).single(),
     supabase
@@ -121,6 +122,12 @@ export default async function StaffHomePage({
       .eq("is_escalation", true)
       .gte("created_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()),
   ]);
+  logQueryError(`[${venueSlug}] home venue`, venueError);
+  logQueryError(`[${venueSlug}] home modules`, modulesError);
+  logQueryError(`[${venueSlug}] home progress`, progressError);
+  logQueryError(`[${venueSlug}] home certTypes`, certTypesError);
+  logQueryError(`[${venueSlug}] home certs`, certsError);
+  logQueryError(`[${venueSlug}] home fallbackCount`, fallbackCountError);
 
   const visibleModules = (modules ?? []).filter(
     (m) => m.module_roles.length === 0 || m.module_roles.some((mr) => mr.role_id === staff.staff_role_id),
@@ -143,10 +150,11 @@ export default async function StaffHomePage({
   let continueSectionsTotal = 0;
   let continueSectionsDone = 0;
   if (continueModule) {
-    const { count } = await supabase
+    const { count, error: sectionsCountError } = await supabase
       .from("module_sections")
       .select("id", { count: "exact", head: true })
       .eq("module_id", continueModule.id);
+    logQueryError(`[${venueSlug}] home continueSectionsTotal`, sectionsCountError);
     continueSectionsTotal = count ?? 0;
     continueSectionsDone = continueStatus === "In progress" ? Math.ceil(continueSectionsTotal / 2) : 0;
   }
@@ -158,13 +166,14 @@ export default async function StaffHomePage({
   // replace once the venue's photo library has module-tagged photos.
   let continuePhotoUrl: string | null = null;
   if (continueModule) {
-    const { data: taggedPhoto } = await supabase
+    const { data: taggedPhoto, error: taggedPhotoError } = await supabase
       .from("photo_library")
       .select("storage_path")
       .eq("module_id", continueModule.id)
       .eq("tag", "module")
       .limit(1)
       .maybeSingle();
+    logQueryError(`[${venueSlug}] home taggedPhoto`, taggedPhotoError);
     continuePhotoUrl = taggedPhoto
       ? await getPhotoLibraryUrl(taggedPhoto.storage_path)
       : "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=640&h=480&fit=crop";
@@ -174,7 +183,7 @@ export default async function StaffHomePage({
   // as Continue above, but not tied to a specific module, so it prefers a
   // "general" photo then falls back to "hero". Same accepted, flagged
   // stock-photo fallback until a venue has real photos uploaded.
-  const { data: activityTaggedPhoto } = await supabase
+  const { data: activityTaggedPhoto, error: activityTaggedPhotoError } = await supabase
     .from("photo_library")
     .select("storage_path")
     .eq("venue_id", staff.venue_id!)
@@ -182,6 +191,7 @@ export default async function StaffHomePage({
     .order("tag") // "general" sorts before "hero" -- gives it priority when both exist
     .limit(1)
     .maybeSingle();
+  logQueryError(`[${venueSlug}] home activityTaggedPhoto`, activityTaggedPhotoError);
   const activityPhotoUrl =
     (activityTaggedPhoto ? await getPhotoLibraryUrl(activityTaggedPhoto.storage_path) : null) ??
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=480&fit=crop";

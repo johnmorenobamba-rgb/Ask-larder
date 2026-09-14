@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { AskLarderExplainer } from "@/components/staff/AskLarderExplainer";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function IntroPage({
   params,
@@ -23,11 +24,12 @@ export default async function IntroPage({
   }
 
   const supabase = await createClient();
-  const { data: venue } = await supabase
+  const { data: venue, error: venueError } = await supabase
     .from("venues")
     .select("name")
     .eq("id", staff.venue_id!)
     .single();
+  logQueryError(`[${venueSlug}] intro venue`, venueError);
 
   return (
     <AskLarderExplainer

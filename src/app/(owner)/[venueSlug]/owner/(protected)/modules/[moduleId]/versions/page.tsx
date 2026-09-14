@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PublishVersionForm } from "@/components/owner/PublishVersionForm";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerModuleVersionsPage({
   params,
@@ -20,22 +21,25 @@ export default async function OwnerModuleVersionsPage({
   // "outstanding" on a version, they just see the current content as their
   // first pass. Owners/managers never go through the staff completion flow,
   // so they're excluded by construction (no staff_module_progress row).
-  const { data: progress } = await supabase
+  const { data: progress, error: progressError } = await supabase
     .from("staff_module_progress")
     .select("user_id, completed_at, app_users(name)")
     .eq("module_id", moduleId)
     .eq("status", "completed");
+  logQueryError(`[module ${moduleId}] versions progress`, progressError);
 
-  const { data: versions } = await supabase
+  const { data: versions, error: versionsError } = await supabase
     .from("module_versions")
     .select("id, version, changelog, published_at")
     .eq("module_id", moduleId)
     .order("version", { ascending: false });
+  logQueryError(`[module ${moduleId}] versions versions`, versionsError);
 
-  const { data: acks } = await supabase
+  const { data: acks, error: acksError } = await supabase
     .from("staff_module_acknowledgements")
     .select("user_id, module_version_id")
     .in("module_version_id", (versions ?? []).map((v) => v.id));
+  logQueryError(`[module ${moduleId}] versions acks`, acksError);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">

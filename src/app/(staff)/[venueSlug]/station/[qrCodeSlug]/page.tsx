@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PressableLink } from "@/components/shared/PressableLink";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Station entry point -- scanning a station's QR code always lands here
 // first, never straight into a module. A printed QR label can't know in
@@ -22,15 +23,16 @@ export default async function StationPage({
 
   let hasModule = false;
   if (station.primary_module_id) {
-    const { data } = await supabase
+    const { data, error: moduleError } = await supabase
       .from("modules")
       .select("status")
       .eq("id", station.primary_module_id)
       .maybeSingle();
+    logQueryError(`[${venueSlug}/${qrCodeSlug}] hub module status`, moduleError);
     hasModule = !!data && ["approved", "live"].includes(data.status ?? "");
   }
 
-  const [{ count: faqCount }, { count: issueCount }] = await Promise.all([
+  const [{ count: faqCount, error: faqCountError }, { count: issueCount, error: issueCountError }] = await Promise.all([
     supabase
       .from("station_faqs")
       .select("id", { count: "exact", head: true })
@@ -42,6 +44,8 @@ export default async function StationPage({
       .eq("station_id", station.id)
       .eq("status", "approved"),
   ]);
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] hub faqCount`, faqCountError);
+  logQueryError(`[${venueSlug}/${qrCodeSlug}] hub issueCount`, issueCountError);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">

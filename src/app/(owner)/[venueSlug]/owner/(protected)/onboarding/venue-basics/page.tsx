@@ -3,16 +3,19 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { VenueBasicsForm } from "@/components/onboarding/VenueBasicsForm";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep } from "@/lib/onboarding/steps";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function VenueBasicsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   const supabase = await createClient();
 
-  const [{ data: venue }, { data: profile }] = await Promise.all([
+  const [{ data: venue, error: venueError }, { data: profile, error: profileError }] = await Promise.all([
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
     supabase.from("venue_licence_profile").select("legal_name, state, address, abn").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
+  logQueryError(`[${venueSlug}] onboarding venue-basics venue`, venueError);
+  logQueryError(`[${venueSlug}] onboarding venue-basics profile`, profileError);
 
   return (
     <>

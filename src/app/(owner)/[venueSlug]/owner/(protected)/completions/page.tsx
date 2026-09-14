@@ -1,23 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function OwnerCompletionsPage() {
   const supabase = await createClient();
 
-  const { data: modules } = await supabase
+  const { data: modules, error: modulesError } = await supabase
     .from("modules")
     .select("id, title")
     .eq("status", "live")
     .order("title");
+  logQueryError("completions modules", modulesError);
 
   // Excludes the owner's own account -- same fix as the main dashboard's
   // staff-completion query (dashboard/page.tsx): an owner row otherwise
   // shows "Not started" across every module here too, real data but
   // semantically wrong to display as if it were staff training progress.
-  const { data: staff } = await supabase.from("app_users").select("id, name").neq("role", "owner").order("name");
+  const { data: staff, error: staffError } = await supabase.from("app_users").select("id, name").neq("role", "owner").order("name");
+  logQueryError("completions staff", staffError);
 
-  const { data: progress } = await supabase
+  const { data: progress, error: progressError } = await supabase
     .from("staff_module_progress")
     .select("user_id, module_id, status, completed_at");
+  logQueryError("completions progress", progressError);
 
   const progressByKey = new Map(
     (progress ?? []).map((p) => [`${p.user_id}:${p.module_id}`, p]),
