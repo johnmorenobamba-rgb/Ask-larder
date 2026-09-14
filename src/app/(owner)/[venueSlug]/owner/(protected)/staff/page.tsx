@@ -66,6 +66,12 @@ export default async function OwnerStaffPage() {
 
         <section className="space-y-3">
           <h2 className="font-mono text-xs uppercase tracking-wide text-clay-brown">Roster</h2>
+          {liveModuleCount === 0 && (staff ?? []).length === 0 && (
+            <p className="font-sans text-sm text-clay-brown">
+              You can invite staff any time, but there&apos;s nothing for them to complete yet. Building a module
+              first means a new hire has something real waiting on day one.
+            </p>
+          )}
           <InviteStaffForm />
           <div className="space-y-3">
             {(staff ?? []).map((member) => (

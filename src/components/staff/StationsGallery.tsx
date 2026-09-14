@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useCylinderCarousel } from "@/lib/hooks/useCylinderCarousel";
 import { getStationVisuals, type StationGlyphKey } from "@/lib/staff/stationVisuals";
@@ -298,9 +299,18 @@ export function StationsGallery({
         <p className="mb-3 px-4 font-mono text-xs uppercase tracking-wide text-clay-brown md:px-6">Stations</p>
         <div className="mx-4 rounded-2xl border-2 border-dashed border-clay-brown/30 px-6 py-8 text-center md:mx-6">
           <GenericGlyph color="var(--color-clay-brown)" />
-          <p className="mt-2 font-sans text-sm text-clay-brown">
-            No stations set up yet. Your owner can add them from the admin panel.
-          </p>
+          {viewerContext === "owner" ? (
+            <p className="mt-2 font-sans text-sm text-clay-brown">
+              No stations set up yet.{" "}
+              <Link href={`/${venueSlug}/owner/stations`} className="underline">
+                Add one from the Stations page.
+              </Link>
+            </p>
+          ) : (
+            <p className="mt-2 font-sans text-sm text-clay-brown">
+              No stations set up yet. Your owner can add them from the admin panel.
+            </p>
+          )}
         </div>
         <StationFocusOverlay station={focused} onClose={() => setFocused(null)} />
       </section>

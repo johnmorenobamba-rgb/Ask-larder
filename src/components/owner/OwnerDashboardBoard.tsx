@@ -400,6 +400,33 @@ function AllClearCell() {
   );
 }
 
+// Fixed 14 Sep 2026: a genuinely brand-new venue (no staff invited yet)
+// hit the exact same showQuietState branch as a real venue that's fully
+// caught up, so "Nothing needs attention, certs/modules/reports are all
+// clear" read as false reassurance -- there was nothing to be clear
+// about yet. This cell only fires when the venue has zero staff; the
+// moment a real venue starts, it falls back to AllClearCell/
+// NeedsAttentionCell like normal.
+function GettingStartedCell({ venueSlug }: { venueSlug: string }) {
+  return (
+    <ElevatedCell
+      glowColor="var(--color-clay-brown)"
+      floatDurationS={5.8}
+      depth="hero"
+      className="flex h-full min-h-[168px] flex-col items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-8 text-center sm:min-h-[280px]"
+    >
+      <ChitMark size={36} fillColor="var(--color-parchment)" traceColor="var(--color-clay-brown)" />
+      <p className="font-display text-lg text-parchment">Nothing set up yet.</p>
+      <p className="font-sans text-sm text-parchment/60">
+        Build your first module, then invite staff once there&apos;s something for them to complete.
+      </p>
+      <Link href={`/${venueSlug}/owner/modules`} className="mt-1 font-mono text-xs uppercase tracking-wide text-saffron underline">
+        Go to Modules
+      </Link>
+    </ElevatedCell>
+  );
+}
+
 // K3 — staff completion as a team-wide aggregate hero cell (single big
 // ring + fraction, matching the staff dashboard's own "Overall progress"
 // hero cell language) instead of every staff member individually elevated
@@ -464,6 +491,7 @@ export function OwnerDashboardBoard({
   weeklyTopQuestion: string | null;
 }) {
   const showQuietState = flags.length === 0 && nearMissCount === 0;
+  const isGenuinelyNewVenue = staff.length === 0;
   const { needsIOSPermission, requestIOSPermission } = useViewportParallax();
 
   return (
@@ -487,7 +515,7 @@ export function OwnerDashboardBoard({
       <div className="grid grid-cols-4 gap-4">
         {showQuietState ? (
           <div className="col-span-4 sm:col-span-2 sm:row-span-2">
-            <AllClearCell />
+            {isGenuinelyNewVenue ? <GettingStartedCell venueSlug={venueSlug} /> : <AllClearCell />}
           </div>
         ) : (
           flags.length > 0 && (
