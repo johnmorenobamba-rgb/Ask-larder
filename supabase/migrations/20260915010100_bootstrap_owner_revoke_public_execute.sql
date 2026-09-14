@@ -1,0 +1,13 @@
+-- Found while building the onboarding-specialist PIN gate (15 Sep 2026):
+-- the 14 Sep fix (20260914180000_revoke_bootstrap_owner_public_execute.sql)
+-- revoked EXECUTE from the named roles anon/authenticated, but Postgres
+-- grants EXECUTE to the PUBLIC pseudo-role by default at function creation
+-- time, and that migration never revoked it from PUBLIC. anon/authenticated
+-- have no membership of their own on this function -- they were inheriting
+-- EXECUTE through PUBLIC the whole time, so the original "fix" never
+-- actually closed direct anonymous RPC access. Confirmed via proacl before
+-- this migration: {=X/postgres,postgres=X/postgres,service_role=X/postgres}
+-- -- the bare "=X" entry is the PUBLIC grant. Live-verified after this fix:
+-- a direct anon-key POST to /rest/v1/rpc/bootstrap_owner now returns 401
+-- "permission denied for function bootstrap_owner".
+revoke execute on function public.bootstrap_owner(uuid, text, text, text, text, uuid) from public;

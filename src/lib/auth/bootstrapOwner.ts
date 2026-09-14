@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyOnboardingSpecialistPin } from "@/lib/auth/onboardingSpecialistPin";
 
 export interface BootstrapOwnerInput {
   venueName: string;
@@ -7,6 +8,8 @@ export interface BootstrapOwnerInput {
   ownerName: string;
   ownerEmail: string;
   ownerPassword: string;
+  specialistPin: string;
+  requestIp: string;
 }
 
 export interface BootstrapOwnerResult {
@@ -52,12 +55,15 @@ function looksLikeRealEmail(email: string): boolean {
  * by deleting the auth user if the DB step fails, so a retry doesn't
  * collide on "email already registered".
  *
- * Service-role only, by design — v1 has no self-serve signup.
+ * Service-role only, by design — v1 has no self-serve signup. Gated by a
+ * real onboarding-specialist PIN, checked server-side here (not just as a
+ * UI gate) — this is the actual fix for the 14 Sep audit finding that this
+ * route succeeded for any anonymous request. See onboardingSpecialistPin.ts.
  */
 export async function bootstrapOwner(
   input: BootstrapOwnerInput,
 ): Promise<BootstrapOwnerResult> {
-  const { venueName, venueSlug, ownerName, ownerEmail, ownerPassword } = input;
+  const { venueName, venueSlug, ownerName, ownerEmail, ownerPassword, specialistPin, requestIp } = input;
 
   if (!venueName || !venueSlug || !ownerName || !ownerEmail || !ownerPassword) {
     throw new BootstrapOwnerError(400, "venueName, venueSlug, ownerName, ownerEmail, and ownerPassword are all required.");
@@ -70,6 +76,18 @@ export async function bootstrapOwner(
   }
   if (ownerPassword.length < 8) {
     throw new BootstrapOwnerError(400, "ownerPassword must be at least 8 characters.");
+  }
+
+  // Checked before anything is created -- an invalid PIN never gets as far
+  // as a real auth user, let alone a venue.
+  let specialist: { specialistId: string; specialistName: string };
+  try {
+    specialist = await verifyOnboardingSpecialistPin(specialistPin ?? "", requestIp || "unknown");
+  } catch (err) {
+    if (err instanceof Error && "status" in err) {
+      throw new BootstrapOwnerError((err as { status: number }).status, err.message);
+    }
+    throw err;
   }
 
   const admin = createAdminClient();
@@ -93,6 +111,7 @@ export async function bootstrapOwner(
     p_venue_slug: venueSlug,
     p_owner_name: ownerName,
     p_owner_email: ownerEmail,
+    p_created_by_specialist_id: specialist.specialistId,
   });
 
   if (rpcError || !data) {

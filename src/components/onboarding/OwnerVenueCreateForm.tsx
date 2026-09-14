@@ -29,6 +29,7 @@ export function OwnerVenueCreateForm() {
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
+  const [specialistPin, setSpecialistPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +43,8 @@ export function OwnerVenueCreateForm() {
     SLUG_PATTERN.test(venueSlug) &&
     ownerName.trim() &&
     ownerEmail.trim() &&
-    ownerPassword.length >= 8;
+    ownerPassword.length >= 8 &&
+    /^\d{4,6}$/.test(specialistPin);
 
   async function submit() {
     if (!valid || loading) return;
@@ -52,7 +54,7 @@ export function OwnerVenueCreateForm() {
     const res = await fetch("/api/auth/bootstrap-owner", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ venueName, venueSlug, ownerName, ownerEmail, ownerPassword }),
+      body: JSON.stringify({ venueName, venueSlug, ownerName, ownerEmail, ownerPassword, specialistPin }),
     });
 
     if (!res.ok) {
@@ -123,6 +125,17 @@ export function OwnerVenueCreateForm() {
           value={ownerPassword}
           onChange={(e) => setOwnerPassword(e.target.value)}
           placeholder="At least 8 characters"
+          className={inputClass}
+        />
+      </div>
+      <div className="space-y-1">
+        <label className={labelClass}>Onboarding specialist PIN</label>
+        <input
+          type="password"
+          inputMode="numeric"
+          value={specialistPin}
+          onChange={(e) => setSpecialistPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          placeholder="4-6 digit PIN"
           className={inputClass}
         />
       </div>

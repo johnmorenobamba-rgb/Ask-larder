@@ -67,6 +67,11 @@ beforeAll(async () => {
     ownerName: "Owner A",
     ownerEmail: OWNER_A_EMAIL,
     ownerPassword: PASSWORD,
+    // "John" / 0623, seeded via scripts/one-off/seed-onboarding-specialist.mjs
+    // -- this test calls the real bootstrapOwner(), so it goes through the
+    // same PIN gate as the actual /onboarding/start route (Part 2, 15 Sep).
+    specialistPin: "0623",
+    requestIp: "127.0.0.1",
   });
   const resultB = await bootstrapOwner({
     venueName: "Isolation Test Venue B",
@@ -74,6 +79,8 @@ beforeAll(async () => {
     ownerName: "Owner B",
     ownerEmail: OWNER_B_EMAIL,
     ownerPassword: PASSWORD,
+    specialistPin: "0623",
+    requestIp: "127.0.0.1",
   });
   venueAId = resultA.venueId;
   venueBId = resultB.venueId;

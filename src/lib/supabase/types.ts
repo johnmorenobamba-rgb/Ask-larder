@@ -749,6 +749,54 @@ export type Database = {
           },
         ]
       }
+      onboarding_pin_attempts: {
+        Row: {
+          failed_attempts: number
+          id: string
+          ip_hash: string
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          failed_attempts?: number
+          id?: string
+          ip_hash: string
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          failed_attempts?: number
+          id?: string
+          ip_hash?: string
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onboarding_specialists: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          pin_hash: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          pin_hash: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          pin_hash?: string
+        }
+        Relationships: []
+      }
       photo_library: {
         Row: {
           created_at: string | null
@@ -1656,6 +1704,7 @@ export type Database = {
           branding: Json | null
           cert_nudge_cadence: number[] | null
           created_at: string | null
+          created_by_specialist_id: string | null
           id: string
           monthly_tier: string | null
           multi_venue_group_id: string | null
@@ -1668,6 +1717,7 @@ export type Database = {
           branding?: Json | null
           cert_nudge_cadence?: number[] | null
           created_at?: string | null
+          created_by_specialist_id?: string | null
           id?: string
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
@@ -1680,6 +1730,7 @@ export type Database = {
           branding?: Json | null
           cert_nudge_cadence?: number[] | null
           created_at?: string | null
+          created_by_specialist_id?: string | null
           id?: string
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
@@ -1688,7 +1739,15 @@ export type Database = {
           shift_windows?: Json | null
           slug?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "venues_created_by_specialist_id_fkey"
+            columns: ["created_by_specialist_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_specialists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wizard_sessions: {
         Row: {
@@ -1746,6 +1805,7 @@ export type Database = {
       bootstrap_owner: {
         Args: {
           p_auth_id: string
+          p_created_by_specialist_id?: string
           p_owner_email: string
           p_owner_name: string
           p_venue_name: string
