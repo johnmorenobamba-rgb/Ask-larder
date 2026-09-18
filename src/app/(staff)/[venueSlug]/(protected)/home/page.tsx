@@ -25,51 +25,6 @@ function daysUntil(dateStr: string): number {
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
 
-// Shift context cell (Bento variety pass) -- lightweight v1 per the spec's
-// explicit guardrail: today's date + whichever configured venues.shift_windows
-// window contains the current time, no roster/"who else is working" data
-// exists so this deliberately doesn't invent any. shift_windows is a flat
-// jsonb map of label -> "HH:MM-HH:MM" (Tech Bible §15a), owner-editable.
-function parseWindowRange(range: string): { startMin: number; endMin: number } | null {
-  const match = range.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const startMin = Number(match[1]) * 60 + Number(match[2]);
-  let endMin = Number(match[3]) * 60 + Number(match[4]);
-  if (endMin <= startMin) endMin += 24 * 60; // crosses midnight, e.g. a late close
-  return { startMin, endMin };
-}
-
-function getShiftContext(shiftWindows: unknown, now: Date) {
-  const entries =
-    shiftWindows && typeof shiftWindows === "object" && !Array.isArray(shiftWindows)
-      ? Object.entries(shiftWindows as Record<string, unknown>)
-      : [];
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  let current: { label: string; range: string } | null = null;
-  let next: { label: string; range: string } | null = null;
-  let nextStartMin = Infinity;
-
-  for (const [key, value] of entries) {
-    if (typeof value !== "string") continue;
-    const parsed = parseWindowRange(value);
-    if (!parsed) continue;
-    const label = key.charAt(0).toUpperCase() + key.slice(1);
-    if (nowMin >= parsed.startMin && nowMin < parsed.endMin) {
-      current = { label, range: value };
-    } else if (parsed.startMin > nowMin && parsed.startMin < nextStartMin) {
-      nextStartMin = parsed.startMin;
-      next = { label, range: value };
-    }
-  }
-
-  return {
-    dateLabel: now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" }),
-    hasAnyWindows: entries.length > 0,
-    current,
-    next,
-  };
-}
-
 export default async function StaffHomePage({
   params,
 }: {
@@ -96,7 +51,7 @@ export default async function StaffHomePage({
     stationsWithQr,
     { count: fallbackCount, error: fallbackCountError },
   ] = await Promise.all([
-    supabase.from("venues").select("name, cert_nudge_cadence, shift_windows").eq("id", staff.venue_id!).single(),
+    supabase.from("venues").select("name, cert_nudge_cadence").eq("id", staff.venue_id!).single(),
     supabase
       .from("modules")
       .select("id, title, module_roles(role_id)")
@@ -238,7 +193,6 @@ export default async function StaffHomePage({
 
   const hour = now.getHours();
   const timeGreeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
-  const shiftContext = getShiftContext(venue?.shift_windows, now);
 
   return (
     <BentoGrid
@@ -257,7 +211,6 @@ export default async function StaffHomePage({
       nextCertExpiring={nextCertExpiring}
       fallbackCount={fallbackCount ?? 0}
       activityPhotoUrl={activityPhotoUrl}
-      shiftContext={shiftContext}
       stations={stationsWithQr}
     />
   );

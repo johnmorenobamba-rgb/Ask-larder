@@ -116,8 +116,7 @@ export async function POST(request: Request) {
   // (defaults to 'frontline', matching the "identical protection unless a
   // venue explicitly says otherwise" design).
   const isBackOfficeAccount = staff.role === "owner" || staff.role === "manager";
-  const [{ data: venue }, stationResult, tierResult] = await Promise.all([
-    supabase.from("venues").select("name, shift_windows").eq("id", staff.venue_id).maybeSingle(),
+  const [stationResult, tierResult] = await Promise.all([
     stationId ? supabase.from("stations").select("name").eq("id", stationId).maybeSingle() : Promise.resolve(null),
     isBackOfficeAccount || !staff.staff_role_id
       ? Promise.resolve(null)
@@ -188,9 +187,6 @@ export async function POST(request: Request) {
   const contextBlock = [
     `Current time: ${new Date().toISOString()}`,
     askerIdentityLine,
-    venue?.shift_windows && Object.keys(venue.shift_windows as object).length > 0
-      ? `Venue shift windows (informational only, not for gating access): ${JSON.stringify(venue.shift_windows)}`
-      : null,
     station ? `Asked from station: ${station.name}` : null,
     withheldCount > 0
       ? `Note: ${withheldCount} additional matching chunk(s) exist for this question but are restricted to authorized roles (manager and above); they have been withheld because this staff member is not authorized. If the question is genuinely asking for that restricted information, this IS a fallback-rule case -- apply it, don't say the topic "isn't covered."`

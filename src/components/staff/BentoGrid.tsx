@@ -13,12 +13,6 @@ import { StationsGallery } from "@/components/staff/StationsGallery";
 
 type CertRow = { id: string; name: string; status: string; label: string; color: string; days: number | null };
 type ContinueModule = { id: string; title: string; status: string };
-type ShiftContext = {
-  dateLabel: string;
-  hasAnyWindows: boolean;
-  current: { label: string; range: string } | null;
-  next: { label: string; range: string } | null;
-};
 
 // Custom line-icon glyphs only, per the Branding Kit's standing rule — no
 // stock icon library. StationGlyph matches the nav drawer's icon language
@@ -31,18 +25,6 @@ export function StationGlyph({ color }: { color: string }) {
       <rect x="3" y="8" width="18" height="3" rx="1" stroke={color} strokeWidth="1.5" />
       <line x1="6.5" y1="11" x2="6.5" y2="18" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
       <line x1="17.5" y1="11" x2="17.5" y2="18" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-// Shift context glyph — a plain clock dial, distinct from Settings' nav
-// dial (that one has no hands, this one does, reading specifically as
-// "time" rather than a generic control).
-function ClockGlyph({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.5" />
-      <path d="M12 7.5V12l3 2" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -150,7 +132,6 @@ export function BentoGrid({
   nextCertExpiring,
   fallbackCount,
   activityPhotoUrl,
-  shiftContext,
   stations,
   remotionFrame,
 }: {
@@ -169,7 +150,6 @@ export function BentoGrid({
   nextCertExpiring: CertRow | null;
   fallbackCount: number;
   activityPhotoUrl: string;
-  shiftContext: ShiftContext;
   stations: { id: string; name: string; qrCodeSlug: string; qrDataUrl: string; photoUrl: string }[];
   /** Block N3 only -- drives per-cell entrance from a Remotion frame instead of the CSS keyframe. Leave undefined in the live app. */
   remotionFrame?: number;
@@ -294,41 +274,6 @@ export function BentoGrid({
             )}
           </ElevatedCell>
         </button>
-
-        {/* Shift context — Bento variety pass (3rd of 4 material treatments:
-            textured/patterned, dot-grid on Parchment). Lightweight v1 per
-            spec: today's date + whichever configured venues.shift_windows
-            window contains now, no roster data invented. */}
-        <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 200)}>
-          <ElevatedCell
-            glowColor="var(--color-clay-brown)"
-            floatDurationS={5.9}
-            floatDelayS={0.45}
-            depth="secondary"
-            tilt={false}
-            className="bento-texture-dot h-full rounded-2xl bg-parchment px-4 py-4"
-          >
-            <div className="flex items-center gap-1.5">
-              <ClockGlyph color="var(--color-clay-brown)" />
-              <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Shift</p>
-            </div>
-            <p className="mt-2 font-display text-base text-ink">{shiftContext.dateLabel}</p>
-            {shiftContext.current ? (
-              <p className="mt-1 font-sans text-sm text-bay-green">
-                On shift now: {shiftContext.current.label} ·{" "}
-                <span className="font-mono text-xs">{shiftContext.current.range}</span>
-              </p>
-            ) : shiftContext.next ? (
-              <p className="mt-1 font-sans text-sm text-clay-brown">
-                Next: {shiftContext.next.label} · <span className="font-mono text-xs">{shiftContext.next.range}</span>
-              </p>
-            ) : shiftContext.hasAnyWindows ? (
-              <p className="mt-1 font-sans text-sm text-clay-brown">No shift right now</p>
-            ) : (
-              <p className="mt-1 font-sans text-sm text-clay-brown">No shift schedule set</p>
-            )}
-          </ElevatedCell>
-        </div>
 
         {/* Ask Larder — Ink cell, Block J3's traveling-glow chit mark */}
         <button

@@ -1710,7 +1710,6 @@ export type Database = {
           multi_venue_group_id: string | null
           name: string
           roster_location: string | null
-          shift_windows: Json | null
           slug: string | null
         }
         Insert: {
@@ -1723,7 +1722,6 @@ export type Database = {
           multi_venue_group_id?: string | null
           name: string
           roster_location?: string | null
-          shift_windows?: Json | null
           slug?: string | null
         }
         Update: {
@@ -1736,7 +1734,6 @@ export type Database = {
           multi_venue_group_id?: string | null
           name?: string
           roster_location?: string | null
-          shift_windows?: Json | null
           slug?: string | null
         }
         Relationships: [
