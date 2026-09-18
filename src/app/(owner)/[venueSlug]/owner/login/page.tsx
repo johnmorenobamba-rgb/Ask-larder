@@ -47,7 +47,7 @@ export default async function OwnerLoginPage({
           <p className="font-mono text-xs text-clay-brown">Owner dashboard</p>
           <h1 className="font-display text-3xl font-bold text-ink">{roster.venue.name}</h1>
         </div>
-        <OwnerLoginForm redirectTo={redirectTo || `/${venueSlug}/owner/dashboard`} />
+        <OwnerLoginForm redirectTo={redirectTo || `/${venueSlug}/owner/dashboard`} venueSlug={venueSlug} />
       </div>
     </main>
   );
