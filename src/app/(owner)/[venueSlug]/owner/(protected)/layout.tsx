@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { OwnerNav } from "@/components/owner/OwnerNav";
+import { OwnerHeader } from "@/components/owner/OwnerHeader";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Mirrors (staff)/[venueSlug]/(protected)/layout.tsx's per-page session gate
@@ -44,8 +44,8 @@ export default async function OwnerProtectedLayout({
 
   return (
     <>
-      <OwnerNav venueSlug={venueSlug} venueName={venue.name} />
-      {children}
+      <OwnerHeader venueSlug={venueSlug} venueName={venue.name} />
+      <div className="pt-24 print:pt-0">{children}</div>
     </>
   );
 }
