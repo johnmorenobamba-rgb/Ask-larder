@@ -1,6 +1,7 @@
-// Task 2: the equipment-sourced content pipeline, run for real against all
-// 5 Two Fires stations (all now have real, owner-confirmed manufacturer/
-// model/serial data captured through the actual NameplateCapture flow).
+// Task 2: the equipment-sourced content pipeline, run for real against
+// every station of a given venue that has real, owner-confirmed
+// manufacturer/model/serial data captured through the actual
+// NameplateCapture flow.
 //
 // Per station: research (web_search + fetch_url agentic loop) -> module
 // (draft, pending the existing submit-for-approval step, same as every
@@ -11,7 +12,12 @@
 // hospitality practice" on fallback) -- nothing here is presented as
 // owner-authored, and nothing goes live automatically.
 //
-// Run with: npx tsx scripts/run-equipment-content-pipeline.mjs
+// Generalised 18 Sep 2026 (was hardcoded to Two Fires' venue_id, a one-off
+// that would have needed re-patching for every future venue) to take the
+// venue's slug as a CLI argument, so a real run for a new venue is a normal
+// invocation, not a code edit.
+//
+// Run with: npx tsx scripts/run-equipment-content-pipeline.mjs <venue-slug>
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -20,7 +26,21 @@ import { researchEquipmentContent } from "../src/lib/ai/researchEquipmentContent
 import { generateSopDocument } from "../src/lib/ai/generateSopDocument.ts";
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const VENUE_ID = "b379e33f-b0d8-47bf-810e-450635b29b6b"; // Two Fires
+
+const venueSlug = process.argv[2];
+if (!venueSlug) {
+  console.error("Usage: npx tsx scripts/run-equipment-content-pipeline.mjs <venue-slug>");
+  process.exit(1);
+}
+
+const { data: venue, error: venueError } = await supabase.from("venues").select("id, name").eq("slug", venueSlug).maybeSingle();
+if (venueError) throw new Error(venueError.message);
+if (!venue) {
+  console.error(`No venue found with slug "${venueSlug}".`);
+  process.exit(1);
+}
+const VENUE_ID = venue.id;
+console.log(`Running equipment-content pipeline for ${venue.name} (${venueSlug}, ${VENUE_ID})`);
 
 const { data: stations, error } = await supabase
   .from("stations")
@@ -34,6 +54,21 @@ const summary = [];
 for (const station of stations) {
   if (!station.equipment_model) {
     console.log(`\n=== ${station.name}: SKIPPED (no equipment data on file) ===`);
+    continue;
+  }
+
+  // Now that this script is meant to be run again for future venues (not a
+  // one-off), guard against a re-run against the same venue silently
+  // creating a second station_equipment_* module for the same station.
+  const topicKey = `station_equipment_${station.qr_code_slug}`;
+  const { data: existingModule } = await supabase
+    .from("modules")
+    .select("id")
+    .eq("venue_id", VENUE_ID)
+    .eq("topic_key", topicKey)
+    .maybeSingle();
+  if (existingModule) {
+    console.log(`\n=== ${station.name}: SKIPPED (module ${existingModule.id} already exists for ${topicKey}) ===`);
     continue;
   }
 
