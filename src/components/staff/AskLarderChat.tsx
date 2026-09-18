@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AskLarderTriggerIcon, type AskLarderIconState } from "@/components/staff/AskLarderTriggerIcon";
 import type { ChitMarkHandle } from "@/components/shared/ChitMark";
+import { ChitTraceLoader } from "@/components/shared/ChitTraceLoader";
 import { useMagneticPull } from "@/lib/hooks/useMagneticPull";
 import { track } from "@/lib/analytics/track";
 import { onAskLarderOpenRequest, broadcastAskLarderOverlayState } from "@/lib/askLarderBus";
@@ -336,7 +337,7 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
               <div className="mb-4 space-y-3">
                 <p className="font-sans text-sm italic text-clay-brown">{askedQuestion}</p>
 
-                {loading && <p className="font-sans text-sm text-clay-brown">Thinking…</p>}
+                {loading && <ChitTraceLoader />}
 
                 {error && (
                   <div className="rounded-2xl border-2 border-preserve-red border-l-4 px-4 py-3">

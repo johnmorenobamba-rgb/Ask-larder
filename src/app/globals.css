@@ -153,6 +153,23 @@ body {
   animation: ask-larder-thinking-pulse 800ms ease-in-out infinite;
 }
 
+/* ChitTraceLoader -- Ask Larder's in-sheet loading state: the chit mark's
+   outline draws in then draws back out, looping. --chit-path-length is set
+   inline per instance from a real getTotalLength() measurement. */
+@keyframes chit-trace-loop {
+  0%,
+  100% {
+    stroke-dashoffset: var(--chit-path-length);
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-chit-trace-loop {
+  animation: chit-trace-loop 1.6s ease-in-out infinite;
+}
+
 /* Ask Larder spec: answer overlay bottom-sheet entrance/dismiss. */
 @keyframes ask-larder-sheet-up {
   from {
