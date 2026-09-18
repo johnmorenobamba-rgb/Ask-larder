@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, useTransform, type MotionValue } from "framer-motion";
-import { useCylinderCarousel } from "@/lib/hooks/useCylinderCarousel";
 import { getStationVisuals, type StationGlyphKey } from "@/lib/staff/stationVisuals";
 import { StationFocusOverlay, type FocusedStation } from "@/components/staff/StationFocusOverlay";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 type Station = {
   id: string;
@@ -20,28 +19,9 @@ type Station = {
 // server-side default.
 const STOCK_STATION_PHOTO_FALLBACK = "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=400&h=560&fit=crop";
 
-const CARD_WIDTH = 200;
-const CARD_HEIGHT = 280;
-const MIN_OPACITY = 0.35;
-const MIN_SCALE = 0.72;
-// At exactly 3 stations (the old threshold), neighbors sit at ±120deg --
-// past backfaceVisibility:hidden's 90deg cutoff, so they're invisible at
-// rest and the carousel reads as a flat single card with chevrons, no
-// peeking, no depth. Confirmed live: this happens on EITHER dashboard with
-// 3 stations, not a component divergence (staff and owner render
-// byte-identical given equal data -- see the comparison this threshold
-// change was verified against). Raised to 5 (72deg neighbors, cos(72)>0,
-// genuinely visible even if grazing) so the cylinder actually looks like
-// one at rest. Fewer than 5 stations get the flat-row fallback instead of
-// a technically-3D-but-looks-flat cylinder.
-const MIN_CYLINDER_COUNT = 5;
-
-function normalizeAngle(deg: number) {
-  let a = deg % 360;
-  if (a > 180) a -= 360;
-  if (a < -180) a += 360;
-  return a;
-}
+const ROW_HEIGHT = 256;
+const EXPAND_MS = 700;
+const EXPAND_EASE = "cubic-bezier(0.25, 1, 0.5, 1)";
 
 // Custom line-icon glyphs, matching the nav drawer / bento cell icon
 // language (24x24 viewBox, ~1.5 stroke weight) -- no stock icon library,
@@ -95,16 +75,13 @@ function GenericGlyph({ color }: { color: string }) {
   );
 }
 
-function ChevronGlyph({ direction }: { direction: "left" | "right" }) {
+// The active card's "open this station" CTA -- a diagonal arrow, same
+// 24x24/~1.5 stroke language as the glyphs above, distinct from a chevron
+// (this opens something, it doesn't step through a list).
+function OpenGlyph({ color }: { color: string }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d={direction === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"}
-        stroke="var(--color-ink)"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M7 17L17 7M17 7H9M17 7V15" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -117,167 +94,118 @@ const GLYPHS: Record<StationGlyphKey, (props: { color: string }) => React.JSX.El
   generic: GenericGlyph,
 };
 
-function CardFace({
+function StationCard({
   station,
-  fillColor,
   glyph,
   department,
   number,
+  active,
+  reducedMotion,
+  onActivate,
+  onMouseEnter,
 }: {
   station: Station;
-  fillColor: string;
   glyph: StationGlyphKey;
   department: string;
   number: string;
+  active: boolean;
+  reducedMotion: boolean;
+  onActivate: () => void;
+  onMouseEnter: () => void;
 }) {
   const Glyph = GLYPHS[glyph];
+  const transitionMs = reducedMotion ? 0 : EXPAND_MS;
+
   return (
-    <div
-      className="relative h-full w-full overflow-hidden rounded-2xl shadow-xl"
-      style={{ backgroundColor: fillColor }}
+    <button
+      type="button"
+      data-testid="station-card"
+      onClick={onActivate}
+      onMouseEnter={onMouseEnter}
+      aria-expanded={active}
+      aria-label={active ? `Open ${station.name}` : `Show ${station.name}`}
+      className={`relative min-w-[56px] shrink overflow-hidden rounded-2xl text-left shadow-xl ${active ? "flex-[4]" : "flex-[1]"}`}
+      style={{
+        height: ROW_HEIGHT,
+        transition: `flex-grow ${transitionMs}ms ${EXPAND_EASE}, flex-shrink ${transitionMs}ms ${EXPAND_EASE}`,
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- stock/tagged photo URL, no benefit from next/image */}
       <img
         src={station.photoUrl}
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          transform: active ? "scale(1)" : "scale(1.1)",
+          filter: active ? "brightness(1)" : "brightness(0.5)",
+          transition: `transform ${transitionMs}ms ${EXPAND_EASE}, filter ${transitionMs}ms ${EXPAND_EASE}`,
+        }}
         // A signed URL that's gone stale (expired token, or the object was
         // deleted after this page rendered) fails at the browser's actual
         // fetch, not at render time -- with a plain <img> and no fallback,
-        // that reads as a genuinely blank tile (fillColor still shows
-        // through, but no photo). Swap to the same stock photo this card
-        // already falls back to server-side when there's no tagged photo
-        // at all, so a stale token degrades to "generic photo" instead of
-        // "nothing."
+        // that reads as a genuinely blank tile. Swap to the same stock
+        // photo this card already falls back to server-side when there's
+        // no tagged photo at all, so a stale token degrades to "generic
+        // photo" instead of "nothing."
         onError={(e) => {
           if (e.currentTarget.src !== STOCK_STATION_PHOTO_FALLBACK) e.currentTarget.src = STOCK_STATION_PHOTO_FALLBACK;
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/15 to-transparent" />
-      <div className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-ink/50">
+
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent"
+        style={{
+          opacity: active ? 1 : 0.55,
+          transition: `opacity ${transitionMs}ms ${EXPAND_EASE}`,
+        }}
+      />
+
+      <div className="absolute left-3 top-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/50">
         <Glyph color="var(--color-parchment)" />
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URL, no benefit from next/image */}
-      <img src={station.qrDataUrl} alt="" className="absolute right-3 top-3 h-11 w-11 rounded-md bg-parchment p-1" />
-      <div className="absolute inset-x-0 bottom-0 p-3">
-        <p className="font-mono text-xs text-parchment/80">
-          {number} · {department}
-        </p>
-        <p className="font-display text-lg leading-tight text-parchment">{station.name}</p>
-      </div>
-    </div>
-  );
-}
 
-function CarouselCard({
-  station,
-  fillColor,
-  glyph,
-  department,
-  number,
-  angle,
-  radius,
-  falloffDeg,
-  anglePerCard,
-  rotationY,
-  onFocus,
-}: {
-  station: Station;
-  fillColor: string;
-  glyph: StationGlyphKey;
-  department: string;
-  number: string;
-  angle: number;
-  radius: number;
-  falloffDeg: number;
-  anglePerCard: number;
-  rotationY: MotionValue<number>;
-  onFocus: () => void;
-}) {
-  // Derived per-card, not React state -- dragging the cylinder shouldn't
-  // re-render every card every frame, same discipline as J1's tilt/
-  // spotlight and the original coverflow hook this replaces.
-  //
-  // falloffDeg is capped at ~85% of the actual spacing between cards (not
-  // a fixed 90deg) -- at 90deg fixed, six cards spaced 60deg apart barely
-  // dim by the time a neighbor is one step away, so the front card's text
-  // was visibly competing with its neighbor's. Scaling the window to the
-  // real spacing means an adjacent card is always most of the way to its
-  // minimum, whatever the station count.
-  const opacity = useTransform(rotationY, (r) => {
-    const t = Math.min(1, Math.abs(normalizeAngle(r + angle)) / falloffDeg);
-    return 1 - t * (1 - MIN_OPACITY);
-  });
-  // A raw transform STRING, not separate rotateY/z/scale style props --
-  // framer-motion composes individual transform shorthand props in a fixed
-  // internal order (translate, then rotate, then scale) regardless of the
-  // order they're listed in the style object. That order rotates each card
-  // around its OWN already-translated center instead of around the shared
-  // cylinder axis -- confirmed live via getBoundingClientRect() on every
-  // card: instead of spreading around a circle, all six clustered near the
-  // same off-center point. Building the string directly gives rotateY the
-  // outer position (rotate the local axis first) and translateZ the inner
-  // position (then push outward along the NEW axis), which is what a
-  // cylinder actually needs.
-  const transform = useTransform(rotationY, (r) => {
-    const t = Math.min(1, Math.abs(normalizeAngle(r + angle)) / falloffDeg);
-    const s = 1 - t * (1 - MIN_SCALE);
-    return `rotateY(${angle}deg) translateZ(${radius}px) scale(${s})`;
-  });
-  // CSS 3D transforms don't reliably depth-sort pointer-event hit-testing
-  // to match what's actually painted on top -- confirmed live via
-  // elementFromPoint() at the visual front card's screen center: it
-  // returned a DIFFERENT card (the last one in DOM order), not the one
-  // actually visible there. Relying on the browser to route a click to the
-  // right card was a real bug, not just a test artifact -- a user could
-  // tap the front card and open the wrong station. Fixed by explicitly
-  // gating pointer-events to only whichever single card is currently
-  // nearest to front (a clean Voronoi split at half the card spacing), so
-  // there's never ambiguity about which element receives the click,
-  // independent of whatever the browser's paint order happens to be.
-  const pointerEvents = useTransform(rotationY, (r) =>
-    Math.abs(normalizeAngle(r + angle)) < anglePerCard / 2 ? "auto" : "none",
-  );
-
-  return (
-    <motion.div
-      className="absolute left-1/2 top-1/2 cursor-pointer"
-      data-station-card={station.id}
-      style={{
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-        marginLeft: -CARD_WIDTH / 2,
-        marginTop: -CARD_HEIGHT / 2,
-        transform,
-        opacity,
-        pointerEvents,
-        backfaceVisibility: "hidden",
-      }}
-      onClick={onFocus}
-    >
-      <CardFace station={station} fillColor={fillColor} glyph={glyph} department={department} number={number} />
-    </motion.div>
+      {active ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URL, no benefit from next/image */}
+          <img src={station.qrDataUrl} alt="" className="absolute right-3 top-3 h-11 w-11 rounded-md bg-parchment p-1" />
+          <div className="absolute inset-x-0 bottom-0 space-y-2 p-4">
+            <p className="font-mono text-xs uppercase tracking-wide text-saffron">
+              {number} · {department}
+            </p>
+            <p className="font-display text-xl leading-tight text-parchment">{station.name}</p>
+            <span className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-parchment/90">
+              Open station
+              <OpenGlyph color="var(--color-parchment)" />
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="absolute inset-0 hidden items-center justify-center pb-4 sm:flex">
+          <span
+            className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-parchment/90"
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+          >
+            {station.name}
+          </span>
+        </div>
+      )}
+    </button>
   );
 }
 
 /**
- * Block J5 redo — Personal Dashboard spec's "Stations gallery" section,
- * rebuilt from a flat coverflow scroll into a true 3D rotating cylinder
- * (drag-physics rotateY carousel, spring-damped settle, click-to-focus
- * zoom) per the direction pivot toward "genuinely impressive." Built from
- * John's description of the reference technique -- no reference files
- * exist in the repo -- adapted so each cylinder face carries real station
- * content (photo, name, department/number, QR chip) rather than the
- * reference's bare image.
- *
- * Dots AND chevron buttons are both kept as non-drag fallbacks for
- * discoverability (flagged, not decided silently): drag-to-spin is the
- * primary, novel interaction, but nothing here requires discovering it --
- * a user who never drags can still reach every station.
- *
- * Fewer than 3 stations can't form a real cylinder (the radius formula
- * divides by tan(pi/count), which is 0 at count<=2) -- those render as a
- * plain flat row instead, still fully featured (click-to-focus included).
+ * Elastic/accordion Stations gallery -- replaces the earlier 3D rotating
+ * cylinder (Block J5) with a row of cards that sit narrow at rest and
+ * expand wide on activation. Tap/touch driven, not hover: this app's
+ * primary device is an iPad on the pass, and a hover-only activation is
+ * unreliable on touch. Two-tier tap -- tapping an inactive card only
+ * expands it; tapping the already-active card performs the real "open"
+ * action (the same StationFocusOverlay every prior version of this
+ * gallery has used for that, owner viewers included, since it already
+ * omits the navigable link for them). onMouseEnter pre-expands a card for
+ * pointer users as a pure enhancement on top of that, so a mouse click
+ * lands on an already-active card -- the tap logic works identically
+ * with a mouse disconnected.
  */
 export function StationsGallery({
   venueSlug,
@@ -298,8 +226,9 @@ export function StationsGallery({
    */
   viewerContext?: "staff" | "owner";
 }) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [activeId, setActiveId] = useState<string | null>(stations[0]?.id ?? null);
   const [focused, setFocused] = useState<FocusedStation | null>(null);
-  const { rotationY, onPan, onPanEnd, activeIndex, goToIndex, anglePerCard } = useCylinderCarousel(stations.length);
 
   function openFocus(station: Station, visuals: ReturnType<typeof getStationVisuals>) {
     setFocused({
@@ -337,110 +266,34 @@ export function StationsGallery({
     );
   }
 
-  // Cards visible at width, arranged so the front-facing one sits at
-  // radius distance from the cylinder's central axis without overlapping
-  // its neighbors -- the standard N-gon-inscribed-circle radius formula.
-  // Rounded to 3 decimals: Math.tan's last few bits of precision can differ
-  // between the server's V8 (Node) and the browser's V8, which otherwise
-  // produces a real, reproducible hydration mismatch on this exact
-  // transform string (confirmed live, 14 Sep) -- a sub-thousandth-of-a-
-  // pixel difference is invisible anyway, so rounding buys determinism for
-  // free rather than papering over the warning.
-  const radius = stations.length >= MIN_CYLINDER_COUNT ? Math.round((CARD_WIDTH / 2 / Math.tan(Math.PI / stations.length)) * 1000) / 1000 : 0;
-
-  if (stations.length < MIN_CYLINDER_COUNT) {
-    return (
-      <section className="-mx-4 mt-6 md:-mx-6">
-        <p className="mb-3 px-4 font-mono text-xs uppercase tracking-wide text-clay-brown md:px-6">Stations</p>
-        <div className="flex justify-center gap-4 px-4 md:px-6">
-          {stations.map((station, i) => {
-            const visuals = getStationVisuals(station.name, i);
-            return (
-              <div key={station.id} style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-                <div className="cursor-pointer" onClick={() => openFocus(station, visuals)}>
-                  <CardFace
-                    station={station}
-                    fillColor={visuals.fillColor}
-                    glyph={visuals.glyph}
-                    department={visuals.department}
-                    number={visuals.number}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <StationFocusOverlay station={focused} onClose={() => setFocused(null)} />
-      </section>
-    );
-  }
-
   return (
     <section className="-mx-4 mt-6 md:-mx-6">
       <p className="mb-3 px-4 font-mono text-xs uppercase tracking-wide text-clay-brown md:px-6">Stations</p>
 
-      <div className="flex items-center justify-center gap-2">
-        <button
-          type="button"
-          aria-label="Previous station"
-          onClick={() => goToIndex(activeIndex - 1)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-parchment shadow"
-        >
-          <ChevronGlyph direction="left" />
-        </button>
-
-        <div className="relative h-[300px] w-full max-w-xs overflow-hidden" style={{ perspective: 700 }}>
-          <motion.div
-            className="absolute left-1/2 top-1/2 h-0 w-0"
-            data-carousel-pivot=""
-            style={{ rotateY: rotationY, transformStyle: "preserve-3d", touchAction: "pan-y" }}
-            onPan={onPan}
-            onPanEnd={onPanEnd}
-          >
-            {stations.map((station, i) => {
-              const visuals = getStationVisuals(station.name, i);
-              return (
-                <CarouselCard
-                  key={station.id}
-                  station={station}
-                  fillColor={visuals.fillColor}
-                  glyph={visuals.glyph}
-                  department={visuals.department}
-                  number={visuals.number}
-                  angle={i * anglePerCard}
-                  radius={radius}
-                  falloffDeg={Math.min(90, anglePerCard * 0.85)}
-                  anglePerCard={anglePerCard}
-                  rotationY={rotationY}
-                  onFocus={() => openFocus(station, visuals)}
-                />
-              );
-            })}
-          </motion.div>
-        </div>
-
-        <button
-          type="button"
-          aria-label="Next station"
-          onClick={() => goToIndex(activeIndex + 1)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-parchment shadow"
-        >
-          <ChevronGlyph direction="right" />
-        </button>
-      </div>
-
-      <div className="mt-3 flex justify-center gap-1.5">
-        {stations.map((station, i) => (
-          <button
-            key={station.id}
-            type="button"
-            aria-label={`Go to ${station.name}`}
-            onClick={() => goToIndex(i)}
-            className={`h-1.5 rounded-full transition-all duration-200 ${
-              i === activeIndex ? "w-4 bg-preserve-red" : "w-1.5 bg-clay-brown/30"
-            }`}
-          />
-        ))}
+      <div className="flex gap-2 overflow-x-auto px-4 md:px-6">
+        {stations.map((station, i) => {
+          const visuals = getStationVisuals(station.name, i);
+          const active = station.id === activeId;
+          return (
+            <StationCard
+              key={station.id}
+              station={station}
+              glyph={visuals.glyph}
+              department={visuals.department}
+              number={visuals.number}
+              active={active}
+              reducedMotion={reducedMotion}
+              onMouseEnter={() => setActiveId(station.id)}
+              onActivate={() => {
+                if (active) {
+                  openFocus(station, visuals);
+                } else {
+                  setActiveId(station.id);
+                }
+              }}
+            />
+          );
+        })}
       </div>
 
       <StationFocusOverlay station={focused} onClose={() => setFocused(null)} />
