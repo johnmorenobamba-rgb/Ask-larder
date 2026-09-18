@@ -8,6 +8,7 @@ import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { DeleteStationButton } from "@/components/owner/DeleteStationButton";
 import { StationModuleSelect } from "@/components/owner/StationModuleSelect";
 import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
+import { StationPhotoTile } from "@/components/owner/StationPhotoTile";
 import { NameplateCapture } from "@/components/owner/NameplateCapture";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
@@ -76,12 +77,7 @@ export default async function OwnerStationsPage({
         <div className="space-y-3">
           {stationsWithDisplay.map((s) => (
             <div key={s.id} className="flex flex-wrap items-start gap-4 rounded-2xl border-2 border-clay-brown/40 px-4 py-4">
-              {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URL / short-lived signed URL, neither benefits from next/image */}
-              <img
-                src={s.photoUrl ?? s.qrDataUrl}
-                alt={s.photoUrl ? s.name : `QR code for ${s.name}`}
-                className={s.photoUrl ? "h-20 w-20 rounded-xl object-cover" : "h-20 w-20"}
-              />
+              <StationPhotoTile photoUrl={s.photoUrl} qrDataUrl={s.qrDataUrl} name={s.name} />
               <div className="min-w-[220px] flex-1 space-y-2">
                 <p className="font-display text-ink">{s.name}</p>
                 <StationModuleSelect stationId={s.id} currentModuleId={s.primary_module_id} modules={modules ?? []} />

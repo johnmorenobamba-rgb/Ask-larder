@@ -15,6 +15,11 @@ type Station = {
   photoUrl: string;
 };
 
+// Mirrors getStationsWithDisplay.ts's STOCK_STATION_PHOTO -- same URL, used
+// here as this card's client-side onError fallback rather than a
+// server-side default.
+const STOCK_STATION_PHOTO_FALLBACK = "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=400&h=560&fit=crop";
+
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 280;
 const MIN_OPACITY = 0.35;
@@ -132,7 +137,22 @@ function CardFace({
       style={{ backgroundColor: fillColor }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- stock/tagged photo URL, no benefit from next/image */}
-      <img src={station.photoUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <img
+        src={station.photoUrl}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+        // A signed URL that's gone stale (expired token, or the object was
+        // deleted after this page rendered) fails at the browser's actual
+        // fetch, not at render time -- with a plain <img> and no fallback,
+        // that reads as a genuinely blank tile (fillColor still shows
+        // through, but no photo). Swap to the same stock photo this card
+        // already falls back to server-side when there's no tagged photo
+        // at all, so a stale token degrades to "generic photo" instead of
+        // "nothing."
+        onError={(e) => {
+          if (e.currentTarget.src !== STOCK_STATION_PHOTO_FALLBACK) e.currentTarget.src = STOCK_STATION_PHOTO_FALLBACK;
+        }}
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/15 to-transparent" />
       <div className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-ink/50">
         <Glyph color="var(--color-parchment)" />
