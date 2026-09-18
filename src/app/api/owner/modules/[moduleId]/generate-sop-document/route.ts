@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   const supabase = await createClient();
   const { data: moduleRow, error: moduleError } = await supabase
     .from("modules")
-    .select("id")
+    .select("id, status")
     .eq("id", moduleId)
     .eq("venue_id", staff.venue_id)
     .maybeSingle();
@@ -28,6 +28,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   }
   if (!moduleRow) {
     return NextResponse.json({ error: "Module not found for this venue." }, { status: 404 });
+  }
+  // Item 8, 18 Sep punch list: server-side twin of the SOP page's own
+  // gate -- the UI hides Regenerate once a module is live, but this route
+  // is the one that actually enforces it against a direct call.
+  if (moduleRow.status === "live") {
+    return NextResponse.json({ error: "This module is live. Use Request edit for changes." }, { status: 403 });
   }
 
   try {

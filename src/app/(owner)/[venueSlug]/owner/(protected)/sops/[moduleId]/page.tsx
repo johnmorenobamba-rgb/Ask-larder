@@ -25,8 +25,17 @@ export default async function SopDocumentPage({
   const [data, { data: sections }, { data: moduleRow }] = await Promise.all([
     fetchSopDocumentData(supabase, staff!.venue_id!, moduleId),
     supabase.from("module_sections").select("id, provenance, citation").eq("module_id", moduleId),
-    supabase.from("modules").select("topic_key").eq("id", moduleId).maybeSingle(),
+    supabase.from("modules").select("topic_key, status").eq("id", moduleId).maybeSingle(),
   ]);
+  // Item 8, 18 Sep punch list: Regenerate rebuilds this document from
+  // already-approved module content (it can't touch what staff see), but
+  // it's free, instant, and unmetered -- while the adjacent Request edit
+  // flow is billed (5 free/month, then $15 AUD) and notifies the founder.
+  // Live, an owner could reword the official SOP document for free,
+  // unlimited times, sidestepping that flow entirely. Regenerate now stays
+  // available only while the module is still being set up (pre-live); once
+  // it's live, changes go through Request edit like everything else.
+  const canRegenerate = moduleRow?.status !== "live";
   let manufacturer: string | null = null;
   if (moduleRow?.topic_key?.startsWith("station_equipment_")) {
     const slug = moduleRow.topic_key.replace("station_equipment_", "");
@@ -54,7 +63,13 @@ export default async function SopDocumentPage({
             Back to SOPs
           </Link>
           <p className="font-sans text-ink">No curated SOP document exists for this module yet.</p>
-          <GenerateSopButton moduleId={moduleId} hasExisting={false} />
+          {canRegenerate ? (
+            <GenerateSopButton moduleId={moduleId} hasExisting={false} />
+          ) : (
+            <p className="font-sans text-sm text-clay-brown">
+              This module is live. Contact us (Settings page) if you need a document generated for it.
+            </p>
+          )}
           {/* Fixed 14 Sep 2026: provenance was previously only shown below,
               inside the "has a curated document" branch -- a module whose
               document generation never ran or failed (a real, best-effort
@@ -88,7 +103,7 @@ export default async function SopDocumentPage({
           </Link>
           <div className="flex flex-wrap gap-3">
             <PrintButton />
-            <GenerateSopButton moduleId={moduleId} hasExisting />
+            {canRegenerate && <GenerateSopButton moduleId={moduleId} hasExisting />}
             <RequestEditForm moduleId={moduleId} />
           </div>
         </div>
