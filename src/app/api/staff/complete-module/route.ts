@@ -24,28 +24,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  // No unique constraint on (user_id, module_id) exists yet, so this is a
-  // check-then-act rather than a real upsert — fine for a single request
-  // from one signed-in device, but a unique constraint would be the more
-  // robust long-term fix.
-  const { data: existing } = await supabase
+  // Item 7 fix, 18 Sep 2026: this used to be a check-then-act (select, then
+  // insert or update) racy enough on its own to produce duplicate rows --
+  // and worse, once a module had 2+ rows for the same person, the check's
+  // .maybeSingle() started throwing on every later call (it errors on more
+  // than one match), an error this route never looked at, so it silently
+  // treated "check failed" the same as "no existing row" and inserted yet
+  // another duplicate, forever. A real upsert against the DB's own unique
+  // constraint (user_id, module_id) is atomic and can't drift like that.
+  const { error } = await supabase
     .from("staff_module_progress")
-    .select("id")
-    .eq("user_id", appUser.id)
-    .eq("module_id", body.moduleId)
-    .maybeSingle();
-
-  const { error } = existing
-    ? await supabase
-        .from("staff_module_progress")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id", existing.id)
-    : await supabase.from("staff_module_progress").insert({
-        user_id: appUser.id,
-        module_id: body.moduleId,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      });
+    .upsert(
+      { user_id: appUser.id, module_id: body.moduleId, status: "completed", completed_at: new Date().toISOString() },
+      { onConflict: "user_id,module_id" },
+    );
 
   if (error) {
     console.error("complete-module unexpected error:", error);

@@ -71,10 +71,13 @@ export default async function OwnerDashboardPage({
   const unresolvedEscalations = (escalationRows ?? []).filter((e) => e.escalation_status !== "resolved");
 
   const liveModuleCount = (liveModules ?? []).length;
-  const completedByUser = new Map<string, number>();
+  // Counts distinct completed module_ids per user, not raw rows -- see the
+  // matching comment in staff/page.tsx (item 7, 18 Sep fix).
+  const completedByUser = new Map<string, Set<string>>();
   for (const p of progress ?? []) {
-    if (p.status === "completed" && p.user_id) {
-      completedByUser.set(p.user_id, (completedByUser.get(p.user_id) ?? 0) + 1);
+    if (p.status === "completed" && p.user_id && p.module_id) {
+      if (!completedByUser.has(p.user_id)) completedByUser.set(p.user_id, new Set());
+      completedByUser.get(p.user_id)!.add(p.module_id);
     }
   }
 
@@ -157,7 +160,7 @@ export default async function OwnerDashboardPage({
     id: s.id,
     name: s.name,
     roleName: s.staff_roles?.name ?? "No role set",
-    completed: completedByUser.get(s.id) ?? 0,
+    completed: completedByUser.get(s.id)?.size ?? 0,
     total: liveModuleCount,
   }));
 
