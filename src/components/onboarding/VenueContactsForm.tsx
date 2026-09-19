@@ -16,6 +16,8 @@ type Contact = {
   check_first_step: string | null;
 };
 
+const TYPE_LABEL = new Map<string, string>(CONTACT_TYPES.map((t) => [t.value, t.label]));
+
 export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; existing: Contact[] }) {
   const router = useRouter();
   const [contactType, setContactType] = useState<string>(CONTACT_TYPES[0].value);
@@ -100,7 +102,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
               <div>
                 <p className="font-sans text-ink">{c.name}</p>
                 <p className="font-mono text-xs text-clay-brown">
-                  {c.contact_type ?? "uncategorised"}
+                  {TYPE_LABEL.get(c.contact_type ?? "") ?? "Uncategorised"}
                   {c.phone ? ` · ${c.phone}` : ""}
                 </p>
                 {c.check_first_step && <p className="font-sans text-xs text-ink/60">Check first: {c.check_first_step}</p>}
