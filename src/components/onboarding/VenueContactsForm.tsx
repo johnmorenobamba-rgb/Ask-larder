@@ -6,7 +6,15 @@ import { CONTACT_TYPES } from "@/lib/onboarding/constants";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { inputClass, selectClass, cardClass, primaryButtonClass, secondaryButtonClass, errorClass, rowClass } from "./fieldStyles";
 
-type Contact = { id: string; contact_type: string | null; name: string; phone: string | null; email: string | null; notes: string | null };
+type Contact = {
+  id: string;
+  contact_type: string | null;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+  check_first_step: string | null;
+};
 
 export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; existing: Contact[] }) {
   const router = useRouter();
@@ -15,6 +23,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [checkFirstStep, setCheckFirstStep] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +34,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
     const res = await fetch("/api/owner/onboarding/contacts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contactType, name, phone, email, notes }),
+      body: JSON.stringify({ contactType, name, phone, email, notes, checkFirstStep }),
     });
     const body = await res.json().catch(() => null);
     setLoading(false);
@@ -37,6 +46,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
     setPhone("");
     setEmail("");
     setNotes("");
+    setCheckFirstStep("");
     router.refresh();
   }
 
@@ -53,10 +63,11 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-2xl font-bold text-ink">Business continuity</h2>
+        <h2 className="font-display text-2xl font-bold text-ink">Contacts</h2>
         <p className="font-sans text-sm text-ink/70">
-          Electrician, plumber, locksmith, insurer, regulator, escalation contact, fire or police for
-          non-emergencies.
+          Trade and business continuity contacts, an electrician, a meat or beverage supplier, an insurer, anyone
+          staff might need to reach. Add a check first step if there is one, staff see that before the number, not
+          instead of it.
         </p>
       </div>
 
@@ -71,7 +82,13 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className={inputClass} />
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className={inputClass} />
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={inputClass} />
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" className={inputClass} />
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What they're for" className={inputClass} />
+        <input
+          value={checkFirstStep}
+          onChange={(e) => setCheckFirstStep(e.target.value)}
+          placeholder="Check first, before calling (optional)"
+          className={inputClass}
+        />
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={addContact} disabled={loading || !name.trim()} className={secondaryButtonClass}>
           {loading ? "Adding…" : "Add contact"}
@@ -86,6 +103,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
                   {c.contact_type ?? "uncategorised"}
                   {c.phone ? ` · ${c.phone}` : ""}
                 </p>
+                {c.check_first_step && <p className="font-sans text-xs text-ink/60">Check first: {c.check_first_step}</p>}
               </div>
               <button type="button" onClick={() => deleteContact(c.id)} className="font-mono text-xs text-preserve-red underline">
                 Delete

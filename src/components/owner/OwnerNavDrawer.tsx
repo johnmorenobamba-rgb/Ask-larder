@@ -18,6 +18,7 @@ const SECTIONS = [
   { href: "near-misses", label: "Near-misses" },
   { href: "stations", label: "Stations" },
   { href: "photo-library", label: "Photos" },
+  { href: "contacts", label: "Contacts" },
   { href: "settings", label: "Settings" },
 ];
 

@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { embedTexts } from "@/lib/ai/voyage";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
+import { CONTACT_TYPES } from "@/lib/onboarding/constants";
+
+const CONTACT_TYPE_LABEL = new Map<string, string>(CONTACT_TYPES.map((t) => [t.value, t.label]));
 
 const MODEL = "claude-sonnet-5";
 
@@ -51,6 +54,8 @@ Role-tiered access (Tech Bible §15i): this is what step zero above implements, 
 If the question isn't answerable from the retrieved content and isn't a fallback-rule case, say so plainly and suggest asking a supervisor -- don't guess or answer from outside knowledge.
 
 Isolation note: the content you were given has already been filtered to this venue, this staff member's role, and only approved (live) modules -- you don't need to enforce that, it's already done. Your job is just to answer accurately from what's provided, and to apply the fallback rule only when it's genuinely a request for a specific secret or a physical/system action on the person's behalf.
+
+Venue contacts: if a "Venue contacts" block appears below, use it for any question about who to call for a supplier, tradesperson, or other outside help. If an entry has a check-first step, lead with that as the thing to try before calling, not the number. If the entry shows a real phone number, give it plainly once the check-first step (if any) doesn't apply or has already been tried. If an entry instead says the number is withheld pending manager authorization, that is a genuine fallback-rule case exactly like a restricted chunk: use the locked phrase, filling [X] with "contacting [name]", and set fallback_triggered true. Don't invent or guess a number that isn't shown to you, and don't treat a withheld contact number as merely "not covered."
 
 Voice: write like a real person on the team, not like an AI assistant. Use plain punctuation (periods and commas), never an em dash or asterisks for emphasis.`;
 
@@ -114,19 +119,55 @@ export async function POST(request: Request) {
   // accounts are always authorized-tier; a frontline staff member is
   // authorized only if their staff_roles row has been explicitly marked so
   // (defaults to 'frontline', matching the "identical protection unless a
-  // venue explicitly says otherwise" design).
-  const isBackOfficeAccount = staff.role === "owner" || staff.role === "manager";
-  const [stationResult, tierResult] = await Promise.all([
-    stationId ? supabase.from("stations").select("name").eq("id", stationId).maybeSingle() : Promise.resolve(null),
-    isBackOfficeAccount || !staff.staff_role_id
-      ? Promise.resolve(null)
-      : supabase.from("staff_roles").select("fallback_tier").eq("id", staff.staff_role_id).maybeSingle(),
-  ]);
-  const station = stationResult?.data ?? null;
+  // venue explicitly says otherwise" design). staff.isManagerTier is the
+  // one shared computation (session.ts) also used to gate the owner
+  // dashboard -- this used to run its own separate staff_roles query here,
+  // a second mechanism that could (and did) drift from the dashboard's own
+  // owner/manager-only check.
+  const station = stationId
+    ? (await supabase.from("stations").select("name").eq("id", stationId).maybeSingle()).data
+    : null;
   // Null out a station id that didn't resolve (wrong venue, deleted, or
   // simply absent) rather than trusting the client-supplied value verbatim.
   const resolvedStationId = station ? stationId! : null;
-  const isAuthorizedTier = isBackOfficeAccount || tierResult?.data?.fallback_tier === "authorized";
+  const isAuthorizedTier = staff.isManagerTier;
+
+  // Contact directory (Part 2, 20 Sep 2026): deterministic, always-included
+  // context rather than a knowledge_chunks embed -- a venue has a handful of
+  // contacts at most, so there's no ranking/recall problem retrieval would
+  // solve, and baking a role-appropriate answer into the model's own
+  // judgment (rather than gating it on whether a vector search happened to
+  // surface the right chunk) matches how the fallback rule itself already
+  // works. Phone numbers are withheld from the context entirely for
+  // frontline-tier staff -- the redaction happens here, not as a prompt
+  // instruction the model could be talked out of.
+  const { data: contacts, error: contactsError } = await supabase
+    .from("venue_contacts")
+    .select("name, contact_type, phone, notes, check_first_step")
+    .eq("venue_id", staff.venue_id)
+    .order("name");
+  if (contactsError) {
+    console.error("ask-larder contacts fetch error:", contactsError);
+  }
+  const contactsBlock =
+    contacts && contacts.length > 0
+      ? `Venue contacts:\n${contacts
+          .map((c) => {
+            const typeLabel = CONTACT_TYPE_LABEL.get(c.contact_type ?? "") ?? "Contact";
+            const parts = [`- ${c.name} (${typeLabel})`];
+            if (c.notes) parts.push(`for: ${c.notes}`);
+            if (c.check_first_step) parts.push(`check first: ${c.check_first_step}`);
+            parts.push(
+              isAuthorizedTier
+                ? c.phone
+                  ? `number: ${c.phone}`
+                  : "number: not on file"
+                : "number: withheld, frontline not authorized for direct contact numbers",
+            );
+            return parts.join(", ");
+          })
+          .join("\n")}`
+      : null;
 
   let queryEmbedding: number[];
   try {
@@ -188,6 +229,7 @@ export async function POST(request: Request) {
     `Current time: ${new Date().toISOString()}`,
     askerIdentityLine,
     station ? `Asked from station: ${station.name}` : null,
+    contactsBlock,
     withheldCount > 0
       ? `Note: ${withheldCount} additional matching chunk(s) exist for this question but are restricted to authorized roles (manager and above); they have been withheld because this staff member is not authorized. If the question is genuinely asking for that restricted information, this IS a fallback-rule case -- apply it, don't say the topic "isn't covered."`
       : null,

@@ -52,7 +52,7 @@ export const WIZARD_STEPS: { slug: WizardStepSlug; label: string }[] = [
   { slug: "menu", label: "Menu" },
   { slug: "equipment", label: "Equipment" },
   { slug: "promotions", label: "Promotions" },
-  { slug: "contacts", label: "Business continuity" },
+  { slug: "contacts", label: "Contacts" },
   { slug: "staff-roles", label: "Staff roles" },
   { slug: "staff-invite", label: "Invite staff" },
   { slug: "content-intake", label: "SOPs & training content" },

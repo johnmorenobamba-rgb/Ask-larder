@@ -1,0 +1,13 @@
+-- Part 2 of the 20 Sep contact-directory work: venue_contacts already
+-- existed (Block P pub validation) with a real wizard intake page and a
+-- real AI-extraction path (confirmExtractedContact), but only covered
+-- business-continuity contact types (electrician, plumber, locksmith,
+-- insurer, regulator, escalation, fire/police, equipment service) -- no
+-- category fit a trade supplier like a meat or post-mix supplier, and
+-- there was no structured place for a "check this first, then call" step.
+--
+-- check_first_step is deliberately its own column, not folded into notes:
+-- Ask Larder's response shaping (a check-first step before the number,
+-- never the number as the first answer) needs to read it as a distinct
+-- field, not parse it out of free text.
+alter table venue_contacts add column if not exists check_first_step text;

@@ -1515,6 +1515,7 @@ export type Database = {
       }
       venue_contacts: {
         Row: {
+          check_first_step: string | null
           contact_type: string | null
           created_at: string | null
           email: string | null
@@ -1525,6 +1526,7 @@ export type Database = {
           venue_id: string | null
         }
         Insert: {
+          check_first_step?: string | null
           contact_type?: string | null
           created_at?: string | null
           email?: string | null
@@ -1535,6 +1537,7 @@ export type Database = {
           venue_id?: string | null
         }
         Update: {
+          check_first_step?: string | null
           contact_type?: string | null
           created_at?: string | null
           email?: string | null

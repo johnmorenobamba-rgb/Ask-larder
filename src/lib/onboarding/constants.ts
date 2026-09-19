@@ -32,6 +32,12 @@ export const CONTACT_TYPES = [
   { value: "escalation", label: "Escalation contact" },
   { value: "fire_police_non_emergency", label: "Fire/police (non-emergency)" },
   { value: "equipment_service", label: "Equipment service/repair" },
+  // Added 20 Sep 2026 for the general contact directory (Part 2) -- the
+  // original set only covered business-continuity trades, nothing fit a
+  // day-to-day trade supplier (a meat supplier, a post-mix gas supplier).
+  { value: "food_supplier", label: "Food supplier" },
+  { value: "beverage_supplier", label: "Beverage/gas supplier" },
+  { value: "general_supplier", label: "General supplier" },
 ] as const;
 
 // Written from Page 5 (crowd control), not Page 10, but the same table/enum
