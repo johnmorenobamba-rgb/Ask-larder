@@ -62,6 +62,21 @@ function ChitOutlineGlyph({ color }: { color: string }) {
   );
 }
 
+// Contacts glyph -- a phone handset, distinct from every other tile's
+// icon language on this screen.
+function PhoneGlyph({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6 3.5c1.2 0 2.3.7 2.8 1.8l.6 1.4c.4.9.2 2-.5 2.7l-1 1c-.3.3-.3.7-.1 1 1 1.9 2.6 3.5 4.5 4.5.3.2.7.2 1-.1l1-1c.7-.7 1.8-.9 2.7-.5l1.4.6c1.1.5 1.8 1.6 1.8 2.8v1.3c0 1.5-1.3 2.6-2.8 2.4-8-1-14.4-7.4-15.4-15.4-.2-1.5.9-2.8 2.4-2.8z"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /**
  * Segmented step-progress -- real section count, decorative fill state.
  * Per-section completion isn't persisted anywhere (ModuleRunner only
@@ -373,6 +388,30 @@ export function BentoGrid({
             </a>
           </div>
         )}
+
+        {/* Contacts -- solid Clay Brown fill, the one brand color not
+            otherwise used as a tile background on this screen, so the phone
+            book reads as its own distinct surface rather than another
+            parchment card with a different glyph (matches the owner
+            dashboard's own Contacts tile treatment). */}
+        <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 400)}>
+          <a href={`/${venueSlug}/contacts`} className="block h-full">
+            <ElevatedCell
+              glowColor="var(--color-clay-brown)"
+              floatDurationS={6.3}
+              floatDelayS={0.85}
+              depth="secondary"
+              tilt={false}
+              className="flex h-full flex-col justify-between rounded-2xl bg-clay-brown px-4 py-4"
+            >
+              <div className="flex items-center gap-1.5">
+                <PhoneGlyph color="var(--color-parchment)" />
+                <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Contacts</p>
+              </div>
+              <p className="font-sans text-sm text-parchment">Suppliers, tradies, and who to call</p>
+            </ElevatedCell>
+          </a>
+        </div>
 
         {/* My Ask Larder activity — Bento variety pass. Personal, not the
             owner's venue-wide escalations digest: how many of THIS staff
