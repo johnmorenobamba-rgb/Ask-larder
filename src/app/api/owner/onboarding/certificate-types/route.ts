@@ -15,7 +15,7 @@ const ALLOWED_CERT_KINDS: Exclude<CertKind, "other">[] = ["wwcc", "first_aid"];
 // this route just writes whatever name it's given, find-or-create by name.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

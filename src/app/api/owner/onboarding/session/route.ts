@@ -12,7 +12,7 @@ import { upsertWizardSession, getWizardFlags } from "@/lib/onboarding/wizardSess
 // (current_step = 'sop_intake:<topic_key>', per Q2 Page 12).
 export async function GET() {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const supabase = await createClient();
@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const body = await request.json().catch(() => null);

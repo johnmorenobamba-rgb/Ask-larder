@@ -15,7 +15,7 @@ const VALID_LEVELS: Set<string> = new Set(FOOD_SERVICE_LEVELS.map((l) => l.value
 // risk" is named low risk deliberately and does not trigger the FSS branch.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

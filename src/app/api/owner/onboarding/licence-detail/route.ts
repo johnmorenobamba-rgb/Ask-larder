@@ -14,7 +14,7 @@ type TradingHoursDay = { closed: boolean; open?: string; close?: string };
 // founder_escalation flag. licence_type = 'other_unsure' does the same.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

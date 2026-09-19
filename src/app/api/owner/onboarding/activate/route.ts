@@ -10,7 +10,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 // wrong place to shortcut that per-module gate.
 export async function POST() {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

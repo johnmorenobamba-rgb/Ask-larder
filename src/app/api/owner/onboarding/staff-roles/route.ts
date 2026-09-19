@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { upsertWizardSession } from "@/lib/onboarding/wizardSession";
-import { DEPARTMENTS, FALLBACK_TIERS } from "@/lib/onboarding/constants";
+import { DEPARTMENTS, FALLBACK_TIERS, isManagerTierRoleName } from "@/lib/onboarding/constants";
 
 const VALID_DEPARTMENTS: Set<string> = new Set(DEPARTMENTS.map((d) => d.value));
 const VALID_TIERS: Set<string> = new Set(FALLBACK_TIERS.map((t) => t.value));
@@ -12,10 +12,14 @@ const VALID_TIERS: Set<string> = new Set(FALLBACK_TIERS.map((t) => t.value));
 // destination column lives on venues, not staff_roles (Q2 §3's deliberate
 // placement choice — "where do staff check who's on shift" is thematically
 // a staffing fact). fallback_tier defaults to frontline server-side too,
-// never silently defaulting to authorized.
+// never silently defaulting to authorized -- except for the locked
+// manager-tier role names (isManagerTierRoleName, 19 Sep 2026 policy),
+// which are force-set to authorized here regardless of what the client
+// sent, so this can't be bypassed by a client that skips the form's own
+// auto-suggested default.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
@@ -44,12 +48,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Choose a valid fallback tier." }, { status: 400 });
   }
 
+  const effectiveTier = isManagerTierRoleName(name) ? "authorized" : fallbackTier;
+
   const supabase = await createClient();
   const { error } = await supabase.from("staff_roles").insert({
     venue_id: staff.venue_id,
     name,
     department: department || null,
-    fallback_tier: fallbackTier,
+    fallback_tier: effectiveTier,
   });
 
   if (error) {

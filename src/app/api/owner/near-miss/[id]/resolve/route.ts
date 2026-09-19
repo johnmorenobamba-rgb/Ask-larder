@@ -5,7 +5,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const staff = await getCurrentStaff();
-  if (!staff || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

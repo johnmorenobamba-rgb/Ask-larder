@@ -11,7 +11,7 @@ import { SECURITY_FIRM_CONTACT_TYPE, CROWD_CONTROL_LICENCES_CONTACT_TYPE } from 
 // resubmit from duplicating the row on a page re-visit.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

@@ -13,7 +13,7 @@ const VALID_DAYS: Set<string> = new Set(DAYS_OF_WEEK.map((d) => d.value));
 // repeatable-group form, not a full-replace upsert.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const id = new URL(request.url).searchParams.get("id");

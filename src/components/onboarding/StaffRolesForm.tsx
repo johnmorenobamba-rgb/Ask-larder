@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DEPARTMENTS, FALLBACK_TIERS } from "@/lib/onboarding/constants";
+import { DEPARTMENTS, FALLBACK_TIERS, isManagerTierRoleName } from "@/lib/onboarding/constants";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { inputClass, selectClass, labelClass, cardClass, primaryButtonClass, secondaryButtonClass, errorClass, rowClass } from "./fieldStyles";
 
@@ -25,6 +25,10 @@ export function StaffRolesForm({
   const [fallbackTier, setFallbackTier] = useState("frontline");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Locked policy (19 Sep 2026), enforced server-side too (staff-roles/
+  // route.ts) -- this is just live feedback while typing, not the actual
+  // enforcement, so there's no way to type around it by disabling JS.
+  const managerTierLocked = isManagerTierRoleName(name);
 
   async function saveRosterLocation() {
     await fetch("/api/owner/onboarding/staff-roles", {
@@ -103,17 +107,30 @@ export function StaffRolesForm({
         </select>
         <div className="space-y-1">
           <label className={labelClass}>Fallback tier</label>
-          <select aria-label="Fallback tier" value={fallbackTier} onChange={(e) => setFallbackTier(e.target.value)} className={selectClass}>
+          <select
+            aria-label="Fallback tier"
+            value={managerTierLocked ? "authorized" : fallbackTier}
+            onChange={(e) => setFallbackTier(e.target.value)}
+            disabled={managerTierLocked}
+            className={selectClass}
+          >
             {FALLBACK_TIERS.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
             ))}
           </select>
-          <p className="font-sans text-xs text-ink/60">
-            Authorized is a deliberate elevation for restricted content like safe or alarm codes. Leave this as
-            Frontline unless this role should genuinely hold that access.
-          </p>
+          {managerTierLocked ? (
+            <p className="font-sans text-xs text-ink/60">
+              Head Chef, Sous Chef, Manager, and 2IC roles always get Authorized -- full owner-dashboard access and
+              real Ask Larder answers, the same as the owner.
+            </p>
+          ) : (
+            <p className="font-sans text-xs text-ink/60">
+              Authorized is a deliberate elevation for restricted content like safe or alarm codes. Leave this as
+              Frontline unless this role should genuinely hold that access.
+            </p>
+          )}
         </div>
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={addRole} disabled={loading || !name.trim()} className={secondaryButtonClass}>

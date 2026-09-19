@@ -11,7 +11,7 @@ const VALID_STATUSES = new Set(["none", "byo_unlicensed", "limited", "full", "un
 // unlicensed" — the upsert here always writes an explicit value.
 export async function POST(request: Request) {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

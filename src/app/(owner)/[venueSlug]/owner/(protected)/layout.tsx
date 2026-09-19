@@ -21,7 +21,7 @@ export default async function OwnerProtectedLayout({
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
 
-  if (!staff || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.isManagerTier) {
     redirect(`/${venueSlug}/owner/login`);
   }
 

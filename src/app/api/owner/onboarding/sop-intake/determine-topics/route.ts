@@ -12,7 +12,7 @@ import { determineSopTopics } from "@/lib/ai/sopTopicDetermination";
 // already run once. Idempotent: re-running just upserts every row again.
 export async function POST() {
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

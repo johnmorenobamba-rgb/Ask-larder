@@ -59,6 +59,23 @@ export const FALLBACK_TIERS = [
   { value: "authorized", label: "Authorized" },
 ] as const;
 
+// Locked product policy, 19 Sep 2026: these job titles get manager-tier
+// authority (full owner-dashboard access + Ask Larder's authorized
+// fallback tier) at every venue, not a per-venue owner choice -- matched
+// as a case-insensitive substring against the role name being created, so
+// "Duty Manager"/"Venue Manager"/"Operations Manager" all match "manager"
+// the same way a plain "Head Chef" matches "head chef". This is the one
+// place this policy is expressed; staff-roles/route.ts enforces it
+// server-side (can't be set below authorized for a matching name) and
+// StaffRolesForm.tsx mirrors it for the owner's own live feedback while
+// typing -- don't duplicate this list a third time.
+export const MANAGER_TIER_ROLE_KEYWORDS = ["head chef", "sous chef", "manager", "2ic"];
+
+export function isManagerTierRoleName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return MANAGER_TIER_ROLE_KEYWORDS.some((keyword) => lower.includes(keyword));
+}
+
 export const FOOD_SERVICE_LEVELS = [
   { value: "full_kitchen", label: "Full kitchen" },
   { value: "bar_snacks_low_risk", label: "Bar snacks or packaged, low risk food only" },

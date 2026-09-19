@@ -8,7 +8,7 @@ import { clearStaffPin, PinAuthError } from "@/lib/auth/staffPin";
 export async function POST(request: Request, { params }: { params: Promise<{ staffUserId: string }> }) {
   const { staffUserId } = await params;
   const staff = await getCurrentStaff();
-  if (!staff || !staff.venue_id || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 

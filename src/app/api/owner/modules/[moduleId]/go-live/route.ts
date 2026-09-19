@@ -11,7 +11,7 @@ import { generateSopDocument } from "@/lib/ai/generateSopDocument";
 export async function POST(request: Request, { params }: { params: Promise<{ moduleId: string }> }) {
   const { moduleId } = await params;
   const staff = await getCurrentStaff();
-  if (!staff || !["owner", "manager"].includes(staff.role)) {
+  if (!staff || !staff.isManagerTier) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
