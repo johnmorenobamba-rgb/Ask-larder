@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Larder</title>
+<style>
+/* ============================================================
+   PLACEHOLDER SCREENSHOTS -- read this before presenting.
+   Every element with class "shot-slot" is a stand in for a real
+   Playwright screenshot of the live Coachman's Arms product.
+   Search this file for "shot-slot" to find and replace all 7.
+   Each one is clearly marked on screen (Preserve Red placeholder
+   label) so this deck cannot be mistaken for finished as is.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-weight: 500 700;
+  font-style: normal;
+  src: url({{FONT_SPACEGROTESK}}) format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 400 600;
+  font-style: normal;
+  src: url({{FONT_INTER}}) format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 400;
+  font-style: normal;
+  src: url({{FONT_IBM_400}}) format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 500;
+  font-style: normal;
+  src: url({{FONT_IBM_500}}) format('woff2');
+}
+
+:root {
+  --color-ink: #1F1B16;
+  --color-parchment: #F2E9D8;
+  --color-preserve-red: #B23A2C;
+  --color-saffron: #E8A93B;
+  --color-bay-green: #55603C;
+  --color-clay-brown: #7A5C43;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+html {
+  margin: 0;
+  height: 100%;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  /* proximity, not mandatory: the two scrubbing sections (pain points,
+     station demo) are deliberately tall (300vh/220vh) with only ONE snap
+     point at their start -- mandatory snap tries to resolve to a snap
+     point after every single scroll gesture, which fights any attempt to
+     scroll through the middle of a long section and snaps it straight
+     back to the top (confirmed while testing touch scroll). Proximity
+     still snaps the normal single-viewport panels cleanly, it just doesn't
+     fight scrolling through a section with no nearby snap point to land on. */
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
+}
+body {
+  margin: 0;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; margin: 0; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.panel {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 24px;
+  position: relative;
+}
+.panel-ink { background: var(--color-ink); color: var(--color-parchment); }
+.panel-parchment { background: var(--color-parchment); color: var(--color-ink); }
+
+.panel-inner { width: 100%; max-width: 620px; margin: 0 auto; }
+
+/* GSAP's pin:true restructures the DOM with a spacer element, which fights
+   native CSS scroll-snap (it snaps to the element's original position, not
+   the spacer's). The standard fix for sections that need both a scrubbed
+   animation AND to participate in section snapping: a tall outer wrapper
+   carries the actual scroll-snap-align, and a `position: sticky` inner
+   layer gives the same "stays put while its content plays out" visual,
+   entirely in CSS -- no GSAP pin, no spacer, no conflict. */
+/* Deliberately NOT a scroll-snap-align target: testing showed proximity
+   snapping will pull the scroll position straight back to a tall section's
+   own start even after scrolling partway through it (close enough counts
+   as "near" the snap point), which fights the scrub instead of letting the
+   narrative play out. These long sections are an intentional break from
+   per-stop snapping -- scrolling into and through them is unconstrained;
+   normal snapping resumes at the next single-viewport .panel after. */
+.pin-wrap { position: relative; }
+.pin-sticky { position: sticky; top: 0; scroll-snap-align: none; }
+
+/* ---------- Opening ---------- */
+#opening { gap: 28px; }
+#openingMark { width: 128px; height: 128px; }
+#openingMark .fill { opacity: 0; }
+#openingWordmark {
+  font-size: 2.6rem;
+  text-align: center;
+  color: var(--color-parchment);
+}
+#openingTagline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  text-align: center;
+  color: var(--color-saffron);
+}
+#openingAudience {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  text-align: center;
+  color: rgba(242, 233, 216, 0.65);
+  max-width: 380px;
+}
+#scrollCue {
+  position: absolute;
+  bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: rgba(242, 233, 216, 0.55);
+}
+#scrollCue .mono { font-size: 0.65rem; }
+
+/* ---------- Pain points ---------- */
+#painPoints { height: 300vh; }
+#painPoints .stack { position: relative; width: 100%; max-width: 560px; height: 260px; }
+.pain-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.pain-card .mono { color: var(--color-clay-brown); font-size: 0.72rem; }
+.pain-card h2 { font-size: 1.7rem; line-height: 1.15; }
+.pain-card p { font-family: var(--font-sans); font-size: 1rem; color: rgba(31, 27, 22, 0.72); max-width: 460px; margin: 0 auto; }
+#painPoints .section-kicker { position: absolute; top: 40px; }
+
+/* ---------- How it works ---------- */
+#howItWorks .panel-inner { display: flex; flex-direction: column; gap: 20px; }
+.mechanism-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 4px;
+  border-bottom: 1px solid rgba(122, 92, 67, 0.2);
+}
+.mechanism-row:last-child { border-bottom: none; }
+.mechanism-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(85, 96, 60, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mechanism-text h3 { font-size: 1.05rem; margin-bottom: 4px; }
+.mechanism-text p { font-family: var(--font-sans); font-size: 0.92rem; color: rgba(31, 27, 22, 0.7); }
+
+/* ---------- Proof / screenshots ---------- */
+.shot-panel .panel-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.shot-caption { text-align: center; max-width: 440px; }
+.shot-caption .mono { color: var(--color-clay-brown); font-size: 0.72rem; margin-bottom: 6px; }
+.shot-caption p { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; }
+.shot-frame {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 28px;
+  border: 3px solid var(--color-ink);
+  background: var(--color-parchment);
+  padding: 10px;
+  box-shadow: 0 18px 40px rgba(31, 27, 22, 0.18);
+}
+.shot-slot {
+  aspect-ratio: 9 / 16;
+  width: 100%;
+  border-radius: 18px;
+  border: 2px dashed var(--color-clay-brown);
+  background: rgba(122, 92, 67, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+}
+.shot-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+.shot-slot .mono { font-size: 0.65rem; color: var(--color-preserve-red); }
+.shot-slot .shot-name { font-family: var(--font-sans); font-size: 0.8rem; color: var(--color-clay-brown); }
+
+/* ---------- Station demo ---------- */
+#stationDemo { height: 220vh; }
+#stationDemo .demo-stage {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#qrGraphic { width: 180px; height: 180px; }
+#scanLine {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  background: var(--color-saffron);
+  box-shadow: 0 0 12px var(--color-saffron);
+  border-radius: 2px;
+}
+#hubReveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: stretch;
+}
+.hub-choice {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: var(--color-parchment);
+  text-align: center;
+}
+#stationDemo .demo-caption { margin-top: 32px; text-align: center; max-width: 420px; }
+#stationDemo .demo-caption .mono { color: var(--color-clay-brown); font-size: 0.72rem; margin-bottom: 8px; }
+#stationDemo .demo-caption p { font-family: var(--font-sans); font-size: 0.98rem; color: rgba(31, 27, 22, 0.75); }
+
+/* ---------- Credibility ---------- */
+#credibility p.line1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-align: center;
+  max-width: 460px;
+  color: var(--color-parchment);
+}
+
+/* ---------- Close ---------- */
+#close .panel-inner { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+#close .close-points { display: flex; flex-direction: column; gap: 10px; }
+#close .close-points p { font-family: var(--font-sans); font-size: 0.98rem; color: rgba(31, 27, 22, 0.78); }
+#close .close-tagline { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: var(--color-preserve-red); margin-top: 8px; }
+#close .close-note { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-clay-brown); }
+
+.reveal { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .pain-card, .shot-slot { opacity: 1 !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<section class="panel panel-ink" id="opening">
+  <svg id="openingMark" viewBox="0 0 72 72" role="img" aria-label="Larder">
+    <path class="fill" d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="var(--color-parchment)"/>
+    <path class="trace" d="M12 14a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H30l-12 12V48h-6a6 6 0 0 1-6-6z" fill="none" stroke="var(--color-saffron)" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+  <h1 id="openingWordmark">Larder</h1>
+  <p id="openingTagline">Your SOPs, always on shift.</p>
+  <p id="openingAudience">Built for small independent Australian hospitality venues, 10 to 30 staff.</p>
+  <div id="scrollCue">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="mono">Scroll</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     PAIN POINTS -- pinned, cards reveal one at a time on scroll
+     ============================================================ -->
+<section class="pin-wrap" id="painPoints">
+  <div class="panel panel-parchment pin-sticky">
+    <p class="mono section-kicker">The real problem</p>
+    <div class="stack">
+      <div class="pain-card">
+        <p class="mono">Pain 01</p>
+        <h2>New staff take too long to become useful.</h2>
+        <p>Training is verbal and inconsistent between shifts, so every new hire learns it a little differently.</p>
+      </div>
+      <div class="pain-card">
+        <p class="mono">Pain 02</p>
+        <h2>Senior staff get interrupted constantly.</h2>
+        <p>The person who knows the answer is also the person running the floor.</p>
+      </div>
+      <div class="pain-card">
+        <p class="mono">Pain 03</p>
+        <h2>SOPs live in someone's head, or a messy folder.</h2>
+        <p>Most venues have never written their own procedures down in one place.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     HOW IT WORKS
+     ============================================================ -->
+<section class="panel panel-parchment" id="howItWorks">
+  <div class="panel-inner">
+    <p class="mono reveal" style="color:var(--color-clay-brown); margin-bottom:8px;">How it actually works</p>
+    <div class="mechanism-row reveal">
+      <div class="mechanism-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l3 3v15H6z" stroke="var(--color-bay-green)" stroke-width="1.5" stroke-linejoin="round"/><path d="M15 3v3h3" stroke="var(--color-bay-green)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="mechanism-text">
+        <h3>Built from your own SOPs and photos</h3>
+        <p>Role specific modules built from this venue's own procedures, photos, and short staff interviews, not generic hospitality content.</p>
+      </div>
+    </div>
+    <div class="mechanism-row reveal">
+      <div class="mechanism-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-4 3.5V16.5H6.5a2 2 0 0 1-2-2z" stroke="var(--color-saffron)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="mechanism-text">
+        <h3>Ask Larder, always on</h3>
+        <p>Answers from this venue's approved content only, any time, so nobody has to interrupt a manager mid shift.</p>
+      </div>
+    </div>
+    <div class="mechanism-row reveal">
+      <div class="mechanism-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="10" r="6" stroke="var(--color-preserve-red)" stroke-width="1.5"/><path d="M9 15.5L7.5 21l4.5-2 4.5 2-1.5-5.5" stroke="var(--color-preserve-red)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="mechanism-text">
+        <h3>The owner approves everything</h3>
+        <p>Nothing goes live to staff until it has been reviewed and approved, module by module, by the owner themselves.</p>
+      </div>
+    </div>
+    <div class="mechanism-row reveal">
+      <div class="mechanism-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.5 4.5h11M6.5 19.5h11M7.5 4.5c0 4 3 5.5 4.5 7 1.5-1.5 4.5-3 4.5-7M7.5 19.5c0-4 3-5.5 4.5-7 1.5 1.5 4.5 3 4.5 7" stroke="var(--color-clay-brown)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="mechanism-text">
+        <h3>Certificates tracked automatically</h3>
+        <p>RSA, food safety, first aid, and Working with Children checks tracked with reminders before they lapse, not after an inspector asks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PROOF -- 7 real screenshots (currently placeholders)
+     ============================================================ -->
+<section class="panel panel-parchment shot-panel" id="shot-welcome">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">New hire, day one</p><p>A first screen that's ready before their first shift.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="new-hire-welcome">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">New hire welcome screen</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-module">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">Real training, this venue's own</p><p>Built from this venue's own procedures, not generic content.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="module-completion-stamp">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Module mid completion, with the Stamp</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-asklarder-inscope">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">Ask Larder, in scope</p><p>Answers from approved content only, no manager needed.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="ask-larder-in-scope">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Ask Larder answering a real in scope question</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-asklarder-fallback">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">Ask Larder, the fallback rule</p><p>Anything needing a key, a code, or a login defers straight to a supervisor.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="ask-larder-fallback">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Ask Larder correctly triggering the fallback rule</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-approval">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">The owner approval gate</p><p>Nothing goes live until the owner has reviewed and approved it.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="owner-approval-gate">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Owner reviewing a module awaiting approval</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-certs">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">Certificates, tracked automatically</p><p>RSA and food safety refreshers alongside a real Working with Children hard expiry, side by side.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="certificate-tracking">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Certificate tracking, WWCC vs refresher</span>
+    </div></div>
+  </div>
+</section>
+
+<section class="panel panel-parchment shot-panel" id="shot-dashboard">
+  <div class="panel-inner">
+    <div class="shot-caption"><p class="mono">One dashboard</p><p>Who's finished training, what's expiring, what needs attention.</p></div>
+    <div class="shot-frame"><div class="shot-slot" data-shot="owner-dashboard">
+      <span class="mono">Placeholder, replace with a real screenshot</span>
+      <span class="shot-name">Owner dashboard</span>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     STATION DEMO -- animated QR to hub sequence
+     ============================================================ -->
+<section class="pin-wrap" id="stationDemo">
+  <div class="panel panel-parchment pin-sticky">
+    <div class="demo-stage">
+      <svg id="qrGraphic" viewBox="0 0 100 100" fill="none">
+        <rect x="4" y="4" width="92" height="92" rx="8" stroke="var(--color-ink)" stroke-width="3"/>
+        <rect x="14" y="14" width="22" height="22" rx="3" fill="var(--color-ink)"/>
+        <rect x="64" y="14" width="22" height="22" rx="3" fill="var(--color-ink)"/>
+        <rect x="14" y="64" width="22" height="22" rx="3" fill="var(--color-ink)"/>
+        <rect x="46" y="14" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="46" y="30" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="62" y="46" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="78" y="46" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="46" y="62" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="46" y="78" width="8" height="8" fill="var(--color-ink)"/>
+        <rect x="62" y="78" width="8" height="8" fill="var(--color-ink)"/>
+      </svg>
+      <div id="scanLine"></div>
+      <div id="hubReveal">
+        <div class="hub-choice">Training</div>
+        <div class="hub-choice">FAQs</div>
+        <div class="hub-choice">Troubleshooting</div>
+      </div>
+    </div>
+    <div class="demo-caption">
+      <p class="mono">Every station, its own code</p>
+      <p>Scan the code at the cellar, the pass, or the bar, and get training, FAQs, or troubleshooting for exactly what's in front of you.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CREDIBILITY
+     ============================================================ -->
+<section class="panel panel-ink" id="credibility">
+  <p class="line1 reveal">Built by a working Melbourne chef, not a vendor studying the industry from outside.</p>
+</section>
+
+<!-- ============================================================
+     CLOSE
+     ============================================================ -->
+<section class="panel panel-parchment" id="close">
+  <div class="panel-inner">
+    <div class="close-points">
+      <p>Month to month. No lock in contract.</p>
+      <p>Thirty days written notice, full export of your content and completion records.</p>
+      <p>Pricing and setup, let's talk it through together.</p>
+    </div>
+    <p class="close-tagline">Your SOPs, always on shift.</p>
+    <p class="close-note">Larder</p>
+  </div>
+</section>
+
+<script>{{GSAP_CORE}}</script>
+<script>{{GSAP_SCROLLTRIGGER}}</script>
+<script>{{GSAP_DRAWSVG}}</script>
+<script>{{GSAP_MORPHSVG}}</script>
+<script>{{GSAP_SPLITTEXT}}</script>
+<script>
+(function () {
+  gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin, MorphSVGPlugin, SplitText);
+
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // iOS Safari address bar settle -- keeps scroll position math stable once
+  // the chrome collapses, rather than fighting a moving viewport height.
+  ScrollTrigger.normalizeScroll(true);
+
+  var BOLD_PATH = "M10 14a8 8 0 0 1 8-8h40a8 8 0 0 1 8 8v30a8 8 0 0 1-8 8H31l-14 13V52h-9a8 8 0 0 1-8-8z";
+
+  function buildOpening() {
+    var traceEl = document.querySelector('#openingMark .trace');
+    var fillEl = document.querySelector('#openingMark .fill');
+    var wordmarkEl = document.getElementById('openingWordmark');
+    var taglineEl = document.getElementById('openingTagline');
+    var audienceEl = document.getElementById('openingAudience');
+    var cueEl = document.getElementById('scrollCue');
+
+    gsap.set([taglineEl, audienceEl, cueEl], { opacity: 0, y: 10 });
+    gsap.set(fillEl, { opacity: 0 });
+    gsap.set(traceEl, { drawSVG: '0%' });
+
+    if (reducedMotion) {
+      gsap.set(traceEl, { drawSVG: '100%' });
+      gsap.set(fillEl, { opacity: 0.12 });
+      gsap.set([wordmarkEl, taglineEl, audienceEl, cueEl], { opacity: 1, y: 0 });
+      return;
+    }
+
+    var split = new SplitText(wordmarkEl, { type: 'chars' });
+    gsap.set(split.chars, { opacity: 0, y: 8 });
+    gsap.set(wordmarkEl, { opacity: 1 });
+
+    // One shot, ticker driven reveal -- never scrubbed, so DrawSVG/MorphSVG
+    // render normally (both silently no-op under a scroll scrubbed
+    // timeline, confirmed in this app's own marketing hero; this timeline
+    // plays once on load instead, exactly like the real product's splash).
+    var tl = gsap.timeline({ delay: 0.2 });
+    tl.to(traceEl, { drawSVG: '100%', duration: 0.6, ease: 'power2.out' })
+      .to(fillEl, { opacity: 1, duration: 0.2 }, '<')
+      .to(split.chars, { opacity: 1, y: 0, duration: 0.55, ease: 'back.out(1.9)', stagger: 0.055 }, '+=0.1')
+      .to(traceEl, { morphSVG: BOLD_PATH, strokeWidth: 3, duration: 0.3, ease: 'power2.inOut' }, '+=0.05')
+      .to(fillEl, { opacity: 0.12, duration: 0.3 }, '<')
+      .to(taglineEl, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '+=0.05')
+      .to(audienceEl, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.25')
+      .to(cueEl, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.1')
+      .to(cueEl, { y: 6, duration: 0.9, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+  }
+
+  function buildPainPoints() {
+    var section = document.getElementById('painPoints');
+    var cards = gsap.utils.toArray('.pain-card');
+    if (reducedMotion) { gsap.set(cards, { opacity: 1 }); return; }
+    gsap.set(cards, { opacity: 0, y: 30 });
+    gsap.set(cards[0], { opacity: 1, y: 0 });
+
+    // No pin:true here -- section is a tall .pin-wrap with a CSS
+    // `position: sticky` inner layer instead, so it can also carry a native
+    // scroll-snap-align without GSAP's pin-spacer fighting the snap (see the
+    // .pin-wrap/.pin-sticky CSS comment). end:"bottom bottom" just reads the
+    // wrapper's own real height rather than duplicating it as a magic number.
+    var tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.4,
+      },
+    });
+    for (var i = 0; i < cards.length - 1; i++) {
+      tl.to(cards[i], { opacity: 0, y: -30, duration: 0.4 }, i)
+        .to(cards[i + 1], { opacity: 1, y: 0, duration: 0.4 }, i + 0.15);
+    }
+  }
+
+  function buildReveals(selector, fromVars) {
+    gsap.utils.toArray(selector).forEach(function (el) {
+      if (reducedMotion) { gsap.set(el, { opacity: 1 }); return; }
+      gsap.fromTo(
+        el,
+        Object.assign({ opacity: 0 }, fromVars),
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.65,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 82%', toggleActions: 'play none none reverse' },
+        },
+      );
+    });
+  }
+
+  function buildStationDemo() {
+    var section = document.getElementById('stationDemo');
+    var scanLine = document.getElementById('scanLine');
+    var qrGraphic = document.getElementById('qrGraphic');
+    var hub = document.getElementById('hubReveal');
+    var choices = gsap.utils.toArray('.hub-choice');
+    var caption = document.querySelector('#stationDemo .demo-caption');
+
+    if (reducedMotion) {
+      gsap.set([hub, caption], { opacity: 1 });
+      gsap.set(choices, { opacity: 1 });
+      gsap.set(scanLine, { opacity: 0 });
+      return;
+    }
+
+    gsap.set(scanLine, { top: '4%', opacity: 0 });
+    gsap.set(hub, { opacity: 0, y: 16 });
+    gsap.set(choices, { opacity: 0, y: 12 });
+    gsap.set(caption, { opacity: 0, y: 16 });
+
+    var tl = gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top top', end: 'bottom bottom', scrub: 0.4 },
+    });
+    tl.to(scanLine, { opacity: 1, duration: 0.08 })
+      .to(scanLine, { top: '92%', duration: 0.5, ease: 'none' })
+      .to(scanLine, { opacity: 0, duration: 0.08 })
+      .to(qrGraphic, { opacity: 0.12, duration: 0.25 }, '<-0.08')
+      .to(hub, { opacity: 1, y: 0, duration: 0.35 }, '-=0.05')
+      .to(choices, { opacity: 1, y: 0, duration: 0.3, stagger: 0.15 }, '-=0.1')
+      .to(caption, { opacity: 1, y: 0, duration: 0.4 }, '-=0.1');
+  }
+
+  buildOpening();
+  buildPainPoints();
+  buildReveals('.reveal', { y: 24 });
+  buildReveals('.shot-slot', { y: 20, scale: 0.94 });
+  buildStationDemo();
+})();
+</script>
+</body>
+</html>
