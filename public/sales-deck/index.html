@@ -201,7 +201,6 @@ html.js-ready #painPoints .stack { height: 260px; display: block; }
   text-align: center;
 }
 html.js-ready .pain-card { position: absolute; inset: 0; }
-.pain-card .mono { color: var(--color-clay-brown); font-size: 0.72rem; }
 .pain-card h2 { font-size: 1.7rem; line-height: 1.15; }
 .pain-card p { font-family: var(--font-sans); font-size: 1rem; color: rgba(31, 27, 22, 0.72); max-width: 460px; margin: 0 auto; }
 #painPoints .section-kicker { margin-bottom: 24px; }
@@ -234,7 +233,8 @@ html.js-ready #painPoints .section-kicker { position: absolute; top: 40px; margi
 .shot-panel .panel-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .shot-caption { text-align: center; max-width: 440px; }
 .shot-caption .mono { color: var(--color-clay-brown); font-size: 0.72rem; margin-bottom: 6px; }
-.shot-caption p { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; }
+.shot-caption .headline { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; }
+.shot-caption .why { font-family: var(--font-sans); font-size: 0.92rem; color: rgba(31, 27, 22, 0.7); margin-top: 8px; }
 .shot-frame {
   width: 100%;
   max-width: 320px;
@@ -362,19 +362,16 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
     <p class="mono section-kicker">The real problem</p>
     <div class="stack">
       <div class="pain-card">
-        <p class="mono">Pain 01</p>
         <h2>New staff take too long to become useful.</h2>
-        <p>Training is verbal and inconsistent between shifts, so every new hire learns it a little differently.</p>
+        <p>Training is verbal and inconsistent between shifts, so every new hire learns it a little differently, and it takes weeks before they can be trusted to work a shift without close supervision.</p>
       </div>
       <div class="pain-card">
-        <p class="mono">Pain 02</p>
         <h2>Senior staff get interrupted constantly.</h2>
-        <p>The person who knows the answer is also the person running the floor.</p>
+        <p>The person who knows the answer is also the person running the floor, so every question mid shift is a choice between stopping service or leaving it unanswered.</p>
       </div>
       <div class="pain-card">
-        <p class="mono">Pain 03</p>
         <h2>SOPs live in someone's head, or a messy folder.</h2>
-        <p>Most venues have never written their own procedures down in one place.</p>
+        <p>Most venues have never written their own procedures down in one place, so what a new hire is taught depends entirely on who happens to be training them that day.</p>
       </div>
     </div>
   </div>
@@ -392,7 +389,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
       </div>
       <div class="mechanism-text">
         <h3>Built from your own SOPs and photos</h3>
-        <p>Role specific modules built from this venue's own procedures, photos, and short staff interviews, not generic hospitality content.</p>
+        <p>Role specific modules built from this venue's own procedures, photos, and short staff interviews, not generic hospitality content, so what a new hire reads matches exactly how this kitchen and bar actually run, not something they have to unlearn on their first real shift.</p>
       </div>
     </div>
     <div class="mechanism-row reveal">
@@ -401,7 +398,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
       </div>
       <div class="mechanism-text">
         <h3>Ask Larder, always on</h3>
-        <p>Answers from this venue's approved content only, any time, so nobody has to interrupt a manager mid shift.</p>
+        <p>Answers from this venue's approved content only, any time, so nobody has to interrupt a manager mid shift. The same question stops getting asked in person every week, and the new hire gets a straight answer the moment they need it instead of guessing.</p>
       </div>
     </div>
     <div class="mechanism-row reveal">
@@ -410,7 +407,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
       </div>
       <div class="mechanism-text">
         <h3>The owner approves everything</h3>
-        <p>Nothing goes live to staff until it has been reviewed and approved, module by module, by the owner themselves.</p>
+        <p>Nothing goes live to staff until it has been reviewed and approved, module by module, by the owner themselves. Liability stays with a decision the business actually made, not with content nobody signed off on.</p>
       </div>
     </div>
     <div class="mechanism-row reveal">
@@ -419,7 +416,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
       </div>
       <div class="mechanism-text">
         <h3>Certificates tracked automatically</h3>
-        <p>RSA, food safety, first aid, and Working with Children checks tracked with reminders before they lapse, not after an inspector asks.</p>
+        <p>RSA, food safety, first aid, and Working with Children checks tracked with reminders before they lapse, not after an inspector asks. A cert that's about to expire gets caught with time to renew it, not discovered during an audit.</p>
       </div>
     </div>
   </div>
@@ -430,7 +427,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
      ============================================================ -->
 <section class="panel panel-parchment shot-panel" id="shot-welcome">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">New hire, day one</p><p>A first screen that's ready before their first shift.</p></div>
+    <div class="shot-caption"><p class="mono">New hire, day one</p><p class="headline">A first screen that's ready before their first shift.</p><p class="why">No generic onboarding video to sit through. Real training built from this venue's own procedures is waiting the moment they log in.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="new-hire-welcome">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">New hire welcome screen</span>
@@ -440,7 +437,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-module">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">Real training, this venue's own</p><p>Built from this venue's own procedures, not generic content.</p></div>
+    <div class="shot-caption"><p class="mono">Real training, this venue's own</p><p class="headline">Built from this venue's own procedures, not generic content.</p><p class="why">Every module ends with a real, timestamped completion record, so an owner has actual proof someone was trained, not just a guess that they were told at some point.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="module-completion-stamp">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Module mid completion, with the Stamp</span>
@@ -450,7 +447,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-asklarder-inscope">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">Ask Larder, in scope</p><p>Answers from approved content only, no manager needed.</p></div>
+    <div class="shot-caption"><p class="mono">Ask Larder, in scope</p><p class="headline">Answers from approved content only, no manager needed.</p><p class="why">The exact kind of question that used to mean pulling someone off the floor, answered correctly and instantly, straight from this venue's own procedures.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="ask-larder-in-scope">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Ask Larder answering a real in scope question</span>
@@ -460,7 +457,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-asklarder-fallback">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">Ask Larder, the fallback rule</p><p>Anything needing a key, a code, or a login defers straight to a supervisor.</p></div>
+    <div class="shot-caption"><p class="mono">Ask Larder, the fallback rule</p><p class="headline">Anything needing a key, a code, or a login defers straight to a supervisor.</p><p class="why">This is the one line it will not cross, no matter how the question is phrased or how it's pushed. A safe combination or an alarm code never comes from the chatbot.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="ask-larder-fallback">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Ask Larder correctly triggering the fallback rule</span>
@@ -470,7 +467,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-approval">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">The owner approval gate</p><p>Nothing goes live until the owner has reviewed and approved it.</p></div>
+    <div class="shot-caption"><p class="mono">The owner approval gate</p><p class="headline">Nothing goes live until the owner has reviewed and approved it.</p><p class="why">Liability stays where it belongs, with a decision the owner actually made, not with content sitting unsupervised in front of staff.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="owner-approval-gate">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Owner reviewing a module awaiting approval</span>
@@ -480,7 +477,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-certs">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">Certificates, tracked automatically</p><p>RSA and food safety refreshers alongside a real Working with Children hard expiry, side by side.</p></div>
+    <div class="shot-caption"><p class="mono">Certificates, tracked automatically</p><p class="headline">RSA and food safety refreshers alongside a real Working with Children hard expiry, side by side.</p><p class="why">A WWCC that lapses is a genuine legal deadline. A refresher that's overdue is a recommendation, not a breach. The dashboard tells them apart so an owner knows which is which at a glance.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="certificate-tracking">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Certificate tracking, WWCC vs refresher</span>
@@ -490,7 +487,7 @@ html.js-ready #hubReveal { position: absolute; inset: 0; justify-content: center
 
 <section class="panel panel-parchment shot-panel" id="shot-dashboard">
   <div class="panel-inner">
-    <div class="shot-caption"><p class="mono">One dashboard</p><p>Who's finished training, what's expiring, what needs attention.</p></div>
+    <div class="shot-caption"><p class="mono">One dashboard</p><p class="headline">Who's finished training, what's expiring, what needs attention.</p><p class="why">Everything an owner needs to know about where training and compliance actually stand, in one place, without chasing anyone for an update.</p></div>
     <div class="shot-frame"><div class="shot-slot" data-shot="owner-dashboard">
       <span class="mono">Placeholder, replace with a real screenshot</span>
       <span class="shot-name">Owner dashboard</span>
