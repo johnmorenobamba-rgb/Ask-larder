@@ -1490,6 +1490,35 @@ export type Database = {
           },
         ]
       }
+      suggestion_pass_runs: {
+        Row: {
+          created_at: string
+          id: string
+          run_week: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          run_week: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          run_week?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_pass_runs_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topic_gap_checklists: {
         Row: {
           created_at: string
