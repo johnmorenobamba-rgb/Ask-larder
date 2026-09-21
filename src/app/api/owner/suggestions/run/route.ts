@@ -3,10 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { runSuggestionPass } from "@/lib/suggestions/runSuggestionPass";
 
-// Manual trigger + the automatic best-effort run the suggestion feed page
-// fires on load (see feed page.tsx) -- no scheduled cron job yet. Real,
-// on-demand, not mocked; wiring a scheduled run is a natural follow-up
-// once this is live-verified, not attempted in this pass.
+// Manual, explicit trigger only -- a real Claude call runs per detector
+// (clustering, then per-cluster drafting), so this deliberately isn't
+// fired automatically on every dashboard/feed page load. No scheduled cron
+// job yet either; wiring one (matching the existing cert-nudge pg_cron
+// precedent) is a natural follow-up once this is live-verified, not
+// attempted in this pass -- real, on-demand generation now, not mocked.
 export async function POST() {
   const staff = await getCurrentStaff();
   if (!staff || !staff.venue_id || !staff.isManagerTier) {
