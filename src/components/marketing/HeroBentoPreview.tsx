@@ -1,18 +1,15 @@
 "use client";
 
-import Image from "next/image";
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
 import { ChitMark } from "@/components/shared/ChitMark";
 import { ProgressRing } from "@/components/shared/ProgressRing";
 import { StationGlyph, SegmentedProgress } from "@/components/staff/BentoGrid";
-import { getStationVisuals } from "@/lib/staff/stationVisuals";
 import twoFiresDemo from "@/data/two-fires-demo.json";
-import twoFiresStations from "@/data/two-fires-stations.json";
 
 export type HeroBentoPreviewHandle = {
-  cardEls: [unknown, unknown, unknown, unknown]; // ring / continue / stations / ask-larder, fall order
+  cardEls: [unknown, unknown, unknown, unknown]; // ring / continue / certificates / ask-larder, fall order
 };
 
 const {
@@ -21,36 +18,27 @@ const {
   continueModule,
   continueSectionsTotal,
   continueSectionsDone,
+  certRows,
 } = twoFiresDemo;
-
-const STATION_CYCLE_MS = 2600;
+const frontCert = certRows[0];
 
 /**
  * Reverted to live, scroll-scrubbed GSAP (6 Sep 2026) -- John's call after
  * seeing the baked-Remotion-video version live: back to the original
- * scroll-tied cascade, but keeping the real stations gallery worked in as
- * the 4th tile (replacing Certificates), which is what the video attempt
- * was actually for. See [[project_block_n_hero_splash_copy]] memory for
- * the full back-and-forth -- the Remotion composition
+ * scroll-tied cascade. The 3rd cell was a real Two Fires stations gallery
+ * for a while (replacing Certificates); reverted back to Certificates
+ * 22 Sep 2026 at John's request, to bring the preview back into exact
+ * fidelity with the real staff BentoGrid dashboard (which has never had a
+ * stations tile at all -- stations render as a separate gallery below the
+ * grid, not a bento cell). See [[project_block_n_hero_splash_copy]] memory
+ * for the stations-tile back-and-forth; the Remotion composition
  * (remotion/compositions/HeroTileDrop.tsx) and its render are left in
- * place, just unused by this component now, not deleted.
+ * place, just unused by this component, not deleted.
  *
  * Real components, not redrawn: ProgressRing, SegmentedProgress,
  * StationGlyph (all exported from BentoGrid.tsx), ChitMark. Real Two
- * Fires data: `two-fires-demo.json` (ring/continue) and
- * `two-fires-stations.json` (5 real stations, real photos downloaded to
- * `public/images/stations/` as static files -- the fetch script's own
- * Supabase signed URLs are fine for a one-time Remotion render but
- * expire in days, which would silently break real photos in this
- * long-lived live component).
- *
- * Stations cycles through 3 of the real 5 stations every
- * `STATION_CYCLE_MS` via plain setInterval + React state -- safe here
- * since this runs live in the browser with no rendering-determinism
- * constraint (unlike the Remotion version, which drove the same idea
- * off `useCurrentFrame()` instead). Gives the swapped-in tile some of
- * the same "gallery" feel without needing the full interactive
- * `useCylinderCarousel` drag physics in a small, non-interactive cell.
+ * Fires data throughout: `two-fires-demo.json` (ring/continue/certRows),
+ * the exact same object the real dashboard itself renders from.
  *
  * Each card is a plain outer div (GSAP's cascade tween target, via
  * cardEls) wrapping a real `<ElevatedCell tilt>` as its only child --
@@ -66,25 +54,14 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
   const reducedMotion = usePrefersReducedMotion();
   const ringRef = useRef<HTMLDivElement | null>(null);
   const continueRef = useRef<HTMLDivElement | null>(null);
-  const stationsRef = useRef<HTMLDivElement | null>(null);
+  const certsRef = useRef<HTMLDivElement | null>(null);
   const askLarderRef = useRef<HTMLDivElement | null>(null);
-  const [stationIndex, setStationIndex] = useState(0);
-  const previewStations = twoFiresStations.slice(0, 3);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = window.setInterval(() => {
-      setStationIndex((i) => (i + 1) % previewStations.length);
-    }, STATION_CYCLE_MS);
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- previewStations is a stable slice of a static import, not real per-render state
-  }, [reducedMotion]);
 
   useImperativeHandle(
     forwardedRef,
     () => ({
       get cardEls() {
-        return [ringRef.current, continueRef.current, stationsRef.current, askLarderRef.current] as [
+        return [ringRef.current, continueRef.current, certsRef.current, askLarderRef.current] as [
           unknown,
           unknown,
           unknown,
@@ -96,8 +73,6 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
   );
 
   const cardClass = reducedMotion ? "" : "opacity-0";
-  const station = previewStations[stationIndex];
-  const visuals = getStationVisuals(station.name, stationIndex);
 
   return (
     <div className="grid h-full w-full grid-cols-4 grid-rows-2 gap-[3%] p-[4%]" style={{ transformStyle: "preserve-3d" }} data-hero-bento-preview>
@@ -125,26 +100,18 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
         </ElevatedCell>
       </div>
 
-      {/* Stations -- real Two Fires stations, cycling through 3 of the real 5 */}
-      <div ref={stationsRef} data-hero-card="stations" className={`col-span-1 row-span-1 ${cardClass}`}>
-        <ElevatedCell glowColor="var(--color-preserve-red)" floatDurationS={6.0} floatDelayS={0.6} depth="secondary" className="relative h-full overflow-hidden rounded-md">
-          <div className="relative h-full w-full">
-            {previewStations.map((s, i) => (
-              <div key={s.id} className="absolute inset-0 transition-opacity duration-500" style={{ opacity: i === stationIndex ? 1 : 0 }}>
-                {/* Genuine next/image candidate, unlike the app's other raw <img> spots --
-                    this is a local /public static asset (see two-fires-stations.json), not a
-                    short-lived Supabase signed URL, so none of next/image's caching/remote-
-                    pattern issues apply. */}
-                <Image src={s.photoUrl} alt="" fill sizes="(max-width: 768px) 50vw, 200px" className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
-              </div>
-            ))}
-            <div className="absolute left-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ink/50">
-              <StationGlyph color="var(--color-parchment)" />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 p-1.5">
-              <p className="font-mono text-[4px] uppercase tracking-wide text-parchment/70 sm:text-[5px]">{visuals.department}</p>
-              <p className="truncate font-display text-[6px] leading-tight text-parchment sm:text-[7px]">{station.name}</p>
+      {/* Certificates -- the real cell type, same front-card + status-color
+          border logic as BentoGrid.tsx's own Certificates tile, same real
+          Two Fires cert data (First Aid, expiring in 9d). */}
+      <div ref={certsRef} data-hero-card="certificates" className={`col-span-1 row-span-1 ${cardClass}`}>
+        <ElevatedCell glowColor={frontCert.color} floatDurationS={6.0} floatDelayS={0.6} depth="secondary" className="h-full rounded-md bg-parchment">
+          <div className="flex h-full flex-col justify-center gap-1 px-[8%]">
+            <p className="font-mono text-[4px] uppercase tracking-wide text-clay-brown sm:text-[5px]">Certificates</p>
+            <div className="rounded border px-1 py-0.5" style={{ borderColor: frontCert.color }}>
+              <p className="truncate font-sans text-[5px] text-ink sm:text-[6px]">{frontCert.name}</p>
+              <p className="font-mono text-[4px] sm:text-[5px]" style={{ color: frontCert.color }}>
+                {frontCert.label}
+              </p>
             </div>
           </div>
         </ElevatedCell>
