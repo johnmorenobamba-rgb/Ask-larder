@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { ingestModule } from "@/lib/ai/ingestModule";
+import { checkModulePrePublish } from "@/lib/modules/prePublishChecks";
 
 // The "new version" path for an already-live module -- calls the existing
 // publish_module_version() RPC (security-definer, already checks
@@ -18,6 +19,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ mod
   const changelog = typeof body?.changelog === "string" ? body.changelog : null;
 
   const supabase = await createClient();
+
+  // Same gate approve() uses for a module's first publish -- found missing
+  // here during the suggestion assistant build (21 Sep 2026): an already-
+  // live module shipping a new version never actually passed through
+  // either the unconfirmed-recommendation check or the credential check.
+  // A suggestion approved against a live module goes out exactly this way,
+  // so this closes a real, pre-existing gap this feature would otherwise
+  // have inherited -- not something new invented for suggestions alone.
+  const check = await checkModulePrePublish(supabase, moduleId);
+  if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
+
   const { data, error } = await supabase.rpc("publish_module_version", {
     p_module_id: moduleId,
     p_changelog: changelog,
