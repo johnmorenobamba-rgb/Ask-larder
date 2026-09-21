@@ -37,6 +37,7 @@ export default async function OwnerDashboardPage({
     stations,
     { data: escalationRows, error: escalationRowsError },
     weeklyDigest,
+    { data: suggestionRows, error: suggestionRowsError },
   ] = await Promise.all([
       getNeedsAttention(supabase, venueId),
       supabase.from("modules").select("id").eq("status", "live"),
@@ -62,11 +63,30 @@ export default async function OwnerDashboardPage({
         .eq("is_escalation", true)
         .order("created_at", { ascending: false }),
       getWeeklyDigest(supabase, venueId, sevenDaysAgo.toISOString()),
+      // Suggestion assistant tile -- signal_type order gives near-miss
+      // patterns (a real physical incident) priority over escalation
+      // patterns over repeated gaps for "most notable", tie-broken by
+      // recency. A plain .order() on signal_type would sort alphabetically
+      // (escalation_pattern, near_miss_pattern, repeated_gap), not by real
+      // severity, so this fetches all pending rows and ranks them here.
+      supabase
+        .from("content_suggestions")
+        .select("id, signal_type, headline, created_at")
+        .eq("venue_id", venueId)
+        .eq("status", "pending"),
     ]);
   logQueryError(`[${venueSlug}] dashboard liveModules`, liveModulesError);
   logQueryError(`[${venueSlug}] dashboard staffList`, staffListError);
   logQueryError(`[${venueSlug}] dashboard progress`, progressError);
   logQueryError(`[${venueSlug}] dashboard escalationRows`, escalationRowsError);
+  logQueryError(`[${venueSlug}] dashboard suggestionRows`, suggestionRowsError);
+
+  const SIGNAL_PRIORITY: Record<string, number> = { near_miss_pattern: 0, escalation_pattern: 1, repeated_gap: 2 };
+  const sortedSuggestions = (suggestionRows ?? []).slice().sort((a, b) => {
+    const priorityDiff = (SIGNAL_PRIORITY[a.signal_type] ?? 3) - (SIGNAL_PRIORITY[b.signal_type] ?? 3);
+    if (priorityDiff !== 0) return priorityDiff;
+    return (b.created_at ?? "").localeCompare(a.created_at ?? "");
+  });
 
   const unresolvedEscalations = (escalationRows ?? []).filter((e) => e.escalation_status !== "resolved");
 
@@ -178,6 +198,8 @@ export default async function OwnerDashboardPage({
         weeklyQuestionCount={weeklyDigest.totalQuestions}
         weeklyOutOfScopeCount={weeklyDigest.outOfScope.length}
         weeklyTopQuestion={weeklyDigest.outOfScope[0]?.question ?? weeklyDigest.escalations[0]?.question ?? null}
+        suggestionCount={sortedSuggestions.length}
+        suggestionPreview={sortedSuggestions[0]?.headline ?? null}
       />
     </main>
   );

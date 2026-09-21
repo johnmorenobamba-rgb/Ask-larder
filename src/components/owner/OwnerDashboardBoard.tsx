@@ -421,6 +421,46 @@ function ContactsCell({ href }: { href: string }) {
   );
 }
 
+// Suggestions -- the one tile on this screen meant to read as alive rather
+// than a static status card, in the same spirit as Contacts' distinct
+// fill (Block on the suggestion assistant, 21 Sep 2026). Reuses ChitMark's
+// real continuous idle animation (the traveling-glow trace already built
+// for Ask Larder's own loading state) instead of a static glyph -- an
+// always-on assistant quietly watching venue activity, not another alert
+// tile. Ink fill (matches Ask Larder's own tile language) with a Saffron
+// trace, distinguishing it from Weekly report's plain Ink cell.
+function SuggestionsCell({ count, preview, href }: { count: number; preview: string | null; href: string }) {
+  return (
+    <Link href={href} className="block h-full w-full">
+      <ElevatedCell
+        glowColor="var(--color-saffron)"
+        floatDurationS={6.0}
+        floatDelayS={0.5}
+        depth="secondary"
+        className="flex h-full flex-col justify-between rounded-2xl bg-ink px-4 py-4"
+      >
+        <div className="flex items-center gap-1.5">
+          <ChitMark size={22} fillColor="var(--color-parchment)" traceColor="var(--color-saffron)" />
+          <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Suggestions</p>
+        </div>
+        {count > 0 ? (
+          <div>
+            <p className="font-sans text-sm text-parchment">
+              <span className="font-display text-2xl font-bold">
+                <AnimatedNumber value={count} animate />
+              </span>{" "}
+              open suggestion{count === 1 ? "" : "s"}
+            </p>
+            {preview && <p className="mt-1 truncate font-sans text-sm text-parchment/70">{preview}</p>}
+          </div>
+        ) : (
+          <p className="font-sans text-sm text-parchment/70">Nothing to suggest right now</p>
+        )}
+      </ElevatedCell>
+    </Link>
+  );
+}
+
 // K5's quiet-state collapse: when there are truly no flags AND no
 // unresolved near-misses, one small confident cell replaces both, rather
 // than two mostly-empty cells taking up grid space.
@@ -516,6 +556,8 @@ export function OwnerDashboardBoard({
   weeklyQuestionCount,
   weeklyOutOfScopeCount,
   weeklyTopQuestion,
+  suggestionCount,
+  suggestionPreview,
 }: {
   venueSlug: string;
   flags: FlagItem[];
@@ -528,6 +570,8 @@ export function OwnerDashboardBoard({
   weeklyQuestionCount: number;
   weeklyOutOfScopeCount: number;
   weeklyTopQuestion: string | null;
+  suggestionCount: number;
+  suggestionPreview: string | null;
 }) {
   const showQuietState = flags.length === 0 && nearMissCount === 0;
   const isGenuinelyNewVenue = staff.length === 0;
@@ -588,6 +632,10 @@ export function OwnerDashboardBoard({
 
         <div className="col-span-4 sm:col-span-1">
           <ContactsCell href={`/${venueSlug}/owner/contacts`} />
+        </div>
+
+        <div className="col-span-4 sm:col-span-1">
+          <SuggestionsCell count={suggestionCount} preview={suggestionPreview} href={`/${venueSlug}/owner/suggestions`} />
         </div>
 
         <div className="col-span-4 sm:col-span-2">

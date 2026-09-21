@@ -148,6 +148,7 @@ export function BentoGrid({
   fallbackCount,
   activityPhotoUrl,
   stations,
+  suggestions,
   remotionFrame,
 }: {
   venueSlug: string;
@@ -166,6 +167,10 @@ export function BentoGrid({
   fallbackCount: number;
   activityPhotoUrl: string;
   stations: { id: string; name: string; qrCodeSlug: string; qrDataUrl: string; photoUrl: string }[];
+  /** Manager-tier only (Head Chef/Sous Chef/Manager/2IC) -- the page never
+   * fetches suggestion data for a frontline account, so undefined here
+   * means "don't render the tile at all", not "zero suggestions". */
+  suggestions?: { count: number; preview: string | null };
   /** Block N3 only -- drives per-cell entrance from a Remotion frame instead of the CSS keyframe. Leave undefined in the live app. */
   remotionFrame?: number;
 }) {
@@ -412,6 +417,43 @@ export function BentoGrid({
             </ElevatedCell>
           </a>
         </div>
+
+        {/* Suggestions -- manager-tier only (Head Chef/Sous Chef/Manager/
+            2IC), same tile as the owner dashboard's own, reusing ChitMark's
+            real continuous idle trace so it reads as an always-on assistant
+            rather than another status card. Absent entirely for frontline
+            staff, not just hidden -- the page never fetches this data for
+            them. */}
+        {suggestions && (
+          <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 460)}>
+            <a href={`/${venueSlug}/owner/suggestions`} className="block h-full">
+              <ElevatedCell
+                glowColor="var(--color-saffron)"
+                floatDurationS={6.0}
+                floatDelayS={0.5}
+                depth="secondary"
+                tilt={false}
+                className="flex h-full flex-col justify-between rounded-2xl bg-ink px-4 py-4"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ChitMark size={22} fillColor="var(--color-parchment)" traceColor="var(--color-saffron)" />
+                  <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Suggestions</p>
+                </div>
+                {suggestions.count > 0 ? (
+                  <div>
+                    <p className="font-sans text-sm text-parchment">
+                      <span className="font-display text-2xl font-bold">{suggestions.count}</span> open suggestion
+                      {suggestions.count === 1 ? "" : "s"}
+                    </p>
+                    {suggestions.preview && <p className="mt-1 truncate font-sans text-sm text-parchment/70">{suggestions.preview}</p>}
+                  </div>
+                ) : (
+                  <p className="font-sans text-sm text-parchment/70">Nothing to suggest right now</p>
+                )}
+              </ElevatedCell>
+            </a>
+          </div>
+        )}
 
         {/* My Ask Larder activity — Bento variety pass. Personal, not the
             owner's venue-wide escalations digest: how many of THIS staff

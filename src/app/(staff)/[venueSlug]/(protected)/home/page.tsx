@@ -50,6 +50,7 @@ export default async function StaffHomePage({
     { data: certs, error: certsError },
     stationsWithQr,
     { count: fallbackCount, error: fallbackCountError },
+    suggestionRows,
   ] = await Promise.all([
     supabase.from("venues").select("name, cert_nudge_cadence").eq("id", staff.venue_id!).single(),
     supabase
@@ -76,6 +77,12 @@ export default async function StaffHomePage({
       .eq("role", "assistant")
       .eq("is_escalation", true)
       .gte("created_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    // Suggestions tile -- manager-tier only (Head Chef/Sous Chef/Manager/
+    // 2IC). Never fetched for a frontline account, not just hidden client
+    // side, matching how this app treats every other owner-only surface.
+    staff.isManagerTier
+      ? supabase.from("content_suggestions").select("id, signal_type, headline, created_at").eq("venue_id", staff.venue_id!).eq("status", "pending")
+      : Promise.resolve({ data: null, error: null }),
   ]);
   logQueryError(`[${venueSlug}] home venue`, venueError);
   logQueryError(`[${venueSlug}] home modules`, modulesError);
@@ -194,6 +201,18 @@ export default async function StaffHomePage({
   const hour = now.getHours();
   const timeGreeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
 
+  // Same "most notable" ranking as the owner dashboard: near-miss patterns
+  // (a real physical incident) before escalation patterns before repeated
+  // gaps, tie-broken by recency.
+  const SIGNAL_PRIORITY: Record<string, number> = { near_miss_pattern: 0, escalation_pattern: 1, repeated_gap: 2 };
+  const sortedSuggestions = (suggestionRows.data ?? [])
+    .slice()
+    .sort((a, b) => {
+      const priorityDiff = (SIGNAL_PRIORITY[a.signal_type] ?? 3) - (SIGNAL_PRIORITY[b.signal_type] ?? 3);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (b.created_at ?? "").localeCompare(a.created_at ?? "");
+    });
+
   return (
     <BentoGrid
       venueSlug={venueSlug}
@@ -212,6 +231,7 @@ export default async function StaffHomePage({
       fallbackCount={fallbackCount ?? 0}
       activityPhotoUrl={activityPhotoUrl}
       stations={stationsWithQr}
+      suggestions={staff.isManagerTier ? { count: sortedSuggestions.length, preview: sortedSuggestions[0]?.headline ?? null } : undefined}
     />
   );
 }
