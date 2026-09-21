@@ -15,8 +15,16 @@
 // PATTERN worth a human decision, not a confirmed leak -- it never blocks
 // storage, only blocks an UNRESTRICTED module from going live while the
 // pattern is present.
+// "keypad code"/"lock code" added 21 Sep 2026 during the suggestion
+// assistant's Part 4 testing: a direct unit test of this regex against
+// "the walk-in fridge keypad code is 8812" (real hospitality phrasing,
+// the exact way staff naturally describe a cold-storage door keypad)
+// came back false -- neither phrase was in the original trigger list.
+// The suggestion pipeline reads raw staff free text (near-miss reports,
+// escalations) into a model prompt, so this gate is now on that path too,
+// not just the original safe/alarm incident it was built for.
 const CREDENTIAL_VALUE_RE =
-  /\b(combination|alarm code|access code|safe code|door code|gate code|security code|passcode|password|credentials?|login|pin)\b\s*(?:is|:|=)\s*["']?[\w-]{2,}/i;
+  /\b(combination|alarm code|access code|safe code|door code|gate code|keypad code|lock code|security code|passcode|password|credentials?|login|pin)\b\s*(?:is|:|=)\s*["']?[\w-]{2,}/i;
 
 export function moduleContentReferencesCredential(sections: { content: string | null }[]): boolean {
   return sections.some((s) => !!s.content && CREDENTIAL_VALUE_RE.test(s.content));
