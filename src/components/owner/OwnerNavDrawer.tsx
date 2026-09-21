@@ -19,6 +19,7 @@ const SECTIONS = [
   { href: "stations", label: "Stations" },
   { href: "photo-library", label: "Photos" },
   { href: "contacts", label: "Contacts" },
+  { href: "suggestions", label: "Suggestions" },
   { href: "settings", label: "Settings" },
 ];
 
