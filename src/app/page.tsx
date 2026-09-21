@@ -5,6 +5,7 @@ import { ExplainerVideoSection } from "@/components/marketing/ExplainerVideoSect
 import { ProblemSolutionSection } from "@/components/marketing/ProblemSolutionSection";
 import { ComplianceSection } from "@/components/marketing/ComplianceSection";
 import { HowItWorksSection } from "@/components/marketing/HowItWorksSection";
+import { SuggestionAssistantSection } from "@/components/marketing/SuggestionAssistantSection";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 
 // Block N1/N2 — replaces the "under construction" placeholder at the bare
@@ -45,6 +46,7 @@ export default function Home() {
       <ProblemSolutionSection />
       <ComplianceSection />
       <HowItWorksSection />
+      <SuggestionAssistantSection />
 
       <div id="cta" className="border-t border-ink/10 bg-parchment px-6 py-16 text-center sm:px-10 md:px-16">
         <p className="font-display text-2xl font-bold text-ink">Want to see it on your own venue?</p>
