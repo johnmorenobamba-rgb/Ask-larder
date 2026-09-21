@@ -44,11 +44,33 @@ export default async function OwnerModulesPage({
           .order("section_order")
       : { data: [], error: null };
   logQueryError(`[${venueSlug}] owner modules pendingSections`, pendingSectionsError);
+
+  // Found during the suggestion assistant's Part 4 testing (21 Sep 2026):
+  // approving a suggestion against an ALREADY-LIVE module inserts an
+  // ai_recommended_pending section, but this page only ever showed the
+  // review block for status === 'pending_approval' modules -- a live
+  // module's new pending section had no confirm UI anywhere, so
+  // publish-version's "confirm all suggested content first" block had no
+  // way to ever be resolved. Fetched separately (not folded into the query
+  // above) because a live module should only surface its NEW pending
+  // section here, not its whole existing live content again.
+  const liveModuleIds = (modules ?? []).filter((m) => m.status === "live").map((m) => m.id);
+  const { data: liveModulePendingSections, error: liveModulePendingSectionsError } =
+    liveModuleIds.length > 0
+      ? await supabase
+          .from("module_sections")
+          .select("id, module_id, section_order, content, provenance, citation")
+          .in("module_id", liveModuleIds)
+          .eq("provenance", "ai_recommended_pending")
+          .order("section_order")
+      : { data: [], error: null };
+  logQueryError(`[${venueSlug}] owner modules liveModulePendingSections`, liveModulePendingSectionsError);
+
   const sectionsByModule = new Map<
     string,
     { id: string; section_order: number; content: string | null; provenance: string; citation: string | null }[]
   >();
-  for (const s of pendingSections ?? []) {
+  for (const s of [...(pendingSections ?? []), ...(liveModulePendingSections ?? [])]) {
     const list = sectionsByModule.get(s.module_id!) ?? [];
     list.push(s);
     sectionsByModule.set(s.module_id!, list);
@@ -86,10 +108,10 @@ export default async function OwnerModulesPage({
                   blockedReason={hasPendingRecommendation(m.id) ? "Confirm Larder's suggested content below before approving." : null}
                 />
               </div>
-              {m.status === "pending_approval" && (
+              {(m.status === "pending_approval" || hasPendingRecommendation(m.id)) && (
                 <div className="mt-4 space-y-4 rounded-2xl border-2 border-clay-brown/20 bg-parchment/60 p-4">
                   <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">
-                    What you&apos;re approving
+                    {m.status === "pending_approval" ? "What you're approving" : "New content awaiting confirmation"}
                   </p>
                   {(sectionsByModule.get(m.id) ?? []).map((s) => (
                     <div key={s.id} className="space-y-2">
