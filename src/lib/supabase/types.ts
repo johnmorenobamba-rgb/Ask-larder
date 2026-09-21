@@ -288,6 +288,82 @@ export type Database = {
           },
         ]
       }
+      content_suggestions: {
+        Row: {
+          blocked_reason: string | null
+          created_at: string
+          dismissed_reason: string | null
+          evidence: Json
+          headline: string
+          id: string
+          proposed_content: string | null
+          proposed_topic_key: string | null
+          reasoning: string
+          resolved_at: string | null
+          resolved_by: string | null
+          signal_type: string
+          status: string
+          target_module_id: string | null
+          venue_id: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          created_at?: string
+          dismissed_reason?: string | null
+          evidence: Json
+          headline: string
+          id?: string
+          proposed_content?: string | null
+          proposed_topic_key?: string | null
+          reasoning: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          signal_type: string
+          status?: string
+          target_module_id?: string | null
+          venue_id: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          created_at?: string
+          dismissed_reason?: string | null
+          evidence?: Json
+          headline?: string
+          id?: string
+          proposed_content?: string | null
+          proposed_topic_key?: string | null
+          reasoning?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          signal_type?: string
+          status?: string
+          target_module_id?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_suggestions_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_suggestions_target_module_id_fkey"
+            columns: ["target_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_suggestions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       esignatures: {
         Row: {
           device_info: string | null
@@ -1706,6 +1782,7 @@ export type Database = {
         Row: {
           branding: Json | null
           cert_nudge_cadence: number[] | null
+          content_suggestion_thresholds: Json | null
           created_at: string | null
           created_by_specialist_id: string | null
           id: string
@@ -1718,6 +1795,7 @@ export type Database = {
         Insert: {
           branding?: Json | null
           cert_nudge_cadence?: number[] | null
+          content_suggestion_thresholds?: Json | null
           created_at?: string | null
           created_by_specialist_id?: string | null
           id?: string
@@ -1730,6 +1808,7 @@ export type Database = {
         Update: {
           branding?: Json | null
           cert_nudge_cadence?: number[] | null
+          content_suggestion_thresholds?: Json | null
           created_at?: string | null
           created_by_specialist_id?: string | null
           id?: string
