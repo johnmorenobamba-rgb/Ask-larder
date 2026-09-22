@@ -41,24 +41,26 @@ const PHRASE_TRAVEL_PX = 32;
 const SPLASH_START = 0.2;
 const SPLASH_HANDOFF_CROSSFADE = 0.3;
 
-// Cascade: 6 real OWNER dashboard cell types fall from scattered/elevated
-// positions into their real grid layout, in the array's own authored order
-// -- needs-attention and staff-completion (the two hero cells, land first,
+// Cascade: 7 real OWNER dashboard sections fall from scattered/elevated
+// positions into their real layout, in the array's own authored order --
+// needs-attention and staff-completion (the two hero cells, land first,
 // anchor the composition) -> escalations -> contacts -> suggestions (the
-// real 3-cell row) -> weekly-report (lands last, the standing 2-col tile)
-// -- GSAP's plain numeric `stagger` over that order IS the fall order, no
-// grid-aware stagger config needed. Rebuilt 22 Sep 2026 (2nd pass, same
-// day) from a 4-card staff-dashboard preview to this 6-card owner-dashboard
-// replica -- see HeroBentoPreview.tsx's own doc comment for the full story.
+// real 3-cell row) -> weekly-report (the standing 2-col tile) -> stations
+// (the real gallery strip below the grid, lands last) -- GSAP's plain
+// numeric `stagger` over that order IS the fall order, no grid-aware
+// stagger config needed. Extended 22 Sep 2026 (3rd pass, same day) from 6
+// tile cards to include the Stations gallery as a 7th real section -- see
+// HeroBentoPreview.tsx's own doc comment for the full story.
 const CARD_FALL_DURATION = 0.5;
-const CARD_STAGGER = 0.075;
+const CARD_STAGGER = 0.065;
 const CARD_SCATTER: { x: number; y: number; rotate: number; scale: number }[] = [
   { x: -6, y: -70, rotate: -8, scale: 0.92 }, // needs-attention (hero cell)
   { x: 16, y: -65, rotate: 10, scale: 0.92 }, // staff-completion (hero cell)
   { x: -14, y: -55, rotate: -12, scale: 0.9 }, // escalations
   { x: 0, y: -60, rotate: 6, scale: 0.9 }, // contacts
   { x: 14, y: -58, rotate: 9, scale: 0.9 }, // suggestions
-  { x: -4, y: -50, rotate: -5, scale: 0.9 }, // weekly-report (lands last)
+  { x: -4, y: -50, rotate: -5, scale: 0.9 }, // weekly-report
+  { x: 6, y: -46, rotate: 4, scale: 0.9 }, // stations (lands last)
 ];
 
 export type HeroTimelineRefs = {
@@ -73,7 +75,7 @@ export type HeroTimelineRefs = {
     rawGroupEl: unknown;
     idleGroupEl: unknown;
   };
-  cardEls: [unknown, unknown, unknown, unknown, unknown, unknown]; // needs-attention / staff-completion / escalations / contacts / suggestions / weekly-report
+  cardEls: [unknown, unknown, unknown, unknown, unknown, unknown, unknown]; // needs-attention / staff-completion / escalations / contacts / suggestions / weekly-report / stations
 };
 
 export type HeroTimelineOptions = {

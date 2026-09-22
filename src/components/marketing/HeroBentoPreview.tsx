@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
 import { ChitMark } from "@/components/shared/ChitMark";
 import { CertGlyph, EscalationGlyph, ReportGlyph, PhoneGlyph } from "@/components/owner/OwnerDashboardBoard";
 import { CompletionRing } from "@/components/owner/StaffCompletionList";
+import { getStationVisuals } from "@/lib/staff/stationVisuals";
 import twoFiresDemo from "@/data/two-fires-demo.json";
+import twoFiresStations from "@/data/two-fires-stations.json";
 
 export type HeroBentoPreviewHandle = {
-  // needs-attention / staff-completion / escalations / contacts / suggestions / weekly-report, fall order
-  cardEls: [unknown, unknown, unknown, unknown, unknown, unknown];
+  // needs-attention / staff-completion / escalations / contacts / suggestions / weekly-report / stations, fall order
+  cardEls: [unknown, unknown, unknown, unknown, unknown, unknown, unknown];
 };
 
 const { ownerDashboard } = twoFiresDemo;
@@ -20,6 +23,17 @@ const TIER_COLOR: Record<string, string> = {
   brown: "var(--color-clay-brown)",
 };
 const needsAttentionColor = TIER_COLOR[ownerDashboard.needsAttention.tier] ?? "var(--color-saffron)";
+// Pizza Station is the one shown active/expanded in the real live capture
+// this whole preview was rebuilt from (22 Sep 2026) -- reordered so it's
+// first, matching what was actually on screen, not the venue's underlying
+// row order (which the real gallery's own default-active-first-item logic
+// doesn't otherwise guarantee lines up with any particular station).
+const GALLERY_STATIONS = [
+  twoFiresStations[1], // Pizza Station -- active
+  twoFiresStations[0], // Fryer Station
+  twoFiresStations[2], // Bar
+  twoFiresStations[3], // Cellar
+];
 
 /**
  * Reverted to live, scroll-scrubbed GSAP (6 Sep 2026) -- John's call after
@@ -41,6 +55,17 @@ const needsAttentionColor = TIER_COLOR[ownerDashboard.needsAttention.tier] ?? "v
  * way the real dashboard would, not stay frozen on whatever was true the
  * day this was built.
  *
+ * A 7th real section, added the same day at John's follow-up request: the
+ * Stations gallery (StationsGallery.tsx), which the real dashboard renders
+ * as its own section below the tile grid, not a grid cell -- reproduced
+ * here the same way (a flex column: the 4x4 tile grid, then this strip
+ * underneath), not crammed into the grid. Real Two Fires station photos
+ * (`two-fires-stations.json`, already downloaded to `public/images/stations/`
+ * for this exact reuse), the real `getStationVisuals` department/number
+ * inference, and the real active/inactive card treatment (wide with full
+ * detail vs. narrow with just a rotated name) -- Pizza Station leads
+ * because that's what the live capture actually showed active.
+ *
  * Each card is a plain outer div (GSAP's cascade tween target, via
  * cardEls) wrapping a real `<ElevatedCell tilt>` as its only child --
  * two different systems each want to own `transform` on whatever node
@@ -59,6 +84,7 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const weeklyReportRef = useRef<HTMLDivElement | null>(null);
+  const stationsRef = useRef<HTMLDivElement | null>(null);
 
   useImperativeHandle(
     forwardedRef,
@@ -71,7 +97,8 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
           contactsRef.current,
           suggestionsRef.current,
           weeklyReportRef.current,
-        ] as [unknown, unknown, unknown, unknown, unknown, unknown];
+          stationsRef.current,
+        ] as [unknown, unknown, unknown, unknown, unknown, unknown, unknown];
       },
     }),
     [],
@@ -80,7 +107,8 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
   const cardClass = reducedMotion ? "" : "opacity-0";
 
   return (
-    <div className="grid h-full w-full grid-cols-4 grid-rows-4 gap-[3%] p-[4%]" style={{ transformStyle: "preserve-3d" }} data-hero-bento-preview>
+    <div className="flex h-full w-full flex-col gap-[3%] p-[4%]" style={{ transformStyle: "preserve-3d" }} data-hero-bento-preview>
+    <div className="grid flex-[4] grid-cols-4 grid-rows-4 gap-[3%]">
       {/* Needs attention -- the real hero cell, same tier-colored glow/badge logic */}
       <div ref={needsAttentionRef} data-hero-card="needs-attention" className={`col-span-2 row-span-2 ${cardClass}`}>
         <ElevatedCell glowColor={needsAttentionColor} floatDurationS={5.6} floatDelayS={0} depth="hero" className="h-full rounded-md bg-parchment">
@@ -175,6 +203,49 @@ export const HeroBentoPreview = forwardRef<HeroBentoPreviewHandle, object>(funct
             <p className="font-sans text-[4px] text-parchment/70 sm:text-[5px]">Everything asked was covered</p>
           </div>
         </ElevatedCell>
+      </div>
+    </div>
+
+      {/* Stations -- a real separate section below the grid (not a grid
+          cell), matching StationsGallery.tsx exactly: a mono label, then a
+          row of cards, one active/wide (full photo + number/department +
+          name + "Open station"), the rest narrow (photo + rotated name
+          only). Real Two Fires photos, real getStationVisuals inference. */}
+      <div ref={stationsRef} data-hero-card="stations" className={`flex-[1.4] ${cardClass}`}>
+        <p className="mb-[3%] font-mono text-[4px] uppercase tracking-wide text-clay-brown sm:text-[5px]">Stations</p>
+        <div className="flex h-[85%] gap-[2%]">
+          {GALLERY_STATIONS.map((station, i) => {
+            const realIndex = twoFiresStations.findIndex((s) => s.id === station.id);
+            const visuals = getStationVisuals(station.name, realIndex);
+            const active = i === 0;
+            return (
+              <div
+                key={station.id}
+                className={`relative overflow-hidden rounded-md ${active ? "flex-[4]" : "flex-1"}`}
+              >
+                <Image src={station.photoUrl} alt="" fill sizes="200px" className="object-cover" loading="eager" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent" style={{ opacity: active ? 1 : 0.55 }} />
+                {active ? (
+                  <div className="absolute inset-x-0 bottom-0 p-[6%]">
+                    <p className="font-mono text-[3.5px] uppercase tracking-wide text-saffron sm:text-[4px]">
+                      {visuals.number} &middot; {visuals.department}
+                    </p>
+                    <p className="truncate font-display text-[6px] leading-tight text-parchment sm:text-[7px]">{station.name}</p>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center pb-[8%]">
+                    <span
+                      className="whitespace-nowrap font-mono text-[3.5px] uppercase tracking-wide text-parchment/90 sm:text-[4px]"
+                      style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                    >
+                      {station.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
