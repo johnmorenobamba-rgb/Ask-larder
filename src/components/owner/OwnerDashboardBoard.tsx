@@ -33,8 +33,11 @@ const TIER_COLOR: Record<FlagTier, string> = {
 
 // Custom line-icon glyphs, matching the nav drawer / bento cell icon
 // language (24x24 viewBox, ~1.5 stroke weight) -- no stock icon library,
-// per the Branding Kit's standing rule.
-function CertGlyph({ color }: { color: string }) {
+// per the Branding Kit's standing rule. Exported -- the marketing hero's
+// tablet preview reuses these exact glyphs for its own real owner-dashboard
+// tile rendering, not redrawn copies (same convention as StationGlyph/
+// SegmentedProgress's export from BentoGrid.tsx).
+export function CertGlyph({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="10" r="6" stroke={color} strokeWidth="1.5" />
@@ -64,7 +67,7 @@ function HazardGlyph({ color }: { color: string }) {
   );
 }
 
-function EscalationGlyph({ color }: { color: string }) {
+export function EscalationGlyph({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M4 5h16v11H9l-4 4v-4H4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
@@ -77,7 +80,7 @@ function EscalationGlyph({ color }: { color: string }) {
 // Weekly report glyph -- a simple bar chart, distinct from the escalation
 // speech-bubble language since this cell is a standing insight surface, not
 // an alert.
-function ReportGlyph({ color }: { color: string }) {
+export function ReportGlyph({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <line x1="5" y1="19" x2="5" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
@@ -89,7 +92,7 @@ function ReportGlyph({ color }: { color: string }) {
 
 // Contacts glyph -- a phone handset, distinct from every other tile's
 // document/hazard/chart vocabulary here.
-function PhoneGlyph({ color }: { color: string }) {
+export function PhoneGlyph({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path

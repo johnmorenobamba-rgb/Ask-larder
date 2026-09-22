@@ -42,6 +42,15 @@
   },
   "fallbackCount": 6,
   "activityPhotoUrl": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=480&fit=crop",
+  "ownerDashboard": {
+    "needsAttention": { "tier": "saffron", "primary": "Tomas Reyes's First Aid refresher recommended", "extraCount": 2 },
+    "staffCompletionCount": 2,
+    "staffCompletionFraction": 0.11,
+    "escalationCount": 10,
+    "suggestionCount": 0,
+    "weeklyQuestionCount": 1,
+    "weeklyOutOfScopeCount": 0
+  },
   "shiftContext": {
     "dateLabel": "Saturday 5 September",
     "hasAnyWindows": true,
