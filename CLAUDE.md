@@ -41,9 +41,9 @@ Full SQL schema and RLS policy patterns are in Tech Bible §15 — use that as t
 
 **Palette:** Ink `#1F1B16` · Parchment `#F2E9D8` · Preserve Red `#B23A2C` · Saffron `#E8A93B` · Bay Green `#55603C` · Clay Brown `#7A5C43`. Preserve Red and Saffron carry the brand's "bold & energetic" personality — used deliberately, not everywhere. Ink/Parchment do the legibility work.
 
-**Type:** Fraunces (display/headlines, bold weight) · Inter (body — chosen for legibility for a casual/ESL kitchen-iPad audience) · IBM Plex Mono (utility — labels, dates, the Stamp element).
+**Type:** Space Grotesk (display/headlines, bold weight — replaced Fraunces per Block L2, Decision Log 31 Aug 2026) · Inter (body — chosen for legibility for a casual/ESL kitchen-iPad audience) · IBM Plex Mono (utility — labels, dates, the Stamp element).
 
-**Logo:** icon + wordmark. Icon is a speech bubble shaped like a kitchen order chit (ties to "ask a question" + the product's own chit/pass vocabulary) — a jar/pantry icon was tried first and rejected for not connecting to onboarding/training. Wordmark: "Larder" in Fraunces bold.
+**Logo:** icon + wordmark. Icon is a speech bubble shaped like a kitchen order chit (ties to "ask a question" + the product's own chit/pass vocabulary) — a jar/pantry icon was tried first and rejected for not connecting to onboarding/training. Wordmark: "Larder" in Space Grotesk bold.
 
 **Signature element — "The Stamp":** a circular maker's-mark badge (styled like a preserve-jar lid stamp), used specifically at module completion, a passed quiz, certificate verification, and e-signature confirmation. This is a real UI component, not a one-off graphic — build it as a reusable component and use it ONLY at these four trust moments, not as decoration elsewhere.
 
