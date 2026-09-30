@@ -230,9 +230,16 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await page.waitForURL(/\/content-intake$/);
 
-    // --- Page 12: SOP intake hub (no upload — manual-entry-equivalent is simply moving on) ---
-    await page.getByRole("button", { name: "Continue" }).click();
-    await page.waitForURL(/\/certificate-types$/);
+    // --- Page 12: SOP intake hub ---
+    // Since the Block U/V interview work, a fresh venue lands on a real
+    // question interview (the "Continue" button only exists once every topic
+    // has been generated), so this spec no longer clicks through it. It
+    // asserts the page renders for a fresh venue (this makes the real
+    // determineSopTopics AI call, so it needs a valid ANTHROPIC_API_KEY) and
+    // then moves on by direct URL, which Q2 §1 guarantees works for any step.
+    await expect(page.getByRole("heading", { name: "SOPs & training content" })).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText("Something went wrong", { exact: false })).toHaveCount(0);
+    await page.goto(`/${SLUG}/owner/onboarding/certificate-types`);
 
     // --- Page 13: certificate types ---
     await page.getByRole("button", { name: /Add Working with Children Check/ }).click();
@@ -242,8 +249,14 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.waitForURL(/\/review$/);
 
     // --- Page 14: review & activate ---
-    await expect(page.getByText("Onboarding Wizard Smoke Venue")).toBeVisible();
-    await page.getByRole("button", { name: "Mark onboarding complete" }).click();
+    await expect(page.getByRole("heading", { name: "Onboarding Wizard Smoke Venue" }).first()).toBeVisible();
+    // Inside an ElevatedCell (continuous float animation): Playwright never sees
+    // a stable box, so use a native DOM click (documented project gotcha, same
+    // helper as back-button-audit.spec.ts).
+    await page.evaluate(() => {
+      const el = Array.from(document.querySelectorAll("button")).find((e) => e.textContent?.trim() === "Mark onboarding complete") as HTMLElement;
+      el.click();
+    });
     await expect(page.getByText("Onboarding marked complete.")).toBeVisible({ timeout: 10_000 });
 
     const { data: session } = await admin.from("wizard_sessions").select("status").eq("venue_id", venueId!).maybeSingle();
