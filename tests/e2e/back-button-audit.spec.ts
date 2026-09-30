@@ -151,6 +151,27 @@ test.describe.serial("back-button audit: onboarding wizard (15 pages)", () => {
       await expectHealthyPage(page);
     });
   }
+
+  // The loop above derives its expectation from getPreviousStep itself, so
+  // it can't catch that function and getNextStep drifting apart. Hardcoded
+  // expectations for the Compliance Forms 0a step and its neighbours.
+  test("wizard step: compliance-setup sits between equipment and promotions", async ({ page }) => {
+    await loginOwner(page);
+    const expectBack = async (from: string, to: string) => {
+      await page.goto(`/${SLUG}/owner/onboarding/${from}`);
+      await expectHealthyPage(page);
+      const backLink = page.getByRole("link", { name: "← Back" });
+      await expect(backLink).toHaveCount(1);
+      expect(await backLink.getAttribute("href")).toBe(`/${SLUG}/owner/onboarding/${to}`);
+    };
+    await expectBack("compliance-setup", "equipment");
+    await expectBack("promotions", "compliance-setup");
+    // Unlicensed venues skip promotions: contacts goes back to compliance-setup.
+    const admin = adminClient();
+    await admin.from("wizard_sessions").upsert({ venue_id: venueId!, venue_type_flags: { licensed: false } }, { onConflict: "venue_id" });
+    await expectBack("contacts", "compliance-setup");
+    await admin.from("wizard_sessions").upsert({ venue_id: venueId!, venue_type_flags: {} }, { onConflict: "venue_id" });
+  });
 });
 
 // ============================================================================

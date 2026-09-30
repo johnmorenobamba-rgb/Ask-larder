@@ -1618,6 +1618,165 @@ export type Database = {
           },
         ]
       }
+      compliance_form_submissions: {
+        Row: {
+          corrective_action: string | null
+          corrects_submission_id: string | null
+          device_stamp: string | null
+          form_id: string
+          id: string
+          out_of_range: boolean
+          payload: Json
+          submitted_at: string
+          submitted_by: string
+          submitted_by_name: string
+          venue_id: string
+          visible_to_roles: string[]
+        }
+        Insert: {
+          corrective_action?: string | null
+          corrects_submission_id?: string | null
+          device_stamp?: string | null
+          form_id: string
+          id?: string
+          out_of_range?: boolean
+          payload?: Json
+          submitted_at?: string
+          submitted_by: string
+          submitted_by_name?: string
+          venue_id: string
+          visible_to_roles?: string[]
+        }
+        Update: {
+          corrective_action?: string | null
+          corrects_submission_id?: string | null
+          device_stamp?: string | null
+          form_id?: string
+          id?: string
+          out_of_range?: boolean
+          payload?: Json
+          submitted_at?: string
+          submitted_by?: string
+          submitted_by_name?: string
+          venue_id?: string
+          visible_to_roles?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_form_submissions_corrects_submission_id_fkey"
+            columns: ["corrects_submission_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_form_submissions_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_form_submissions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_compliance_settings: {
+        Row: {
+          created_at: string
+          high_risk_activities: string[]
+          id: string
+          offers_accommodation: boolean
+          trade_waste_agreement: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          high_risk_activities?: string[]
+          id?: string
+          offers_accommodation?: boolean
+          trade_waste_agreement?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          high_risk_activities?: string[]
+          id?: string
+          offers_accommodation?: boolean
+          trade_waste_agreement?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_compliance_settings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_refrigeration_units: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_temp_c: number | null
+          min_temp_c: number | null
+          name: string
+          station_id: string | null
+          unit_type: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_temp_c?: number | null
+          min_temp_c?: number | null
+          name: string
+          station_id?: string | null
+          unit_type: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_temp_c?: number | null
+          min_temp_c?: number | null
+          name?: string
+          station_id?: string | null
+          unit_type?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_refrigeration_units_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_refrigeration_units_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_contacts: {
         Row: {
           check_first_step: string | null

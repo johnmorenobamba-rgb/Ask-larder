@@ -3,6 +3,7 @@ config({ path: ".env.local" });
 
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/lib/supabase/types";
 
@@ -28,7 +29,10 @@ function adminClient() {
 
 const suffix = randomUUID().slice(0, 8);
 const SLUG = `onboarding-wizard-smoke-${suffix}`;
-const OWNER_EMAIL = `onboarding-wizard-smoke-${suffix}@example.com`;
+// Real domain with a disposable alias: bootstrapOwner rejects RFC 2606 test domains.
+const OWNER_EMAIL = `john.moreno.bamba+onboarding-wizard-smoke-${suffix}@gmail.com`;
+const SPECIALIST_PIN = "8824";
+let specialistId: string | undefined;
 const PASSWORD = "OnboardingWizardSmoke123!";
 
 let venueId: string | undefined;
@@ -38,6 +42,7 @@ test.afterAll(async () => {
   if (venueId) {
     await admin.from("venues").delete().eq("id", venueId);
   }
+  if (specialistId) await admin.from("onboarding_specialists").delete().eq("id", specialistId);
   const { data: authList } = await admin.auth.admin.listUsers();
   const u = authList.users.find((x) => x.email === OWNER_EMAIL);
   if (u) await admin.auth.admin.deleteUser(u.id);
@@ -48,6 +53,13 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     test.setTimeout(180_000);
 
     // --- Page 1: pre-auth owner + venue creation ---
+    // Onboarding specialist PIN gate (15 Sep): disposable specialist row.
+    const { data: specialist } = await adminClient()
+      .from("onboarding_specialists")
+      .insert({ name: "Wizard Smoke Specialist", pin_hash: await bcrypt.hash(SPECIALIST_PIN, 10), active: true })
+      .select("id")
+      .single();
+    specialistId = specialist!.id;
     await page.goto("/onboarding/start");
     await page.getByPlaceholder("Trading name").fill("Onboarding Wizard Smoke Venue");
     const slugInput = page.getByPlaceholder("venue-slug");
@@ -56,6 +68,7 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.getByPlaceholder("Your name").fill("Test Owner");
     await page.getByPlaceholder("you@venue.com.au").fill(OWNER_EMAIL);
     await page.getByPlaceholder("At least 8 characters").fill(PASSWORD);
+    await page.getByPlaceholder("4-6 digit PIN").fill(SPECIALIST_PIN);
     await page.getByRole("button", { name: "Create venue and start onboarding" }).click();
     await page.waitForURL(new RegExp(`/${SLUG}/owner/onboarding/venue-basics$`), { timeout: 20_000 });
 
@@ -122,7 +135,51 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.getByPlaceholder("Station name").fill("Main Bar");
     await page.getByPlaceholder("qr-code-slug").fill(`main-bar-${suffix}`);
     await page.getByRole("button", { name: "Create station" }).click();
-    await expect(page.getByText("Main Bar")).toBeVisible();
+    await expect(page.getByText("Main Bar", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL(/\/compliance-setup$/);
+
+    // --- Compliance Forms Stage 0a: fridges and compliance ---
+    // Trade Waste Agreement is the one required answer.
+    await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
+    await page.getByRole("button", { name: "Add unit" }).click();
+    await page.getByLabel("Unit name 1").fill("Walk in cool room");
+    await expect(page.getByLabel("Safe maximum (°C) 1")).toHaveValue("5"); // cold default
+    await page.getByRole("button", { name: "Add unit" }).click();
+    await page.getByLabel("Unit name 2").fill("Bain marie");
+    await page.getByLabel("Unit type 2").selectOption("hot_hold");
+    await expect(page.getByLabel("Safe minimum (°C) 2")).toHaveValue("60"); // hot hold default
+    await page.getByRole("button", { name: "Add unit" }).click();
+    await page.getByLabel("Unit name 3").fill("Chest freezer");
+    await page.getByLabel("Unit type 3").selectOption("frozen");
+    await expect(page.getByLabel("Safe maximum (°C) 3")).toHaveValue("-15"); // frozen default
+    await page.getByLabel("Station 1").selectOption({ label: "Main Bar" });
+    await page.getByText("Sous vide").click();
+    await page.getByText("This venue offers accommodation").click();
+    await page.getByLabel("Trade Waste Agreement").selectOption("yes");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL(/\/promotions$/);
+
+    // Persisted to the real tables, not just component state.
+    {
+      const admin = adminClient();
+      const { data: settings } = await admin.from("venue_compliance_settings").select("*").eq("venue_id", venueId!).single();
+      expect(settings?.high_risk_activities).toEqual(["sous_vide"]);
+      expect(settings?.offers_accommodation).toBe(true);
+      expect(settings?.trade_waste_agreement).toBe("yes");
+      const { data: units } = await admin.from("venue_refrigeration_units").select("*").eq("venue_id", venueId!).order("created_at");
+      expect(units?.map((u) => [u.name, u.unit_type, u.min_temp_c, u.max_temp_c])).toEqual([
+        ["Walk in cool room", "cold", null, 5],
+        ["Bain marie", "hot_hold", 60, null],
+        ["Chest freezer", "frozen", null, -15],
+      ]);
+    }
+
+    // Back button lands on the step, values re-read from the database.
+    await page.getByRole("link", { name: "← Back" }).click();
+    await page.waitForURL(/\/compliance-setup$/);
+    await expect(page.getByLabel("Unit name 2")).toHaveValue("Bain marie");
+    await expect(page.getByLabel("Trade Waste Agreement")).toHaveValue("yes");
     await page.getByRole("button", { name: "Continue" }).click();
     await page.waitForURL(/\/promotions$/);
 

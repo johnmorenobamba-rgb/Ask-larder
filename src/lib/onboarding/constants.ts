@@ -88,6 +88,30 @@ export const FOOD_SERVICE_LEVELS = [
   { value: "no_food_service", label: "No food service" },
 ] as const;
 
+// Compliance Forms Stage 0a. Safe range defaults come from the Compliance
+// Forms Build Reference (B2): cold at or below 5 C, frozen at or below -15 C,
+// hot hold at or above 60 C. "limit" says which end of the range is the
+// legal limit, so the form only asks for that one.
+export const UNIT_TYPES = [
+  { value: "cold", label: "Cold storage", limit: "max", defaultLimit: 5 },
+  { value: "frozen", label: "Frozen storage", limit: "max", defaultLimit: -15 },
+  { value: "hot_hold", label: "Hot hold", limit: "min", defaultLimit: 60 },
+] as const;
+
+export const HIGH_RISK_ACTIVITIES = [
+  { value: "sous_vide", label: "Sous vide" },
+  { value: "raw_egg", label: "Raw egg foods" },
+  { value: "rare_minced_meat", label: "Rare minced meat or poultry" },
+  { value: "off_site_catering", label: "Off site catering" },
+  { value: "modified_atmosphere", label: "Modified atmosphere packaging" },
+] as const;
+
+export const TRADE_WASTE_OPTIONS = [
+  { value: "yes", label: "Yes, we have a Trade Waste Agreement" },
+  { value: "no", label: "No Trade Waste Agreement" },
+  { value: "unsure", label: "Not sure yet" },
+] as const;
+
 export const LICENCE_TYPES = [
   { value: "general_club", label: "General/Club" },
   { value: "on_premises", label: "On premises" },
