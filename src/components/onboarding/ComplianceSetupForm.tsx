@@ -49,7 +49,8 @@ export function ComplianceSetupForm({
   // Retired units stay on file (past readings point at them) but don't need
   // a name or limit to be valid again.
   const activeUnits = units.filter((u) => u.isActive);
-  const valid = !!tradeWaste && activeUnits.every((u) => u.name.trim() && u.limitTempC.trim() !== "" && Number.isFinite(Number(u.limitTempC)));
+  const unitsValid = activeUnits.every((u) => u.name.trim() && u.limitTempC.trim() !== "" && Number.isFinite(Number(u.limitTempC)));
+  const valid = !!tradeWaste && unitsValid;
 
   function updateUnit(index: number, patch: Partial<UnitRow>) {
     setUnits((prev) => prev.map((u, i) => (i === index ? { ...u, ...patch } : u)));
@@ -73,7 +74,9 @@ export function ComplianceSetupForm({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        units: units.filter((u) => u.isActive || u.id),
+        // clientIndex lets the server say which row got which id, so a retry
+        // after a partial failure updates saved rows instead of duplicating.
+        units: units.map((u, clientIndex) => ({ ...u, clientIndex })).filter((u) => u.isActive || u.id),
         highRiskActivities: activities,
         offersAccommodation,
         tradeWasteAgreement: tradeWaste,
@@ -81,6 +84,10 @@ export function ComplianceSetupForm({
     });
     const body = await res.json().catch(() => null);
     setLoading(false);
+    const saved: { index: number; id: string }[] = Array.isArray(body?.saved) ? body.saved : [];
+    if (saved.length > 0) {
+      setUnits((prev) => prev.map((u, i) => (u.id ? u : { ...u, id: saved.find((s) => s.index === i)?.id ?? null })));
+    }
     if (!res.ok) {
       setError(body?.error ?? "Couldn't save fridges and compliance setup.");
       return;
@@ -102,7 +109,10 @@ export function ComplianceSetupForm({
 
       <div className={cardClass}>
         <h3 className="font-display text-lg font-bold text-ink">Temperature controlled units</h3>
-        {units.length === 0 && <p className="font-sans text-sm text-clay-brown">No units yet.</p>}
+        <p className="font-sans text-sm text-ink/70">Cold and frozen units must stay at or below their limit. Hot hold units must stay at or above it.</p>
+        {units.length === 0 && (
+          <p className="font-sans text-sm text-ink/70">No units yet. Add each fridge, freezer and hot hold unit that staff will log.</p>
+        )}
 
         {units.map((u, i) => {
           const info = typeInfo(u.unitType);
@@ -110,7 +120,10 @@ export function ComplianceSetupForm({
           return (
             <div key={u.id ?? `new-${i}`} className={`space-y-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-3 ${u.isActive ? "" : "opacity-60"}`}>
               <div className="space-y-1">
-                <label className={labelClass}>Unit name</label>
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Unit name</label>
+                  {!u.isActive && <span className="font-mono text-[10px] uppercase tracking-wide text-clay-brown">Retired</span>}
+                </div>
                 <input
                   type="text"
                   aria-label={`Unit name ${i + 1}`}
@@ -121,7 +134,7 @@ export function ComplianceSetupForm({
                   className={inputClass}
                 />
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 xl:grid-cols-3">
                 <div className="space-y-1">
                   <label className={labelClass}>Type</label>
                   <select
@@ -170,11 +183,11 @@ export function ComplianceSetupForm({
               </div>
               <div className="flex justify-end">
                 {u.id ? (
-                  <button type="button" onClick={() => updateUnit(i, { isActive: !u.isActive })} className="font-mono text-xs uppercase tracking-wide text-clay-brown hover:text-ink">
+                  <button type="button" onClick={() => updateUnit(i, { isActive: !u.isActive })} className="-my-1 min-h-11 px-3 font-mono text-xs uppercase tracking-wide text-ink/80 hover:text-ink">
                     {u.isActive ? "Retire unit" : "Restore unit"}
                   </button>
                 ) : (
-                  <button type="button" onClick={() => setUnits((prev) => prev.filter((_, idx) => idx !== i))} className="font-mono text-xs uppercase tracking-wide text-clay-brown hover:text-ink">
+                  <button type="button" onClick={() => setUnits((prev) => prev.filter((_, idx) => idx !== i))} className="-my-1 min-h-11 px-3 font-mono text-xs uppercase tracking-wide text-ink/80 hover:text-ink">
                     Remove
                   </button>
                 )}
@@ -194,14 +207,14 @@ export function ComplianceSetupForm({
         <fieldset className="space-y-2">
           <legend className={labelClass}>High risk food activities this venue does</legend>
           {HIGH_RISK_ACTIVITIES.map((a) => (
-            <label key={a.value} className="flex items-center gap-2 font-sans text-sm text-ink">
+            <label key={a.value} className="flex min-h-11 items-center gap-2 font-sans text-sm text-ink">
               <input type="checkbox" checked={activities.includes(a.value)} onChange={() => toggleActivity(a.value)} />
               {a.label}
             </label>
           ))}
         </fieldset>
 
-        <label className="flex items-center gap-2 font-sans text-sm text-ink">
+        <label className="flex min-h-11 items-center gap-2 font-sans text-sm text-ink">
           <input type="checkbox" checked={offersAccommodation} onChange={(e) => setOffersAccommodation(e.target.checked)} />
           This venue offers accommodation
         </label>
@@ -218,6 +231,11 @@ export function ComplianceSetupForm({
           </select>
         </div>
 
+        {!valid && (
+          <p className="font-sans text-sm text-ink/70">
+            To continue, give every unit a name and a limit, and choose a Trade Waste Agreement answer.
+          </p>
+        )}
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
           {loading ? "Saving…" : "Continue"}

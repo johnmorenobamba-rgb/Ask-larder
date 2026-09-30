@@ -90,7 +90,7 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.waitForURL(/\/licence-detail$/);
 
     // --- Page 4: licence detail ---
-    await page.getByLabel("Licence type").selectOption("general_club");
+    await page.getByLabel("Licence type").selectOption("general");
     await page.getByPlaceholder("Licence number").fill("LIC-12345");
     await page.getByPlaceholder("Licensed capacity").fill("120");
     await page.getByRole("button", { name: "No", exact: true }).click(); // gaming/EGM
@@ -180,6 +180,24 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await page.waitForURL(/\/compliance-setup$/);
     await expect(page.getByLabel("Unit name 2")).toHaveValue("Bain marie");
     await expect(page.getByLabel("Trade Waste Agreement")).toHaveValue("yes");
+    // Retire one unit (never deleted), then save: still 3 rows, one inactive.
+    await page.getByRole("button", { name: "Retire unit" }).nth(2).click();
+    await expect(page.getByText("Retired", { exact: true })).toHaveCount(1);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL(/\/promotions$/);
+    {
+      const admin = adminClient();
+      const { data: units } = await admin.from("venue_refrigeration_units").select("name, is_active").eq("venue_id", venueId!).order("created_at");
+      expect(units).toEqual([
+        { name: "Walk in cool room", is_active: true },
+        { name: "Bain marie", is_active: true },
+        { name: "Chest freezer", is_active: false },
+      ]);
+    }
+    // Restore it so the rest of the walkthrough sees a normal venue.
+    await page.getByRole("link", { name: "← Back" }).click();
+    await page.waitForURL(/\/compliance-setup$/);
+    await page.getByRole("button", { name: "Restore unit" }).click();
     await page.getByRole("button", { name: "Continue" }).click();
     await page.waitForURL(/\/promotions$/);
 
