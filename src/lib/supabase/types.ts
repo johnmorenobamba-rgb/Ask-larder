@@ -1882,6 +1882,7 @@ export type Database = {
           licence_number: string | null
           licence_status: string | null
           licence_type: string | null
+          licence_type_original: string | null
           licensed_capacity: number | null
           state: string | null
           venue_id: string | null
@@ -1898,6 +1899,7 @@ export type Database = {
           licence_number?: string | null
           licence_status?: string | null
           licence_type?: string | null
+          licence_type_original?: string | null
           licensed_capacity?: number | null
           state?: string | null
           venue_id?: string | null
@@ -1914,6 +1916,7 @@ export type Database = {
           licence_number?: string | null
           licence_status?: string | null
           licence_type?: string | null
+          licence_type_original?: string | null
           licensed_capacity?: number | null
           state?: string | null
           venue_id?: string | null

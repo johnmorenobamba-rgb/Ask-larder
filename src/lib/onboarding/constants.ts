@@ -112,10 +112,17 @@ export const TRADE_WASTE_OPTIONS = [
   { value: "unsure", label: "Not sure yet" },
 ] as const;
 
+// The four values match the CHECK on venue_licence_profile.licence_type
+// (20260930010000). "other_unsure" is a wizard-only choice: it is stored as
+// null and routes to founder escalation (licence_type_other_unsure), so a
+// licensed venue can legitimately have a null type. "Required when
+// licensed" is enforced by the form, not the database.
 export const LICENCE_TYPES = [
-  { value: "general_club", label: "General/Club" },
   { value: "on_premises", label: "On premises" },
-  { value: "other_unsure", label: "Other/unsure" },
+  { value: "general", label: "General" },
+  { value: "late_night", label: "Late night" },
+  { value: "packaged", label: "Packaged liquor" },
+  { value: "other_unsure", label: "Other or unsure" },
 ] as const;
 
 // Matches the live check constraint on venue_licence_profile.licence_status

@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("venue_licence_profile").upsert(
     {
       venue_id: staff.venue_id,
-      licence_type: licenceType,
+      // "other_unsure" is stored as null (the DB CHECK allows only the four
+      // real types); the founder-escalation flag below carries the meaning.
+      licence_type: licenceType === "other_unsure" ? null : licenceType,
       licence_number: licenceNumber,
       licensed_capacity: licensedCapacity,
       approved_trading_hours: cleanHours,
