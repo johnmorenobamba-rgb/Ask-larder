@@ -8,7 +8,7 @@ import { getStaffDepartment, loadB2Overview } from "@/lib/compliance/b2Data";
 import {
   UNIT_TYPE_HEADINGS,
   UNIT_TYPE_ORDER,
-  describeLimit,
+  describeLimitSentence,
   formatLocalDateTime,
   formatLocalTime,
   limitFor,
@@ -52,7 +52,7 @@ export default async function TemperaturePage({ params }: { params: Promise<{ ve
           limitC: l.limitC,
           minC: s.unit.min_temp_c,
           maxC: s.unit.max_temp_c,
-          limitText: describeLimit(s.unit),
+          limitText: describeLimitSentence(s.unit),
           latest: todayLatest
             ? {
                 id: todayLatest.id,
@@ -89,7 +89,7 @@ export default async function TemperaturePage({ params }: { params: Promise<{ ve
   const dateLabel = new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
 
   return (
-    <main className="min-h-screen bg-parchment px-6 pb-10 pt-24">
+    <main className="min-h-screen bg-parchment px-6 pb-44 pt-24">
       <PassSlide>
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="space-y-1">
@@ -99,7 +99,7 @@ export default async function TemperaturePage({ params }: { params: Promise<{ ve
               {degraded ? "" : total === 0 ? "No units set up yet." : `${doneToday} of ${total} units logged today.`}
               {!degraded && openFlags > 0 ? ` ${openFlags === 1 ? "1 unit is" : `${openFlags} units are`} still out of range.` : ""}
             </p>
-            <p className="font-sans text-sm text-ink/60">{form.frequency.note}</p>
+            <p className="font-sans text-sm text-ink/70">{form.frequency.note}</p>
           </div>
           {degraded && (
             <p role="alert" className="rounded-2xl border-2 border-preserve-red px-4 py-3 font-sans text-base text-preserve-red">
@@ -107,7 +107,7 @@ export default async function TemperaturePage({ params }: { params: Promise<{ ve
             </p>
           )}
           <TemperatureLogForm groups={groups} canSetUp={staff.isManagerTier} setupHref={`/${venueSlug}/owner/onboarding/compliance-setup`} />
-          <p className="font-sans text-xs text-ink/60">{form.retentionNote}</p>
+          <p className="font-sans text-sm text-ink/70">{form.retentionNote}</p>
         </div>
       </PassSlide>
     </main>

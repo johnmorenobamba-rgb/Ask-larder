@@ -322,6 +322,7 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
     { href: "weekly-report", label: "Weekly report" },
     { href: "escalations", label: "Escalations" },
     { href: "near-misses", label: "Near-misses" },
+    { href: "temperature", label: "Temperature log" },
     { href: "stations", label: "Stations" },
     { href: "photo-library", label: "Photos" },
     { href: "contacts", label: "Contacts" },
@@ -429,7 +430,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
 
     const { data: role } = await admin
       .from("staff_roles")
-      .insert({ venue_id: venueId, name: "Back Audit Staff Role" })
+      .insert({ venue_id: venueId, name: "Back Audit Staff Role", department: "BOH" })
       .select("id")
       .single();
 
@@ -546,6 +547,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const DRAWER_ITEMS = [
     { segment: "modules", label: "Modules" },
     { segment: "certs", label: "Certificates" },
+    { segment: "temperature", label: "Temperature log" },
     { segment: "settings", label: "Settings" },
   ];
 
@@ -590,6 +592,17 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
     await page.goto(`/${SLUG}/home`);
     await page.goto(`/${SLUG}/contacts`);
     await expectHealthyPage(page);
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("temperature log (direct, BOH staff, no units set up: empty state)", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    await page.goto(`/${SLUG}/home`);
+    await page.goto(`/${SLUG}/temperature`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible();
     await page.goBack();
     await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
     await expectHealthyPage(page);

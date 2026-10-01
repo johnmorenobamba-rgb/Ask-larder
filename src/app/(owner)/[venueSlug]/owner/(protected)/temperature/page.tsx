@@ -27,7 +27,8 @@ export default async function OwnerTemperaturePage({ params }: { params: Promise
   const { total, doneToday, openFlags } = overview.summary;
 
   const flagged = overview.statuses.filter((s) => s.openFlag && s.latest);
-  const notLogged = overview.statuses.filter((s) => !s.doneToday);
+  const typeRank = (t: string) => (t === "cold" ? 0 : t === "frozen" ? 1 : 2);
+  const notLogged = overview.statuses.filter((s) => !s.doneToday).sort((a, b) => typeRank(a.unit.unit_type) - typeRank(b.unit.unit_type));
   const todays = overview.todays.slice().sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
 
   return (
@@ -71,7 +72,7 @@ export default async function OwnerTemperaturePage({ params }: { params: Promise
                     {formatLocalDateTime(s.latest!.submitted_at, tz)} by {s.latest!.submitted_by_name}
                   </p>
                   {s.latest!.corrective_action && <p className="font-sans text-sm text-ink">Action: {s.latest!.corrective_action}</p>}
-                  <p className="mt-1 font-sans text-xs text-ink/60">Stays open until a later reading is in range.</p>
+                  <p className="mt-1 font-sans text-sm text-ink/70">Stays open until a later reading is in range.</p>
                 </li>
               ))}
             </ul>
@@ -126,7 +127,7 @@ export default async function OwnerTemperaturePage({ params }: { params: Promise
                     {UNIT_TYPE_HEADINGS[s.unit.unit_type as "cold" | "frozen" | "hot_hold"] ?? s.unit.unit_type}. {describeLimit(s.unit)}
                   </p>
                   {s.latest && (
-                    <p className="font-sans text-xs text-ink/60">
+                    <p className="font-sans text-sm text-ink/70">
                       Last reading {formatLocalDateTime(s.latest.submitted_at, tz)}
                       {s.readingC !== null ? `, ${formatTemp(s.readingC)}` : ""}
                     </p>

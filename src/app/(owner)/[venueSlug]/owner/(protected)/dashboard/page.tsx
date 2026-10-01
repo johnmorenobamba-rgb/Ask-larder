@@ -114,7 +114,24 @@ export default async function OwnerDashboardPage({
   // Handling, Food Safety Supervisor, First Aid) is never a compliance
   // breach, so it never gets red or "expired" wording -- overdue refreshers
   // read as Saffron (same urgency tier as "expiring soon"), not Red.
+  // Temperature log (B2): an open out of range flag is a real "needs attention" item, so the
+  // hero card never says "nothing needs attention" next to a unit that is out of range.
+  const b2 = await loadB2Overview(supabase, venueId);
+  const openTemperatureUnits = b2.statuses.filter((s) => s.openFlag).map((s) => s.unit.name);
+
   const flags: FlagItem[] = [
+    ...(openTemperatureUnits.length > 0
+      ? [
+          {
+            key: "b2-open-flags",
+            tier: "red",
+            href: `/${venueSlug}/owner/temperature`,
+            glyph: "temperature",
+            primary: `${openTemperatureUnits.length} unit${openTemperatureUnits.length === 1 ? " is" : "s are"} out of range`,
+            secondary: openTemperatureUnits.slice(0, 3).join(", ") + (openTemperatureUnits.length > 3 ? " and more" : ""),
+          } satisfies FlagItem,
+        ]
+      : []),
     ...needsAttention.expiredCerts.map(
       (c): FlagItem =>
         c.trackingType === "hard_expiry"
@@ -184,8 +201,6 @@ export default async function OwnerDashboardPage({
     completed: completedByUser.get(s.id)?.size ?? 0,
     total: liveModuleCount,
   }));
-
-  const b2 = await loadB2Overview(supabase, venueId);
 
   return (
     <main className="min-h-screen bg-parchment px-4 py-10 md:px-6">

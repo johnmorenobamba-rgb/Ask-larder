@@ -14,7 +14,7 @@ import { ExportDataButton } from "@/components/owner/ExportDataButton";
 import type { StationDisplay } from "@/lib/stations/getStationsWithDisplay";
 
 export type FlagTier = "red" | "saffron" | "brown";
-export type FlagGlyphKey = "cert" | "module" | "escalation";
+export type FlagGlyphKey = "cert" | "module" | "escalation" | "temperature";
 
 export type FlagItem = {
   key: string;
@@ -105,10 +105,20 @@ export function PhoneGlyph({ color }: { color: string }) {
   );
 }
 
+function TemperatureGlyph({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1="12" y1="9" x2="12" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const GLYPHS: Record<FlagGlyphKey, (props: { color: string }) => React.JSX.Element> = {
   cert: CertGlyph,
   module: ModuleGlyph,
   escalation: EscalationGlyph,
+  temperature: TemperatureGlyph,
 };
 
 // The individual flag row, unchanged from J6 -- reused inside K1's popup

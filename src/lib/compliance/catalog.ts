@@ -52,7 +52,7 @@ export type ComplianceFormDef = {
 export const COMPLIANCE_FORMS = {
   B2: {
     id: "B2",
-    title: "Storage temperature log",
+    title: "Temperature log",
     category: "BOH",
     statusTag: "M*",
     statusNote: "Food businesses must be able to show their temperature controls work. A written log is one accepted way to do that.",
@@ -67,7 +67,7 @@ export const COMPLIANCE_FORMS = {
       frozen: {
         tag: "BP",
         label: "Best practice limit",
-        basis: "Frozen food must stay frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
+        basis: "Keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
       },
       hot_hold: {
         tag: "M",

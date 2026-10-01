@@ -435,18 +435,24 @@ export function BentoGrid({
                 tilt={false}
                 className={`flex h-full flex-col justify-between rounded-2xl px-4 py-4 ${temperature.openFlags > 0 ? "bg-preserve-red" : "bg-ink"}`}
               >
-                <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Temperature log</p>
+                <div className="flex items-center gap-1.5">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke="var(--color-parchment)" strokeWidth="1.5" strokeLinejoin="round" />
+                    <line x1="12" y1="9" x2="12" y2="16" stroke="var(--color-parchment)" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <p className="font-mono text-xs uppercase tracking-wide text-parchment">Temperature log</p>
+                </div>
                 {temperature.degraded ? (
                   <p className="font-sans text-sm text-parchment">Couldn&apos;t load readings</p>
                 ) : temperature.total === 0 ? (
-                  <p className="font-sans text-sm text-parchment/80">No units set up yet</p>
+                  <p className="font-sans text-sm text-parchment">No units set up yet</p>
                 ) : (
                   <div>
                     <p className="font-sans text-sm text-parchment">
-                      <span className="font-display text-2xl font-bold">{temperature.done}</span> of {temperature.total} logged today
+                      <span className="font-display text-3xl font-bold">{temperature.done}</span> of {temperature.total} logged today
                     </p>
                     {temperature.openFlags > 0 && (
-                      <p className="mt-1 font-sans text-sm font-medium text-parchment">{temperature.openFlags} out of range</p>
+                      <p className="mt-1 font-sans text-base font-medium text-parchment">{temperature.openFlags} out of range</p>
                     )}
                   </div>
                 )}

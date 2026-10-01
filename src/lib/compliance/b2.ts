@@ -60,6 +60,18 @@ export function describeLimit(unit: Pick<UnitLike, "unit_type" | "min_temp_c" | 
   return `${l.kind === "max" ? "Max" : "Min"} ${formatTemp(l.limitC)}`;
 }
 
+/** The limit as a plain sentence for the person checking a reading against it. */
+export function describeLimitSentence(unit: Pick<UnitLike, "unit_type" | "min_temp_c" | "max_temp_c">): string {
+  const l = limitFor(unit);
+  if (!l) return "No limit set";
+  return l.kind === "max" ? `Keep at ${formatTemp(l.limitC)} or colder` : `Keep at ${formatTemp(l.limitC)} or hotter`;
+}
+
+/** True for a lone minus sign (or dash) with nothing after it yet: the person is mid way through typing. */
+export function isPendingMinus(raw: string): boolean {
+  return /^[-\u2212\u2013\u2014]\s*$/.test(raw.trim());
+}
+
 /** Parses what a person types: accepts a comma as the decimal mark. null when not a usable number. */
 export function parseReadingInput(raw: string): number | null {
   // iPad keyboards can produce a true minus sign or a dash: treat them as a minus
