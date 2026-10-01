@@ -149,6 +149,7 @@ export function BentoGrid({
   activityPhotoUrl,
   stations,
   suggestions,
+  temperature,
   remotionFrame,
 }: {
   venueSlug: string;
@@ -171,6 +172,8 @@ export function BentoGrid({
    * fetches suggestion data for a frontline account, so undefined here
    * means "don't render the tile at all", not "zero suggestions". */
   suggestions?: { count: number; preview: string | null };
+  /** B2 temperature log tile: BOH staff and manager tier only (undefined hides it). */
+  temperature?: { done: number; total: number; openFlags: number; degraded: boolean };
   /** Block N3 only -- drives per-cell entrance from a Remotion frame instead of the CSS keyframe. Leave undefined in the live app. */
   remotionFrame?: number;
 }) {
@@ -417,6 +420,40 @@ export function BentoGrid({
             </ElevatedCell>
           </a>
         </div>
+
+        {/* Temperature log (B2) -- BOH staff and manager tier only. Ink by default, Preserve
+            Red when a unit is still out of range, so the one thing that needs action is
+            the one thing that is loud. No Stamp: a routine log is not a trust moment. */}
+        {temperature && (
+          <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 420)}>
+            <a href={`/${venueSlug}/temperature`} className="block h-full">
+              <ElevatedCell
+                glowColor={temperature.openFlags > 0 ? "var(--color-preserve-red)" : "var(--color-saffron)"}
+                floatDurationS={6.1}
+                floatDelayS={0.7}
+                depth="secondary"
+                tilt={false}
+                className={`flex h-full flex-col justify-between rounded-2xl px-4 py-4 ${temperature.openFlags > 0 ? "bg-preserve-red" : "bg-ink"}`}
+              >
+                <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">Temperature log</p>
+                {temperature.degraded ? (
+                  <p className="font-sans text-sm text-parchment">Couldn&apos;t load readings</p>
+                ) : temperature.total === 0 ? (
+                  <p className="font-sans text-sm text-parchment/80">No units set up yet</p>
+                ) : (
+                  <div>
+                    <p className="font-sans text-sm text-parchment">
+                      <span className="font-display text-2xl font-bold">{temperature.done}</span> of {temperature.total} logged today
+                    </p>
+                    {temperature.openFlags > 0 && (
+                      <p className="mt-1 font-sans text-sm font-medium text-parchment">{temperature.openFlags} out of range</p>
+                    )}
+                  </div>
+                )}
+              </ElevatedCell>
+            </a>
+          </div>
+        )}
 
         {/* Suggestions -- manager-tier only (Head Chef/Sous Chef/Manager/
             2IC), same tile as the owner dashboard's own, reusing ChitMark's

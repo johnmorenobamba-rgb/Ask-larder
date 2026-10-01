@@ -7,6 +7,8 @@ import { AskLarderChat } from "@/components/staff/AskLarderChat";
 import { StaffTopBar } from "@/components/staff/StaffTopBar";
 import { StaffHeader } from "@/components/staff/StaffHeader";
 import { logQueryError } from "@/lib/supabase/logQueryError";
+import { COMPLIANCE_FORMS, canSubmitForm } from "@/lib/compliance/catalog";
+import { getStaffDepartment } from "@/lib/compliance/b2Data";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
@@ -33,8 +35,14 @@ export default async function ProtectedStaffLayout({
   }
 
   let venueName = "";
+  // Temperature log nav item: BOH staff plus manager tier and owners (catalog audience).
+  let showTemperature = staff.isManagerTier;
   if (staff.venue_id) {
     const supabase = await createClient();
+    if (!showTemperature) {
+      const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+      showTemperature = canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: false, department: dept.department });
+    }
     const { data: venue, error: venueError } = await supabase.from("venues").select("name").eq("id", staff.venue_id).maybeSingle();
     logQueryError(`[${venueSlug}] staff protected layout venues`, venueError);
     venueName = venue?.name ?? "";
@@ -43,7 +51,7 @@ export default async function ProtectedStaffLayout({
   return (
     <>
       {venueName && <StaffTopBar venueName={venueName} />}
-      <StaffHeader venueSlug={venueSlug} venueName={venueName} />
+      <StaffHeader venueSlug={venueSlug} venueName={venueName} showTemperature={showTemperature} />
       {children}
       {staff.venue_id && (
         <>

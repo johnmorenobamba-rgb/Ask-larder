@@ -14,6 +14,9 @@ const ITEMS = [
   { segment: "settings", label: "Settings" },
 ] as const;
 
+// Only shown to the B2 audience (BOH staff, manager tier, owners).
+const TEMPERATURE_ITEM = { segment: "temperature", label: "Temperature log" } as const;
+
 function ModulesIcon({ color }: { color: string }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -28,6 +31,15 @@ function CertificatesIcon({ color }: { color: string }) {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
       <circle cx="12" cy="12" r="5.5" stroke={color} strokeWidth="1" />
+    </svg>
+  );
+}
+
+function ThermometerIcon({ color }: { color: string }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1="12" y1="9" x2="12" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -56,12 +68,17 @@ export function NavDrawer({
   activeSegment,
   open,
   onClose,
+  showTemperature = false,
 }: {
   venueSlug: string;
   activeSegment: string;
   open: boolean;
   onClose: () => void;
+  showTemperature?: boolean;
 }) {
+  const items: readonly { segment: string; label: string }[] = showTemperature
+    ? [...ITEMS.slice(0, 3), TEMPERATURE_ITEM, ...ITEMS.slice(3)]
+    : ITEMS;
   return (
     <div
       className={`fixed inset-0 z-50 flex justify-end transition-opacity duration-240 ${
@@ -77,7 +94,7 @@ export function NavDrawer({
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {ITEMS.map((item) => {
+        {items.map((item) => {
           const href = `/${venueSlug}/${item.segment}`;
           const active = activeSegment === item.segment;
           const color = active ? "var(--color-ink)" : "var(--color-clay-brown)";
@@ -93,6 +110,7 @@ export function NavDrawer({
               {item.segment === "home" && <LarderMark size={22} color={color} />}
               {item.segment === "modules" && <ModulesIcon color={color} />}
               {item.segment === "certs" && <CertificatesIcon color={color} />}
+              {item.segment === "temperature" && <ThermometerIcon color={color} />}
               {item.segment === "settings" && <SettingsIcon color={color} />}
               <span
                 className={`font-mono text-xs uppercase tracking-wide ${active ? "text-preserve-red" : "text-clay-brown"}`}

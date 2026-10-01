@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { BentoGrid } from "@/components/staff/BentoGrid";
+import { COMPLIANCE_FORMS, canSubmitForm } from "@/lib/compliance/catalog";
+import { getStaffDepartment, loadB2Overview } from "@/lib/compliance/b2Data";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Forces a fresh read every request. Found live during Block O roleplay QA
@@ -198,6 +200,22 @@ export default async function StaffHomePage({
   const expiringRows = certRows.filter((c) => c.status === "expiring" && c.days !== null);
   const nextCertExpiring = expiringRows.length > 0 ? expiringRows.slice().sort((a, b) => a.days! - b.days!)[0] : null;
 
+  // Temperature log tile: BOH staff and manager tier only. Absent entirely for everyone
+  // else (the overview is never fetched for them).
+  let temperature: { done: number; total: number; openFlags: number; degraded: boolean } | undefined;
+  {
+    const dept = staff.isManagerTier ? { department: null, ok: true } : await getStaffDepartment(supabase, staff.staff_role_id);
+    if (canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department })) {
+      const overview = await loadB2Overview(supabase, staff.venue_id!, now);
+      temperature = {
+        done: overview.summary.doneToday,
+        total: overview.summary.total,
+        openFlags: overview.summary.openFlags,
+        degraded: overview.degraded,
+      };
+    }
+  }
+
   const hour = now.getHours();
   const timeGreeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
 
@@ -231,6 +249,7 @@ export default async function StaffHomePage({
       fallbackCount={fallbackCount ?? 0}
       activityPhotoUrl={activityPhotoUrl}
       stations={stationsWithQr}
+      temperature={temperature}
       suggestions={staff.isManagerTier ? { count: sortedSuggestions.length, preview: sortedSuggestions[0]?.headline ?? null } : undefined}
     />
   );

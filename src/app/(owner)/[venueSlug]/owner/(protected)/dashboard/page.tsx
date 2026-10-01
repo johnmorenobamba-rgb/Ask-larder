@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { getNeedsAttention } from "@/lib/owner/needsAttention";
+import { loadB2Overview } from "@/lib/compliance/b2Data";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { getWeeklyDigest } from "@/lib/reports/weeklyDigest";
 import { OwnerDashboardBoard, type FlagItem } from "@/components/owner/OwnerDashboardBoard";
@@ -184,6 +185,8 @@ export default async function OwnerDashboardPage({
     total: liveModuleCount,
   }));
 
+  const b2 = await loadB2Overview(supabase, venueId);
+
   return (
     <main className="min-h-screen bg-parchment px-4 py-10 md:px-6">
       <OwnerDashboardBoard
@@ -200,6 +203,7 @@ export default async function OwnerDashboardPage({
         weeklyTopQuestion={weeklyDigest.outOfScope[0]?.question ?? weeklyDigest.escalations[0]?.question ?? null}
         suggestionCount={sortedSuggestions.length}
         suggestionPreview={sortedSuggestions[0]?.headline ?? null}
+        temperature={{ done: b2.summary.doneToday, total: b2.summary.total, openFlags: b2.summary.openFlags, degraded: b2.degraded }}
       />
     </main>
   );
