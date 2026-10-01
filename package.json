@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:isolation": "vitest run tests/isolation.test.ts"
+    "test:isolation": "vitest run tests/isolation.test.ts",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
