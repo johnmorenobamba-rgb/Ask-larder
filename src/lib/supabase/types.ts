@@ -288,8 +288,61 @@ export type Database = {
           },
         ]
       }
+      compliance_alert_log: {
+        Row: {
+          created_at: string
+          email_attempts: number
+          email_error: string | null
+          email_sent_at: string | null
+          kind: string
+          submission_id: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_attempts?: number
+          email_error?: string | null
+          email_sent_at?: string | null
+          kind?: string
+          submission_id: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          email_attempts?: number
+          email_error?: string | null
+          email_sent_at?: string | null
+          kind?: string
+          submission_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_alert_log_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "compliance_b2_latest_readings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_alert_log_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "compliance_form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_alert_log_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_form_submissions: {
         Row: {
+          client_request_id: string | null
           corrective_action: string | null
           corrects_submission_id: string | null
           device_stamp: string | null
@@ -304,6 +357,7 @@ export type Database = {
           visible_to_roles: string[]
         }
         Insert: {
+          client_request_id?: string | null
           corrective_action?: string | null
           corrects_submission_id?: string | null
           device_stamp?: string | null
@@ -318,6 +372,7 @@ export type Database = {
           visible_to_roles?: string[]
         }
         Update: {
+          client_request_id?: string | null
           corrective_action?: string | null
           corrects_submission_id?: string | null
           device_stamp?: string | null
@@ -332,6 +387,13 @@ export type Database = {
           visible_to_roles?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "compliance_form_submissions_corrects_submission_id_fkey"
+            columns: ["corrects_submission_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_b2_latest_readings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "compliance_form_submissions_corrects_submission_id_fkey"
             columns: ["corrects_submission_id"]
@@ -2069,7 +2131,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      compliance_b2_latest_readings: {
+        Row: {
+          corrective_action: string | null
+          id: string | null
+          out_of_range: boolean | null
+          payload: Json | null
+          submitted_at: string | null
+          submitted_by_name: string | null
+          unit_id: string | null
+          venue_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_form_submissions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       bootstrap_owner: {
@@ -2113,6 +2195,17 @@ export type Database = {
       publish_module_version: {
         Args: { p_changelog?: string; p_module_id: string }
         Returns: string
+      }
+      submit_compliance_form: {
+        Args: {
+          p_device_stamp: string
+          p_entries: Json
+          p_form_id: string
+          p_staff_id: string
+          p_venue_id: string
+          p_visible_to_roles: string[]
+        }
+        Returns: Json
       }
       venue_roster: { Args: { p_slug: string }; Returns: Json }
     }
