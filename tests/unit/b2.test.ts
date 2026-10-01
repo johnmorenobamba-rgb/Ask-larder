@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import {
   buildUnitStatuses,
+  cleanNote,
   describeLimit,
   formatTemp,
   isOutOfRange,
@@ -271,5 +272,30 @@ describe("owner alert recipients and the env gate", () => {
     expect(alertEmailsEnabled()).toBe(false);
     process.env.COMPLIANCE_ALERT_EMAIL_ENABLED = "true";
     expect(alertEmailsEnabled()).toBe(true);
+  });
+});
+
+describe("cleanNote (free text made safe for jsonb)", () => {
+  const NUL = String.fromCharCode(0);
+  const HIGH = String.fromCharCode(0xd83d);
+  const LOW = String.fromCharCode(0xde00);
+  it("drops NUL characters", () => {
+    expect(cleanNote("a" + NUL + "b")).toBe("ab");
+  });
+  it("drops a lone high or lone low surrogate", () => {
+    expect(cleanNote("a" + HIGH + "b")).toBe("ab");
+    expect(cleanNote("a" + LOW + "b")).toBe("ab");
+  });
+  it("keeps a valid surrogate pair (an emoji)", () => {
+    expect(cleanNote("ok " + HIGH + LOW)).toBe("ok " + HIGH + LOW);
+  });
+  it("cuts by whole characters and never splits a pair", () => {
+    const pair = HIGH + LOW;
+    expect(cleanNote(pair.repeat(3), 2)).toBe(pair.repeat(2));
+    expect(cleanNote("abcdef", 3)).toBe("abc");
+  });
+  it("trims, and whitespace only becomes empty", () => {
+    expect(cleanNote("  moved the stock  ")).toBe("moved the stock");
+    expect(cleanNote("   " + NUL + "  ")).toBe("");
   });
 });

@@ -72,6 +72,22 @@ export function isPendingMinus(raw: string): boolean {
   return /^[-\u2212\u2013\u2014]\s*$/.test(raw.trim());
 }
 
+/**
+ * Makes free text safe for jsonb: drops NUL characters and lone surrogates (a valid pair
+ * arrives from for...of as one character, a lone surrogate as one half), trims, and cuts by
+ * whole characters so a pair is never split.
+ */
+export function cleanNote(raw: string, maxChars = 1000): string {
+  const kept: string[] = [];
+  for (const ch of raw) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code === 0) continue;
+    if (code >= 0xd800 && code <= 0xdfff) continue;
+    kept.push(ch);
+  }
+  return kept.join("").trim().length === 0 ? "" : Array.from(kept.join("").trim()).slice(0, maxChars).join("");
+}
+
 /** Parses what a person types: accepts a comma as the decimal mark. null when not a usable number. */
 export function parseReadingInput(raw: string): number | null {
   // iPad keyboards can produce a true minus sign or a dash: treat them as a minus
