@@ -79,6 +79,8 @@ export function compileRules(def: FormDef, opts: CompileOptions = {}): RulesObje
       chain: stage.chain,
       ...(stage.requires ? { requires: stage.requires } : {}),
       ...(stage.requiresPrior ? { requires_prior: stage.requiresPrior } : {}),
+      ...(stage.softPrior ? { soft_prior: stage.softPrior } : {}),
+      ...(stage.softPriorLabel ? { soft_prior_label: stage.softPriorLabel } : {}),
       ...(stage.elapsedMaxMin !== undefined ? { elapsed_max_min: stage.elapsedMaxMin } : {}),
       ...(stage.elapsedLabel ? { elapsed_label: stage.elapsedLabel } : {}),
     };

@@ -497,8 +497,8 @@ export const FORMS: FormDef[] = [
     subjectField: "thermometer",
     fields: [
       { type: "text", key: "thermometer", label: "Which thermometer", maxLength: 60, hint: "For example Probe 1 or the red probe." },
-      { type: "number", key: "ice_c", label: "Reading in iced water", unit: "°C", min: -10, max: 10, allowNegative: true, hint: `Should read between ${MINUS}1°C and 1°C.` },
-      { type: "number", key: "boil_c", label: "Reading in boiling water", unit: "°C", min: 90, max: 105, hint: "Should read between 99°C and 101°C." },
+      { type: "number", key: "ice_c", label: "Reading in iced water", unit: "°C", min: -30, max: 60, allowNegative: true, hint: `Should read between ${MINUS}1°C and 1°C.` },
+      { type: "number", key: "boil_c", label: "Reading in boiling water", unit: "°C", min: 40, max: 120, hint: "Should read between 99°C and 101°C." },
     ],
     fail: [
       { field: "ice_c", op: "outside", min: -1, max: 1, label: `Iced water reading is outside ${MINUS}1°C to 1°C` },
@@ -539,7 +539,7 @@ export const FORMS: FormDef[] = [
           { value: "hot", label: "Hot" },
         ],
       },
-      { type: "number", key: "temp_c", label: "Temperature", unit: "°C", min: -40, max: 120, allowNegative: true },
+      { type: "number", key: "temp_c", label: "Temperature", unit: "°C", min: -60, max: 150, allowNegative: true },
       { type: "passfail", key: "packaging", label: "Packaging is clean and undamaged", passLabel: "Good", failLabel: "Damaged" },
       { type: "passfail", key: "dates", label: "Use by dates are in date", passLabel: "In date", failLabel: "Out of date" },
       {
@@ -582,7 +582,7 @@ export const FORMS: FormDef[] = [
     defaultList: true,
     fields: [
       { type: "text", key: "item", label: "What you cooked", maxLength: 80 },
-      { type: "number", key: "core_temp_c", label: "Core temperature", unit: "°C", min: 0, max: 150 },
+      { type: "number", key: "core_temp_c", label: "Core temperature", unit: "°C", min: -30, max: 150, allowNegative: true },
     ],
     fail: [{ field: "core_temp_c", op: "lt", value: 75, label: "Below 75°C (Larder default, review before use)" }],
     failBehaviour: "Write what you did, for example cooked it longer, then save. The owner sees it flagged.",
@@ -611,7 +611,7 @@ export const FORMS: FormDef[] = [
     defaultList: true,
     fields: [
       { type: "text", key: "item", label: "What you reheated", maxLength: 80 },
-      { type: "number", key: "core_temp_c", label: "Core temperature", unit: "°C", min: 0, max: 150 },
+      { type: "number", key: "core_temp_c", label: "Core temperature", unit: "°C", min: -30, max: 150, allowNegative: true },
     ],
     fail: [{ field: "core_temp_c", op: "lt", value: 75, label: "Below 75°C (Larder default, review before use)" }],
     failBehaviour: "Write what you did, for example reheated it again or threw it out, then save. The owner sees it flagged.",
@@ -704,7 +704,8 @@ export const FORMS: FormDef[] = [
         label: "6 hour check",
         chain: "existing",
         requires: "start",
-        requiresPrior: ["two_hour"],
+        softPrior: ["two_hour"],
+        softPriorLabel: "The 2 hour check was missed",
         elapsedMaxMin: 360,
         elapsedLabel: "Checked after the 6 hour limit",
         departments: ["BOH"],

@@ -16,6 +16,7 @@ const ITEMS = [
 
 // Only shown to the B2 audience (BOH staff, manager tier, owners).
 const TEMPERATURE_ITEM = { segment: "temperature", label: "Temperature log" } as const;
+const FORMS_ITEM = { segment: "forms", label: "Compliance forms" } as const;
 
 function ModulesIcon({ color }: { color: string }) {
   return (
@@ -77,8 +78,8 @@ export function NavDrawer({
   showTemperature?: boolean;
 }) {
   const items: readonly { segment: string; label: string }[] = showTemperature
-    ? [...ITEMS.slice(0, 3), TEMPERATURE_ITEM, ...ITEMS.slice(3)]
-    : ITEMS;
+    ? [...ITEMS.slice(0, 3), FORMS_ITEM, TEMPERATURE_ITEM, ...ITEMS.slice(3)]
+    : [...ITEMS.slice(0, 3), FORMS_ITEM, ...ITEMS.slice(3)];
   return (
     <div
       className={`fixed inset-0 z-50 flex justify-end transition-opacity duration-240 ${
@@ -111,6 +112,7 @@ export function NavDrawer({
               {item.segment === "modules" && <ModulesIcon color={color} />}
               {item.segment === "certs" && <CertificatesIcon color={color} />}
               {item.segment === "temperature" && <ThermometerIcon color={color} />}
+              {item.segment === "forms" && <FormsIcon color={color} />}
               {item.segment === "settings" && <SettingsIcon color={color} />}
               <span
                 className={`font-mono text-xs uppercase tracking-wide ${active ? "text-preserve-red" : "text-clay-brown"}`}
@@ -122,5 +124,15 @@ export function NavDrawer({
         })}
       </div>
     </div>
+  );
+}
+
+function FormsIcon({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="4" width="14" height="17" rx="2" stroke={color} strokeWidth="1.5" />
+      <path d="M9 4.5h6v2H9z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M8.5 12l1.8 1.8L14 10.5M8.5 17h7" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

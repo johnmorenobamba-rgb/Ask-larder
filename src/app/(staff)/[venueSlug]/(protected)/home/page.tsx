@@ -6,6 +6,8 @@ import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { BentoGrid } from "@/components/staff/BentoGrid";
 import { COMPLIANCE_FORMS, canSubmitForm } from "@/lib/compliance/catalog";
 import { getStaffDepartment, loadB2Overview } from "@/lib/compliance/b2Data";
+import { loadHub } from "@/lib/compliance/engine/hubData";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Forces a fresh read every request. Found live during Block O roleplay QA
@@ -216,6 +218,23 @@ export default async function StaffHomePage({
     }
   }
 
+  // Compliance forms tile: every staff member. Counts come from the hub loader; a failure shows a quiet message, never a clean zero.
+  let forms: { todo: number; overdue: number; degraded: boolean } | undefined;
+  {
+    try {
+      const dept = staff.isManagerTier ? { department: null, ok: true } : await getStaffDepartment(supabase, staff.staff_role_id);
+      const hub = await loadHub(supabase, createAdminClient(), staff.venue_id!, { isManagerTier: staff.isManagerTier, department: dept.department }, now);
+      const mine = hub.forms.filter((f) => f.on && f.canFill);
+      forms = {
+        todo: mine.filter((f) => f.status.status === "not_started" || f.status.status === "overdue").length,
+        overdue: mine.filter((f) => f.status.status === "overdue").length,
+        degraded: hub.degraded || !dept.ok,
+      };
+    } catch {
+      forms = { todo: 0, overdue: 0, degraded: true };
+    }
+  }
+
   const hour = now.getHours();
   const timeGreeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
 
@@ -250,6 +269,7 @@ export default async function StaffHomePage({
       activityPhotoUrl={activityPhotoUrl}
       stations={stationsWithQr}
       temperature={temperature}
+      forms={forms}
       suggestions={staff.isManagerTier ? { count: sortedSuggestions.length, preview: sortedSuggestions[0]?.headline ?? null } : undefined}
     />
   );

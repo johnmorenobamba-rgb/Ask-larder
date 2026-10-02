@@ -248,3 +248,45 @@ export async function loginWithStaffPin({
     userId: authId,
   };
 }
+
+/**
+ * Compliance Forms Stage 0 (two person sign off, F3): confirm that a SECOND staff member of this venue
+ * knows their own PIN, without creating a session. It uses the SAME failed attempt counter and lockout
+ * as the login (5 wrong PINs lock that person for 15 minutes), so this route cannot be used to guess a
+ * colleague's PIN any faster than the login page allows. Returns the verified person's id and name.
+ */
+export async function verifyStaffPin({
+  venueId,
+  staffUserId,
+  pin,
+}: {
+  venueId: string;
+  staffUserId: string;
+  pin: string;
+}): Promise<{ id: string; name: string }> {
+  if (!PIN_PATTERN.test(pin)) throw new PinAuthError(401, "Incorrect PIN.");
+  const admin = createAdminClient();
+  const { data: staff, error } = await admin
+    .from("app_users")
+    .select("id, name, pin_hash, pin_failed_attempts, pin_locked_until, deactivated_at, venue_id")
+    .eq("id", staffUserId)
+    .eq("venue_id", venueId)
+    .maybeSingle();
+  if (error) throw new PinAuthError(500, error.message);
+  if (!staff || staff.deactivated_at || !staff.pin_hash) throw new PinAuthError(404, "That person can't sign off.");
+  const lockedUntil = staff.pin_locked_until ? new Date(staff.pin_locked_until) : null;
+  if (lockedUntil && lockedUntil.getTime() > Date.now()) {
+    throw new PinAuthError(423, "Too many attempts for that person. Try again later.");
+  }
+  const matches = await bcrypt.compare(pin, staff.pin_hash);
+  if (!matches) {
+    // ONE atomic increment in the database (the same 5 attempts then 15 minute lock as the login), so
+    // parallel wrong PIN requests cannot all read the same count and dodge the lock. The counter is reset
+    // only by a correct PIN, as in the login.
+    const { error: bumpError } = await admin.rpc("bump_staff_pin_failure", { p_staff_id: staffUserId });
+    if (bumpError) console.error("[verifyStaffPin] could not record a failed attempt:", bumpError.message);
+    throw new PinAuthError(401, "Incorrect PIN.");
+  }
+  await admin.from("app_users").update({ pin_failed_attempts: 0, pin_locked_until: null }).eq("id", staffUserId);
+  return { id: staff.id, name: staff.name };
+}

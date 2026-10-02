@@ -8,8 +8,8 @@ import type { Cadence } from "./types";
 //   done         when a record exists in the current period (shift and daily: the local day;
 //                weekly: Monday to Sunday; monthly: the calendar month; yearly: the calendar year),
 //   overdue      when the current period has no record AND either the form has a due hour that has
-//                passed today (shift and daily forms), or the PREVIOUS period had no record and
-//                the form was already switched on when that period started,
+//                passed today (shift and daily forms, and the form was on before that hour), or the
+//                PREVIOUS period had no record and the form was switched on before that period began,
 //   not started  otherwise,
 //   event        for forms logged when something happens (never due).
 // Overdue is shown on screen only. Nothing here sends an email or a push.
@@ -18,7 +18,7 @@ type Ymd = { y: number; m: number; d: number };
 
 function parts(instant: Date | string, timeZone: string): Ymd & { hour: number; weekday: number } {
   const d = typeof instant === "string" ? new Date(instant) : instant;
-  const f = new Intl.DateTimeFormat("en-CA", {
+  const f = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
     month: "2-digit",
@@ -30,6 +30,7 @@ function parts(instant: Date | string, timeZone: string): Ymd & { hour: number; 
   const map: Record<string, string> = {};
   for (const p of f.formatToParts(d)) map[p.type] = p.value;
   const weekdayIndex = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(map.weekday);
+  if (weekdayIndex < 0) throw new Error(`Unexpected weekday value: ${map.weekday}`);
   return { y: Number(map.year), m: Number(map.month), d: Number(map.day), hour: Number(map.hour) % 24, weekday: weekdayIndex };
 }
 
@@ -115,12 +116,15 @@ export function formStatus(input: StatusInput): FormStatus {
   const previous = previousPeriodStart(cadence, now, timeZone);
   const activatedDay = periodStart("daily", activatedAt, timeZone);
   const hadPrevious = recordTimes.some((t) => periodStart(cadence, t, timeZone) === previous);
-  // The previous period only counts as missed if the form was already on when it began.
-  if (!hadPrevious && previous >= activatedDay) {
+  // The previous period only counts as missed if the form was already on BEFORE the day it began
+  // (switching a form on at 9pm must not show it as missed yesterday).
+  if (!hadPrevious && previous > activatedDay) {
     const word = cadence === "shift" || cadence === "daily" ? "yesterday" : cadence === "weekly" ? "last week" : cadence === "monthly" ? "last month" : "last year";
     return { status: "overdue", reason: `Not done ${word}`, lastAt };
   }
-  if ((cadence === "shift" || cadence === "daily") && dueAfterHour !== undefined && localHour(now, timeZone) >= dueAfterHour) {
+  // A form switched on today after its due hour is not overdue today.
+  const onBeforeDueHour = activatedDay < current || localHour(activatedAt, timeZone) < (dueAfterHour ?? 0);
+  if ((cadence === "shift" || cadence === "daily") && dueAfterHour !== undefined && onBeforeDueHour && localHour(now, timeZone) >= dueAfterHour) {
     return { status: "overdue", reason: `Due by ${formatHour(dueAfterHour)}`, lastAt };
   }
   return { status: "not_started", reason: null, lastAt };
@@ -146,4 +150,23 @@ export function periodWord(cadence: Cadence): string {
     case "event":
       return "";
   }
+}
+
+/**
+ * The instant of local midnight at the start of a local date (yyyy-mm-dd) in an IANA zone, plus a number
+ * of days. Searches in 30 minute steps so half hour zones (Adelaide, Darwin) are exact.
+ */
+export function localMidnightInstant(ymd: string, timeZone: string, addDays = 0): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const target = new Date(Date.UTC(y, m - 1, d + addDays));
+  const wantDate = target.toISOString().slice(0, 10);
+  const base = target.getTime();
+  const f = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  for (let offsetMin = -14 * 60; offsetMin <= 14 * 60; offsetMin += 30) {
+    const t = new Date(base - offsetMin * 60_000);
+    const map: Record<string, string> = {};
+    for (const p of f.formatToParts(t)) map[p.type] = p.value;
+    if (`${map.year}-${map.month}-${map.day}` === wantDate && Number(map.hour) % 24 === 0 && map.minute === "00") return t.toISOString();
+  }
+  return target.toISOString();
 }

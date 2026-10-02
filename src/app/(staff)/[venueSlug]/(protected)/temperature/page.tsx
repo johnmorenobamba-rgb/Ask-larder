@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { resolveNow } from "@/lib/compliance/engine/testClock";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
@@ -18,8 +19,9 @@ export const dynamic = "force-dynamic";
 
 // B2 storage temperature log, staff side. Visible to BOH staff plus manager tier
 // and owners (catalog); everyone else is sent home.
-export default async function TemperaturePage({ params }: { params: Promise<{ venueSlug: string }> }) {
+export default async function TemperaturePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
+  const sp = await searchParams;
   const staff = await getCurrentStaff();
   if (!staff) redirect(`/${venueSlug}/login`);
   if (!staff.staff_role_id && !staff.isManagerTier) redirect(`/${venueSlug}/roles`);
@@ -30,7 +32,7 @@ export default async function TemperaturePage({ params }: { params: Promise<{ ve
   // a failed role lookup must not look like "your role can't log this"
   if (dept.ok && !canSubmitForm(form, { isManagerTier: staff.isManagerTier, department: dept.department })) redirect(`/${venueSlug}/home`);
 
-  const now = new Date();
+  const now = resolveNow(sp.asof);
   const overview = await loadB2Overview(supabase, staff.venue_id!, now);
   const tz = overview.timeZone;
 

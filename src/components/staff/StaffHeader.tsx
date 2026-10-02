@@ -10,7 +10,7 @@ import { NavDrawer } from "@/components/staff/NavDrawer";
 // persistent tab bar. Same route scope as the bar it replaces (self-hides
 // outside the ongoing app's four sections) — the linear new-hire flow
 // still uses StaffTopBar.
-const NAV_SEGMENTS = ["home", "modules", "certs", "settings", "temperature"];
+const NAV_SEGMENTS = ["home", "modules", "certs", "settings", "temperature", "forms"];
 
 /**
  * The tradeoff the spec calls out explicitly: a hamburger trades the tab

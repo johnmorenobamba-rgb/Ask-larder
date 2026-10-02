@@ -2243,6 +2243,7 @@ export type Database = {
         }
         Returns: Json
       }
+      bump_staff_pin_failure: { Args: { p_staff_id: string }; Returns: number }
       complete_onboarding_signature: {
         Args: { p_device: string; p_ip: string; p_typed_name: string }
         Returns: Json

@@ -102,11 +102,28 @@ describe("form status", () => {
   it("monthly and yearly", () => {
     const now = new Date("2026-10-06T02:00:00Z");
     expect(formStatus({ ...base, cadence: "monthly", now, recordTimes: ["2026-10-01T01:00:00Z"] }).status).toBe("done");
-    expect(formStatus({ ...base, cadence: "monthly", now, recordTimes: ["2026-08-01T01:00:00Z"] }).reason).toBe("Not done last month");
+    expect(formStatus({ ...base, activatedAt: new Date("2026-06-01T00:00:00Z"), cadence: "monthly", now, recordTimes: ["2026-08-01T01:00:00Z"] }).reason).toBe("Not done last month");
     expect(formStatus({ ...base, cadence: "annual", now, recordTimes: ["2025-06-01T01:00:00Z"] }).status).toBe("not_started"); // last year done
     // last year only counts as missed if the form was already on when it began
     expect(formStatus({ ...base, cadence: "annual", now, recordTimes: ["2024-06-01T01:00:00Z"] }).status).toBe("not_started");
     expect(formStatus({ ...base, activatedAt: new Date("2020-01-01T00:00:00Z"), cadence: "annual", now, recordTimes: ["2024-06-01T01:00:00Z"] }).status).toBe("overdue");
+  });
+  it("switching a form on late is never an instant overdue", () => {
+    // switched on at 9pm local yesterday: this morning it is NOT overdue for yesterday
+    const onAt = new Date("2026-10-05T10:00:00Z"); // 9pm 5 Oct local (AEDT)
+    const morning = new Date("2026-10-05T23:30:00Z"); // 10:30am 6 Oct local
+    expect(formStatus({ cadence: "daily", timeZone: MEL, now: morning, recordTimes: [], activatedAt: onAt }).status).toBe("not_started");
+    // the day after that it is overdue for the full day that was missed
+    const next = new Date("2026-10-06T23:30:00Z");
+    expect(formStatus({ cadence: "daily", timeZone: MEL, now: next, recordTimes: [], activatedAt: onAt }).status).toBe("overdue");
+    // switched on at 3pm today, a form due by 11am is not overdue today
+    const threePm = new Date("2026-10-06T04:00:00Z"); // 3pm 6 Oct local
+    const evening = new Date("2026-10-06T08:00:00Z"); // 7pm 6 Oct local
+    expect(formStatus({ cadence: "shift", timeZone: MEL, now: evening, recordTimes: [], activatedAt: threePm, dueAfterHour: 11 }).status).toBe("not_started");
+    // switched on at 8am, due by 11am: overdue at 1pm
+    const eightAm = new Date("2026-10-05T21:00:00Z"); // 8am 6 Oct local
+    const onePm = new Date("2026-10-06T02:00:00Z");
+    expect(formStatus({ cadence: "shift", timeZone: MEL, now: onePm, recordTimes: [], activatedAt: eightAm, dueAfterHour: 11 }).status).toBe("overdue");
   });
   it("event forms are never due and report the last record", () => {
     const s = formStatus({ ...base, cadence: "event", now: new Date("2026-10-06T02:00:00Z"), recordTimes: ["2026-10-01T01:00:00Z", "2026-10-03T01:00:00Z"] });
@@ -131,11 +148,22 @@ describe("rule compiler and mirror", () => {
   });
   it("compiles stages, subject and cosign", () => {
     const six = compileRules(FORM_BY_ID.B6, { stageKey: "six_hour" });
-    expect(six.stage).toMatchObject({ key: "six_hour", chain: "existing", requires: "start", requires_prior: ["two_hour"], elapsed_max_min: 360 });
+    expect(six.stage).toMatchObject({ key: "six_hour", chain: "existing", requires: "start", soft_prior: ["two_hour"], elapsed_max_min: 360 });
     expect(six.allow_correction).toBe(false);
     expect(compileRules(FORM_BY_ID.B6, { stageKey: "start" }).stage).toMatchObject({ chain: "new" });
     expect(compileRules(FORM_BY_ID.B4).subject).toEqual({ field: "thermometer" });
+    // the hard field bounds are wide enough to SAVE a failing reading instead of refusing it
+    const b4 = compileRules(FORM_BY_ID.B4).fields as { key: string; min: number; max: number }[];
+    expect(b4.find((f) => f.key === "ice_c")).toMatchObject({ min: -30, max: 60 });
+    expect(b4.find((f) => f.key === "boil_c")).toMatchObject({ min: 40, max: 120 });
+    const b5 = compileRules(FORM_BY_ID.B5).fields as { key: string; min: number }[];
+    expect(b5.find((f) => f.key === "core_temp_c")?.min).toBe(-30);
     expect(compileRules(FORM_BY_ID.F3).cosign).toBe(true);
+  });
+  it("B6 6 hour check: a missed 2 hour check is a soft prior, not a block", () => {
+    const six = compileRules(FORM_BY_ID.B6, { stageKey: "six_hour" });
+    expect(six.stage).toMatchObject({ soft_prior: ["two_hour"], soft_prior_label: "The 2 hour check was missed" });
+    expect(six.stage).not.toHaveProperty("requires_prior");
   });
   it("an unknown stage is an error", () => {
     expect(() => compileRules(FORM_BY_ID.B6, { stageKey: "nope" })).toThrow();

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveNow } from "@/lib/compliance/engine/testClock";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { COMPLIANCE_FORMS, STATUS_TAG_LABELS } from "@/lib/compliance/catalog";
@@ -16,11 +17,12 @@ export const dynamic = "force-dynamic";
 // Minimal owner view of the B2 temperature log (Stage 0b scope): open out of range
 // flags (however old, until a LATER in range reading exists), today's readings, and
 // units not yet logged today. The full list and export is Stage 0c.
-export default async function OwnerTemperaturePage({ params }: { params: Promise<{ venueSlug: string }> }) {
+export default async function OwnerTemperaturePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
+  const sp = await searchParams;
   const staff = await getCurrentStaff();
   const supabase = await createClient();
-  const now = new Date();
+  const now = resolveNow(sp.asof);
   const overview = await loadB2Overview(supabase, staff!.venue_id!, now);
   const form = COMPLIANCE_FORMS.B2;
   const tz = overview.timeZone;

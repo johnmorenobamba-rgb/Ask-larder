@@ -77,6 +77,9 @@ export type StageDef = {
   chain: "new" | "existing";
   requires?: string;
   requiresPrior?: string[];
+  /** Earlier steps that SHOULD exist: a missing one does not block this step, it makes the record a fail. */
+  softPrior?: string[];
+  softPriorLabel?: string;
   /** Minutes allowed since the start, measured on the server clock. */
   elapsedMaxMin?: number;
   elapsedLabel?: string;
@@ -149,6 +152,8 @@ export type RulesObject = {
     chain: "new" | "existing";
     requires?: string;
     requires_prior?: string[];
+    soft_prior?: string[];
+    soft_prior_label?: string;
     elapsed_max_min?: number;
     elapsed_label?: string;
   };

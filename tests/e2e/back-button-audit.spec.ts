@@ -323,6 +323,7 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
     { href: "escalations", label: "Escalations" },
     { href: "near-misses", label: "Near-misses" },
     { href: "temperature", label: "Temperature log" },
+    { href: "compliance", label: "Compliance" },
     { href: "stations", label: "Stations" },
     { href: "photo-library", label: "Photos" },
     { href: "contacts", label: "Contacts" },
@@ -342,6 +343,31 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
       await expectHealthyPage(page);
     });
   }
+
+  test("owner compliance: overview -> switch forms (nested) -> back to overview", async ({ page }) => {
+    await loginOwner(page);
+    await page.goto(`/${SLUG}/owner/compliance`);
+    await expectHealthyPage(page);
+    await page.getByRole("link", { name: "Switch forms on or off" }).click();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/forms$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance forms" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("owner compliance: overview -> records (nested) -> back to overview", async ({ page }) => {
+    await loginOwner(page);
+    await page.goto(`/${SLUG}/owner/compliance`);
+    await page.getByRole("link", { name: "See and print records" }).click();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance/records$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance records" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
 
   test("owner nested: module versions (from Modules list)", async ({ page }) => {
     await loginOwner(page);
@@ -547,6 +573,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const DRAWER_ITEMS = [
     { segment: "modules", label: "Modules" },
     { segment: "certs", label: "Certificates" },
+    { segment: "forms", label: "Compliance forms" },
     { segment: "temperature", label: "Temperature log" },
     { segment: "settings", label: "Settings" },
   ];
@@ -605,6 +632,29 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
     await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible();
     await page.goBack();
     await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("compliance forms hub (direct, BOH staff) -> a form -> back to the hub", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    await page.goto(`/${SLUG}/home`);
+    await page.goto(`/${SLUG}/forms`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance forms" })).toBeVisible();
+    await page.goto(`/${SLUG}/forms/B10`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Kitchen opening checklist" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/forms$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("compliance form (direct): an unknown form id is a clean not found, B2 sends you to the temperature log", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    const res = await page.goto(`/${SLUG}/forms/NOPE`);
+    expect(res?.status()).toBe(404);
+    await page.goto(`/${SLUG}/forms/B2`);
+    await page.waitForURL(new RegExp(`/${SLUG}/temperature$`), { waitUntil: "commit" });
     await expectHealthyPage(page);
   });
 
