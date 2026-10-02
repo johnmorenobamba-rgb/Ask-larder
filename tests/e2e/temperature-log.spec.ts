@@ -135,6 +135,9 @@ test.afterAll(async () => {
 });
 
 test.describe.serial("B2 temperature log", () => {
+  // The dev server compiles routes on first hit and the walkthrough and screenshot tests make many
+  // navigations: the 30s default fails on a slow or busy machine, not because anything is broken.
+  test.describe.configure({ timeout: 240_000 });
   test("FOH staff are denied: no page, no nav item, API refuses", async ({ page }) => {
     await loginStaff(page, "Flo Floor");
     await page.goto(`/${SLUG}/temperature`);
