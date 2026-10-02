@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:isolation": "vitest run tests/isolation.test.ts",
-    "test:unit": "vitest run tests/unit"
+    "test:unit": "vitest run tests/unit",
+    "check:integrity": "node scripts/check-source-integrity.mjs",
+    "setup:hooks": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

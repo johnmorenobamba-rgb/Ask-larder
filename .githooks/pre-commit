@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a commit that stages a corrupted source file (NUL byte, U+FFFD, invalid UTF-8).
+# Enabled per clone with: npm run setup:hooks
+node scripts/check-source-integrity.mjs --staged || exit 1
