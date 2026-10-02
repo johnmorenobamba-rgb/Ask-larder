@@ -332,6 +332,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compliance_alert_log_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "compliance_latest_by_subject"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "compliance_alert_log_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
@@ -399,6 +406,13 @@ export type Database = {
             columns: ["corrects_submission_id"]
             isOneToOne: false
             referencedRelation: "compliance_form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_form_submissions_corrects_submission_id_fkey"
+            columns: ["corrects_submission_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_latest_by_subject"
             referencedColumns: ["id"]
           },
           {
@@ -1747,6 +1761,48 @@ export type Database = {
           },
         ]
       }
+      venue_compliance_forms: {
+        Row: {
+          enabled: boolean
+          enabled_at: string
+          form_id: string
+          updated_at: string
+          updated_by: string | null
+          venue_id: string
+        }
+        Insert: {
+          enabled: boolean
+          enabled_at?: string
+          form_id: string
+          updated_at?: string
+          updated_by?: string | null
+          venue_id: string
+        }
+        Update: {
+          enabled?: boolean
+          enabled_at?: string
+          form_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_compliance_forms_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_compliance_forms_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_compliance_settings: {
         Row: {
           created_at: string
@@ -2152,6 +2208,28 @@ export type Database = {
           },
         ]
       }
+      compliance_latest_by_subject: {
+        Row: {
+          corrective_action: string | null
+          form_id: string | null
+          id: string | null
+          out_of_range: boolean | null
+          payload: Json | null
+          subject_key: string | null
+          submitted_at: string | null
+          submitted_by_name: string | null
+          venue_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_form_submissions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       bootstrap_owner: {
@@ -2204,6 +2282,20 @@ export type Database = {
           p_staff_id: string
           p_venue_id: string
           p_visible_to_roles: string[]
+        }
+        Returns: Json
+      }
+      submit_compliance_record: {
+        Args: {
+          p_cosigner_id?: string
+          p_device_stamp: string
+          p_entry: Json
+          p_form_id: string
+          p_gate_roles: string[]
+          p_rules: Json
+          p_staff_id: string
+          p_venue_id: string
+          p_visible_roles: string[]
         }
         Returns: Json
       }
