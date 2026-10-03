@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 // The Save bar for the staff compliance forms. It is rendered in a portal on document.body because the
@@ -8,8 +8,12 @@ import { createPortal } from "react-dom";
 // `position: fixed` into "fixed to that ancestor": the bar then sat at the bottom of the content, covered
 // the last field and did not stick to the screen.
 export function StickyBar({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // false on the server and during hydration, true in the browser afterwards (no effect needed)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   if (!mounted) return null;
   return createPortal(
     <>

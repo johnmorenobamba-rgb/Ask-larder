@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { FORMS, FORM_BY_ID } from "../../src/lib/compliance/engine/forms";
 import type { FormDef, StageDef } from "../../src/lib/compliance/engine/types";
 import { adminClient, createFixture, destroyFixture, loginStaff, PIN, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
-import { PLANS, fillAll as fillAllShared, fieldsOf, openForm as openFormShared, saveRecord, type Sample } from "./helpers/formDriver";
+import { PLANS, fillAll as fillAllShared, openForm as openFormShared, saveRecord, type Sample } from "./helpers/formDriver";
 
 // Stage 0 compliance forms, end to end, on a DISPOSABLE fixture venue modelled on the demo pub (see
 // helpers/stage0.ts). For every generic form: the allowed role fills it, a pass saves and the hub shows
