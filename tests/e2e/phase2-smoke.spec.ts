@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
 
+// The seeded smoke venue staff PIN comes from the environment, never from the repo.
+const SMOKE_PIN = process.env.E2E_SMOKE_PIN ?? "";
+
 // Quick smoke check for Phase 2's core flow against the disposable
 // "Smoke Test Venue" seeded directly in larder-dev (not venue #1's real
 // data, which correctly stays hidden until the owner approves modules).
@@ -11,7 +14,7 @@ test("welcome -> role select -> module -> completion", async ({ page }) => {
   await expect(page.getByText("Smoke Test Venue")).toBeVisible();
 
   await page.getByRole("button", { name: "Smoke Tester" }).click();
-  await page.locator('input[type="password"]').fill("1234");
+  await page.locator('input[type="password"]').fill(SMOKE_PIN);
   await page.getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL(/\/welcome$/);

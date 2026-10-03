@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -34,7 +35,7 @@ async function embed(text: string): Promise<number[]> {
 
 const suffix = randomUUID().slice(0, 8);
 const SLUG = `ask-larder-test-${suffix}`;
-const STAFF_PIN = "1234";
+const STAFF_PIN = fixturePin();
 const STAFF_NAME = "Ask Larder Tester";
 const SECTION_CONTENT =
   "The venue's closing checklist: turn off the fryers, wipe down the pass, and take the bins out to the rear laneway before locking the back door.";

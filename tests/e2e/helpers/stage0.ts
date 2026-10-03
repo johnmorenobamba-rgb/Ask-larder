@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../../helpers/secrets";
 config({ path: ".env.local" });
 
 import { randomUUID } from "node:crypto";
@@ -20,8 +21,8 @@ export function adminClient() {
   });
 }
 
-export const PIN = "4821";
-const OWNER_PASSWORD = "FixtureOwner123!";
+export const PIN = fixturePin();
+const OWNER_PASSWORD = randomPassword();
 
 export type Fixture = {
   slug: string;

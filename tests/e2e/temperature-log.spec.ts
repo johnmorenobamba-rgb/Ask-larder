@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -24,8 +25,8 @@ const suffix = randomUUID().slice(0, 8);
 const SLUG = `temp-log-${suffix}`;
 // Resend test address (never a real mailbox): alert emails are off in this spec, and if one were ever enabled by mistake this still could not reach a person.
 const OWNER_EMAIL = `delivered+tl${suffix}@resend.dev`;
-const OWNER_PASSWORD = "TempLogOwner123!";
-const PIN = "4821";
+const OWNER_PASSWORD = randomPassword();
+const PIN = fixturePin();
 const SHOTS = path.resolve(__dirname, "../../scratch/compliance-0b-report/screenshots");
 
 let venueId = "";

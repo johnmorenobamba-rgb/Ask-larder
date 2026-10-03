@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -23,7 +24,8 @@ function adminClient() {
 const suffix = randomUUID().slice(0, 8);
 const SLUG = `p5-routes-${suffix}`;
 const OWNER_EMAIL = `delivered+p5${suffix}@resend.dev`;
-const PIN = "4821";
+const PIN = fixturePin();
+const FIXTURE_OWNER_PASSWORD = randomPassword();
 let venueId = "";
 let ownerAuthId = "";
 const staffIds: string[] = [];
@@ -49,7 +51,7 @@ async function loginAs(page: Page, name: string) {
 
 test.beforeAll(async () => {
   const admin = adminClient();
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({ email: OWNER_EMAIL, password: "P5RoutesOwner123!", email_confirm: true });
+  const { data: authData, error: authError } = await admin.auth.admin.createUser({ email: OWNER_EMAIL, password: FIXTURE_OWNER_PASSWORD, email_confirm: true });
   if (authError || !authData.user) throw authError ?? new Error("no owner user");
   ownerAuthId = authData.user.id;
   const { data: boot, error } = await admin.rpc("bootstrap_owner", {

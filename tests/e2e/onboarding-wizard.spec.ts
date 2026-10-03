@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect } from "@playwright/test";
@@ -31,9 +32,9 @@ const suffix = randomUUID().slice(0, 8);
 const SLUG = `onboarding-wizard-smoke-${suffix}`;
 // Real domain with a disposable alias: bootstrapOwner rejects RFC 2606 test domains.
 const OWNER_EMAIL = `john.moreno.bamba+onboarding-wizard-smoke-${suffix}@gmail.com`;
-const SPECIALIST_PIN = "8824";
+const SPECIALIST_PIN = fixturePin();
 let specialistId: string | undefined;
-const PASSWORD = "OnboardingWizardSmoke123!";
+const PASSWORD = randomPassword();
 
 let venueId: string | undefined;
 

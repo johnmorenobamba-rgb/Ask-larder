@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -67,8 +68,8 @@ test.describe.serial("back-button audit: onboarding wizard (15 pages)", () => {
   // used one) -- a real domain with a disposable alias, same convention
   // already used for every other throwaway account in this project.
   const OWNER_EMAIL = `john.moreno.bamba+back-audit-wizard-${suffix}@gmail.com`;
-  const PASSWORD = "BackAuditWizard123!";
-  const SPECIALIST_PIN = "8823";
+  const PASSWORD = randomPassword();
+  const SPECIALIST_PIN = fixturePin();
   let venueId: string | undefined;
   let specialistId: string | undefined;
 
@@ -181,7 +182,7 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
   const suffix = randomUUID().slice(0, 8);
   const SLUG = `back-audit-owner-${suffix}`;
   const OWNER_EMAIL = `back-audit-owner-${suffix}@example.com`;
-  const PASSWORD = "BackAuditOwner123!";
+  const PASSWORD = randomPassword();
   const QR_SLUG = `back-audit-owner-station-${suffix}`;
 
   let venueId: string;
@@ -443,7 +444,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const QR_SLUG = `back-audit-staff-station-${suffix}`;
   const FRESH_NAME = "Back Audit Fresh Staff";
   const SET_NAME = "Back Audit Set Staff";
-  const PIN = "7412";
+  const PIN = fixturePin();
 
   let venueId: string;
   let liveModuleId: string;

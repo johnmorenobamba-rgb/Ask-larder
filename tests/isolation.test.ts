@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { randomPassword } from "./helpers/secrets";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { bootstrapOwner } from "../src/lib/auth/bootstrapOwner";
@@ -20,7 +21,9 @@ const SLUG_A = `isolation-test-a-${suffix}`;
 const SLUG_B = `isolation-test-b-${suffix}`;
 const OWNER_A_EMAIL = `isolation-owner-a-${suffix}@example.com`;
 const OWNER_B_EMAIL = `isolation-owner-b-${suffix}@example.com`;
-const PASSWORD = "IsolationTest123!";
+const PASSWORD = randomPassword();
+// The real onboarding specialist PIN gate is exercised, so its PIN comes from the environment, never from the repo.
+const SPECIALIST_PIN = process.env.E2E_SPECIALIST_PIN ?? "";
 
 function anonClient(): SupabaseClient<Database> {
   return createClient<Database>(
@@ -61,6 +64,7 @@ let clientA: SupabaseClient<Database>;
 let clientB: SupabaseClient<Database>;
 
 beforeAll(async () => {
+  if (!SPECIALIST_PIN) throw new Error("Set E2E_SPECIALIST_PIN (the onboarding specialist PIN) to run this suite.");
   const resultA = await bootstrapOwner({
     venueName: "Isolation Test Venue A",
     venueSlug: SLUG_A,
@@ -70,7 +74,7 @@ beforeAll(async () => {
     // "John" / 0623, seeded via scripts/one-off/seed-onboarding-specialist.mjs
     // -- this test calls the real bootstrapOwner(), so it goes through the
     // same PIN gate as the actual /onboarding/start route (Part 2, 15 Sep).
-    specialistPin: "0623",
+    specialistPin: SPECIALIST_PIN,
     requestIp: "127.0.0.1",
   });
   const resultB = await bootstrapOwner({
@@ -79,7 +83,7 @@ beforeAll(async () => {
     ownerName: "Owner B",
     ownerEmail: OWNER_B_EMAIL,
     ownerPassword: PASSWORD,
-    specialistPin: "0623",
+    specialistPin: SPECIALIST_PIN,
     requestIp: "127.0.0.1",
   });
   venueAId = resultA.venueId;

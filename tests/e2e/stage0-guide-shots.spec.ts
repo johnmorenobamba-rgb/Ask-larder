@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 import { FORMS, FORM_BY_ID } from "../../src/lib/compliance/engine/forms";
-import { adminClient, createFixture, destroyFixture, loginOwner, loginStaff, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
+import { adminClient, createFixture, PIN, destroyFixture, loginOwner, loginStaff, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
 import { PLANS, fieldsOf, fillAll, openForm, saveRecord } from "./helpers/formDriver";
 
 // Screenshots for the staff UI guide. They come ONLY from a disposable fixture venue modelled on the
@@ -165,7 +165,7 @@ test("guide shots F3 till reconciliation with the second signature", async ({ pa
   await fillAll(page, def, null, { expected_cash: 500, counted_cash: 500 });
   await shotAll(page, "F3", "progress", role);
   await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
-  await page.locator("#cosign-pin").fill("4821");
+  await page.locator("#cosign-pin").fill(PIN);
   await shotAll(page, "F3", "complete", role);
   await saveRecord(page);
   await shotAll(page, "F3", "saved", role);
@@ -174,7 +174,7 @@ test("guide shots F3 till reconciliation with the second signature", async ({ pa
   await shotAll(page, "F3", "fail", role);
   await page.locator("#fail-note").fill("Fixture note: recounted twice, till is short");
   await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
-  await page.locator("#cosign-pin").fill("4821");
+  await page.locator("#cosign-pin").fill(PIN);
   await shotAll(page, "F3", "failnote", role);
 });
 

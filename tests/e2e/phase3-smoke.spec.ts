@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
 
+// The seeded smoke venue staff PIN comes from the environment, never from the repo.
+const SMOKE_PIN = process.env.E2E_SMOKE_PIN ?? "";
+
 // Quick smoke check for Phase 3's certs -> signature -> completion -> Ask
 // Larder explainer flow, against the same disposable "Smoke Test Venue"
 // phase2-smoke.spec.ts uses. Runs after phase2-smoke, which already gives
@@ -10,7 +13,7 @@ test("certs -> signature -> completion -> Ask Larder intro", async ({ page }) =>
   test.setTimeout(90_000);
   await page.goto("/smoke-test-venue/login");
   await page.getByRole("button", { name: "Smoke Tester" }).click();
-  await page.locator('input[type="password"]').fill("1234");
+  await page.locator('input[type="password"]').fill(SMOKE_PIN);
   await page.getByRole("button", { name: "Log in" }).click();
 
   // Login always lands on welcome first, regardless of prior progress.
