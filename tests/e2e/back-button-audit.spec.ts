@@ -651,8 +651,9 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
 
   test("compliance form (direct): an unknown form id is a clean not found, B2 sends you to the temperature log", async ({ page }) => {
     await loginStaff(page, SET_NAME);
-    const res = await page.goto(`/${SLUG}/forms/NOPE`);
-    expect(res?.status()).toBe(404);
+    await page.goto(`/${SLUG}/forms/NOPE`);
+    // the app streams its response, so the status is already 200 when notFound() renders: check the page instead
+    await expect(page.getByText(/could not be found|not found|404/i).first()).toBeVisible();
     await page.goto(`/${SLUG}/forms/B2`);
     await page.waitForURL(new RegExp(`/${SLUG}/temperature$`), { waitUntil: "commit" });
     await expectHealthyPage(page);
