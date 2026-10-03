@@ -19,8 +19,8 @@ import type { Database } from "../src/lib/supabase/types";
 const suffix = randomUUID().slice(0, 8);
 const SLUG_A = `isolation-test-a-${suffix}`;
 const SLUG_B = `isolation-test-b-${suffix}`;
-const OWNER_A_EMAIL = `isolation-owner-a-${suffix}@example.com`;
-const OWNER_B_EMAIL = `isolation-owner-b-${suffix}@example.com`;
+const OWNER_A_EMAIL = `delivered+isoa${suffix}@resend.dev`;
+const OWNER_B_EMAIL = `delivered+isob${suffix}@resend.dev`;
 const PASSWORD = randomPassword();
 // The real onboarding specialist PIN gate is exercised, so its PIN comes from the environment, never from the repo.
 const SPECIALIST_PIN = process.env.E2E_SPECIALIST_PIN ?? "";
@@ -328,7 +328,7 @@ afterAll(async () => {
   await admin.from("venues").delete().eq("slug", SLUG_A);
   await admin.from("venues").delete().eq("slug", SLUG_B);
 
-  const { data: authList } = await admin.auth.admin.listUsers();
+  const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const toDelete = authList.users.filter((u) => u.email === OWNER_A_EMAIL || u.email === OWNER_B_EMAIL);
   for (const u of toDelete) {
     await admin.auth.admin.deleteUser(u.id);
@@ -624,5 +624,160 @@ describe("multi-tenant isolation", () => {
     const { data, error } = await clientA.from("venue_promotions").select("id").eq("id", promotionBId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
+  });
+});
+
+// Compliance tables, the new role tables and the views: the same two venue proof for the tables added after the older suite.
+describe("multi-tenant isolation: compliance, roles and views", () => {
+  let roleA = "";
+  let roleB = "";
+  let ownerAId = "";
+  let ownerBId = "";
+  let unitA = "";
+  let unitB = "";
+  let recA = "";
+  let recB = "";
+  // table names in a loop are not one typed union, so use an untyped handle for the loops only
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyA = () => clientA as unknown as { from: (t: string) => any };
+
+  beforeAll(async () => {
+    const admin = createAdminClient();
+    const mk = async (venueId: string, name: string) => {
+      const { data: role } = await admin.from("staff_roles").insert({ venue_id: venueId, name: "Cook " + name, department: "BOH", fallback_tier: "frontline" }).select("id").single();
+      const { data: owner } = await admin.from("app_users").select("id").eq("venue_id", venueId).eq("role", "owner").single();
+      await admin.from("venue_compliance_forms").insert({ venue_id: venueId, form_id: "B13", enabled: true });
+      await admin.from("venue_compliance_settings").upsert({ venue_id: venueId, trade_waste_agreement: "yes", offers_accommodation: false, high_risk_activities: [] }, { onConflict: "venue_id" });
+      const { data: unit } = await admin.from("venue_refrigeration_units").insert({ venue_id: venueId, name: "Fridge " + name, unit_type: "cold", max_temp_c: 5 }).select("id").single();
+      const rules = { version: "1", fields: [{ key: "note", type: "text", required: true }], fail: [] };
+      const { data: rec, error } = await admin.rpc("submit_compliance_record", {
+        p_venue_id: venueId,
+        p_staff_id: owner!.id,
+        p_form_id: "B13",
+        p_gate_roles: ["BOH"],
+        p_visible_roles: ["BOH"],
+        p_rules: rules,
+        p_entry: { client_request_id: randomUUID(), values: { note: "isolation " + name } },
+        p_device_stamp: "isolation test",
+      });
+      if (error) throw error;
+      // an out of range B2 reading makes an alert row in this venue too
+      const { error: e2 } = await admin.rpc("submit_compliance_form", {
+        p_venue_id: venueId,
+        p_staff_id: owner!.id,
+        p_form_id: "B2",
+        p_visible_to_roles: ["BOH"],
+        p_entries: [{ client_request_id: randomUUID(), unit_id: unit!.id, reading_c: 9, corrective_action: "isolation test" }],
+        p_device_stamp: "isolation test",
+      });
+      if (e2) throw e2;
+      return { roleId: role!.id, ownerId: owner!.id, unitId: unit!.id, recId: (rec as { id: string }).id };
+    };
+    const a = await mk(venueAId, "A");
+    const b = await mk(venueBId, "B");
+    roleA = a.roleId;
+    ownerAId = a.ownerId;
+    unitA = a.unitId;
+    recA = a.recId;
+    roleB = b.roleId;
+    ownerBId = b.ownerId;
+    unitB = b.unitId;
+    recB = b.recId;
+  });
+
+  const tables = [
+    "staff_roles",
+    "app_users",
+    "compliance_form_submissions",
+    "compliance_alert_log",
+    "venue_compliance_forms",
+    "venue_compliance_settings",
+    "venue_refrigeration_units",
+    "compliance_latest_by_subject",
+    "compliance_b2_latest_readings",
+  ] as const;
+
+  it("venue A sees only its own rows in every compliance and role table and view (sanity check)", async () => {
+    for (const t of tables) {
+      const { data, error } = await anyA().from(t).select("venue_id");
+      expect(error, t).toBeNull();
+      expect((data ?? []).length, t + " has rows for A").toBeGreaterThan(0);
+      expect((data ?? []).every((r: { venue_id: string }) => r.venue_id === venueAId), t + " only venue A").toBe(true);
+    }
+  });
+
+  it("venue A reads none of venue B's rows in any of them, by scan and by venue id", async () => {
+    for (const t of tables) {
+      const { data, error } = await anyA().from(t).select("venue_id").eq("venue_id", venueBId);
+      expect(error, t).toBeNull();
+      expect(data, t).toHaveLength(0);
+    }
+  });
+
+  it("venue A cannot read venue B's specific rows by known id", async () => {
+    expect((await clientA.from("compliance_form_submissions").select("id").eq("id", recB)).data).toHaveLength(0);
+    expect((await clientA.from("staff_roles").select("id").eq("id", roleB)).data).toHaveLength(0);
+    expect((await clientA.from("venue_refrigeration_units").select("id").eq("id", unitB)).data).toHaveLength(0);
+    expect((await clientA.from("app_users").select("id").eq("id", ownerBId)).data).toHaveLength(0);
+  });
+
+  it("venue A cannot update or delete venue B's rows (nothing changes)", async () => {
+    await clientA.from("staff_roles").update({ department: "FOH" }).eq("id", roleB);
+    await clientA.from("staff_roles").delete().eq("id", roleB);
+    await clientA.from("app_users").update({ name: "Hijacked" }).eq("id", ownerBId);
+    await clientA.from("app_users").delete().eq("id", ownerBId);
+    await clientA.from("venue_compliance_forms").update({ enabled: false }).eq("venue_id", venueBId);
+    await clientA.from("venue_compliance_settings").update({ offers_accommodation: true }).eq("venue_id", venueBId);
+    await clientA.from("venue_refrigeration_units").update({ max_temp_c: 99 }).eq("id", unitB);
+    await clientA.from("compliance_form_submissions").update({ payload: {} }).eq("id", recB);
+    await clientA.from("compliance_form_submissions").delete().eq("id", recB);
+    const admin = createAdminClient();
+    const [r, u, f, s, un, rec] = await Promise.all([
+      admin.from("staff_roles").select("department").eq("id", roleB).single(),
+      admin.from("app_users").select("name").eq("id", ownerBId).single(),
+      admin.from("venue_compliance_forms").select("enabled").eq("venue_id", venueBId).single(),
+      admin.from("venue_compliance_settings").select("offers_accommodation").eq("venue_id", venueBId).single(),
+      admin.from("venue_refrigeration_units").select("max_temp_c").eq("id", unitB).single(),
+      admin.from("compliance_form_submissions").select("id, payload").eq("id", recB).single(),
+    ]);
+    expect(r.data?.department).toBe("BOH");
+    expect(u.data?.name).not.toBe("Hijacked");
+    expect(f.data?.enabled).toBe(true);
+    expect(s.data?.offers_accommodation).toBe(false);
+    expect(Number(un.data?.max_temp_c)).toBe(5);
+    expect(rec.data?.id).toBe(recB);
+    expect(JSON.stringify(rec.data?.payload)).toContain("isolation B");
+  });
+
+  it("venue A cannot insert rows scoped to venue B", async () => {
+    const a = await clientA.from("staff_roles").insert({ venue_id: venueBId, name: "Foreign", department: "BOH", fallback_tier: "frontline" });
+    const b = await clientA.from("venue_compliance_forms").insert({ venue_id: venueBId, form_id: "B12", enabled: true });
+    const c = await clientA.from("venue_refrigeration_units").insert({ venue_id: venueBId, name: "Foreign unit", unit_type: "cold", max_temp_c: 5 });
+    const d = await clientA.from("compliance_form_submissions").insert({ venue_id: venueBId, form_id: "B13", submitted_by: ownerAId, submitted_by_name: "x", payload: {} });
+    const e = await clientA.from("app_users").insert({ venue_id: venueBId, role: "staff", name: "Foreign staff" });
+    for (const r of [a, b, c, d, e]) expect(r.error).not.toBeNull();
+    const admin = createAdminClient();
+    expect((await admin.from("staff_roles").select("id").eq("venue_id", venueBId).eq("name", "Foreign")).data).toHaveLength(0);
+    expect((await admin.from("app_users").select("id").eq("venue_id", venueBId).eq("name", "Foreign staff")).data).toHaveLength(0);
+  });
+
+  it("venue A cannot give itself venue B's role, nor move itself into venue B", async () => {
+    const x = await clientA.from("app_users").update({ staff_role_id: roleB }).eq("id", ownerAId);
+    const y = await clientA.from("app_users").update({ venue_id: venueBId }).eq("id", ownerAId);
+    expect(x.error ?? y.error).not.toBeNull();
+    const admin = createAdminClient();
+    const { data } = await admin.from("app_users").select("venue_id, staff_role_id").eq("id", ownerAId).single();
+    expect(data?.venue_id).toBe(venueAId);
+    expect(data?.staff_role_id).not.toBe(roleB);
+  });
+
+  it("venue A's own rows still work (sanity: own record visible, own role update)", async () => {
+    const { data: rec } = await clientA.from("compliance_form_submissions").select("id").eq("id", recA);
+    expect(rec).toHaveLength(1);
+    const { error } = await clientA.from("staff_roles").update({ department: "FOH" }).eq("id", roleA);
+    expect(error).toBeNull();
+    const admin = createAdminClient();
+    expect((await admin.from("staff_roles").select("department").eq("id", roleA).single()).data?.department).toBe("FOH");
+    expect(unitA).not.toBe(unitB);
   });
 });

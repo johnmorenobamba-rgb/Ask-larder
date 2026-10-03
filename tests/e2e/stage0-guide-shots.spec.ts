@@ -20,6 +20,7 @@ const VIEWPORTS = [
 ] as const;
 
 let fx: Fixture;
+let mainFx: Fixture | null = null; // the first fixture; the clean venue test reassigns fx, so keep this one to destroy it
 let cleanFx: Fixture | null = null;
 const only = process.env.GUIDE_ONLY ? new Set(process.env.GUIDE_ONLY.split(",")) : null;
 const want = (id: string) => !only || only.has(id);
@@ -44,16 +45,26 @@ async function shotAll(page: Page, form: string, state: string, role: string) {
 test.beforeAll(async () => {
   fs.mkdirSync(OUT, { recursive: true });
   fx = await createFixture("gd");
+  mainFx = fx;
   const admin = adminClient();
   for (const id of ["CAFE1", "CAFE2", "CAFE3"]) await admin.from("venue_compliance_forms").insert({ venue_id: fx.venueId, form_id: id, enabled: true });
 });
 
 test.afterAll(async () => {
-  fs.writeFileSync(path.join(OUT, "..", "manifest.json"), JSON.stringify(manifest, null, 1));
-  // the catalog as plain data, for the guide builder (functions such as defaultOn are dropped)
-  fs.writeFileSync(path.join(OUT, "..", "forms.json"), JSON.stringify(FORMS, (_k, v) => (typeof v === "function" ? undefined : v), 1));
-  await destroyFixture(fx);
-  await destroyFixture(cleanFx);
+  try {
+    fs.writeFileSync(path.join(OUT, "..", "manifest.json"), JSON.stringify(manifest, null, 1));
+    // the catalog as plain data, for the guide builder (functions such as defaultOn are dropped)
+    fs.writeFileSync(path.join(OUT, "..", "forms.json"), JSON.stringify(FORMS, (_k, v) => (typeof v === "function" ? undefined : v), 1));
+  } finally {
+    // always remove every fixture this spec made, even if writing the files or a test failed
+    for (const f of new Set([mainFx, fx, cleanFx])) {
+      try {
+        await destroyFixture(f ?? null);
+      } catch (err) {
+        console.error("[guide] fixture cleanup failed:", err instanceof Error ? err.message : "unknown error");
+      }
+    }
+  }
 });
 
 async function startOfChecklistProgress(page: Page, label: string) {

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { nativeClick } from "./helpers/stage0";
 
 // The seeded smoke venue staff PIN comes from the environment, never from the repo.
 const SMOKE_PIN = process.env.E2E_SMOKE_PIN ?? "";
@@ -27,7 +28,7 @@ test("module update interstitial -> QR station entry -> near-miss report", async
   await page.goto("/smoke-test-venue/login");
   await page.getByRole("button", { name: "Smoke Tester" }).click();
   await page.locator('input[type="password"]').fill(SMOKE_PIN);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
 
   await expect(page).toHaveURL(/\/module-updates$/, { timeout: 10_000 });
   await expect(page.getByText("Smoke Test Module")).toBeVisible();
@@ -45,7 +46,7 @@ test("module update interstitial -> QR station entry -> near-miss report", async
 
   await page.getByRole("button", { name: "Smoke Tester" }).click();
   await page.locator('input[type="password"]').fill(SMOKE_PIN);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
   await expect(page).toHaveURL(/\/station\/smoke-station-01$/, { timeout: 10_000 });
   await expect(page.getByText("Smoke Station")).toBeVisible();
   // Block D replaced the disabled placeholder with the real chat entry point.

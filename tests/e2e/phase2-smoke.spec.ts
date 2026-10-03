@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { nativeClick } from "./helpers/stage0";
 
 // The seeded smoke venue staff PIN comes from the environment, never from the repo.
 const SMOKE_PIN = process.env.E2E_SMOKE_PIN ?? "";
@@ -15,7 +16,7 @@ test("welcome -> role select -> module -> completion", async ({ page }) => {
 
   await page.getByRole("button", { name: "Smoke Tester" }).click();
   await page.locator('input[type="password"]').fill(SMOKE_PIN);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
 
   await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByRole("heading", { name: "Welcome to Smoke Test Venue." })).toBeVisible();

@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { nativeClick } from "./helpers/stage0";
 import { randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
@@ -122,7 +123,7 @@ async function loginAsOwner(page: Page) {
   await page.goto(`/${SLUG}/owner/login`);
   await page.getByPlaceholder("Email").fill(OWNER_EMAIL);
   await page.getByPlaceholder("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
   await page.waitForURL(/\/owner\/dashboard$/);
 }
 

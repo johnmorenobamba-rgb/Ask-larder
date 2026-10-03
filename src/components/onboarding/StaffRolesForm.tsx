@@ -30,6 +30,21 @@ export function StaffRolesForm({
   // enforcement, so there's no way to type around it by disabling JS.
   const managerTierLocked = isManagerTierRoleName(name);
 
+  async function changeDepartment(roleId: string, newDepartment: string) {
+    setError(null);
+    const res = await fetch("/api/owner/onboarding/staff-roles", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roleId, department: newDepartment }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      setError(body?.error ?? "Couldn't change this department.");
+      return;
+    }
+    router.refresh();
+  }
+
   async function saveRosterLocation() {
     await fetch("/api/owner/onboarding/staff-roles", {
       method: "POST",
@@ -141,9 +156,22 @@ export function StaffRolesForm({
           {existing.map((r) => (
             <div key={r.id} className={rowClass}>
               <p className="font-sans text-ink">{r.name}</p>
-              <p className="font-mono text-xs text-clay-brown">
-                {r.department ?? "no department"} · {r.fallback_tier ?? "frontline"}
-              </p>
+              <div className="flex items-center gap-2">
+                <select
+                  aria-label={`Department for ${r.name}`}
+                  value={r.department ?? ""}
+                  onChange={(e) => changeDepartment(r.id, e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">No department</option>
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="font-mono text-xs text-clay-brown">{r.fallback_tier ?? "frontline"}</p>
+              </div>
             </div>
           ))}
           {existing.length === 0 && <p className="font-sans text-sm text-clay-brown">No roles yet.</p>}

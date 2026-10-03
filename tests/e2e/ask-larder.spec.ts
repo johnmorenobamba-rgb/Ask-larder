@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { nativeClick } from "./helpers/stage0";
 import { fixturePin } from "../helpers/secrets";
 config({ path: ".env.local" });
 
@@ -109,7 +110,7 @@ async function loginAsTester(page: Page) {
   await page.goto(`/${SLUG}/login`);
   await page.getByRole("button", { name: STAFF_NAME }).click();
   await page.locator('input[type="password"]').fill(STAFF_PIN);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
   await page.waitForURL(/\/(welcome|modules|roles)$/);
 }
 

@@ -1,3 +1,4 @@
+-- (cosign tests updated 5 Oct 2026 for the manager tier rule inside the function)
 -- Compliance engine suite: submit_compliance_record, venue_compliance_forms, compliance_latest_by_subject.
 -- ONE DO block ending in a forced RAISE, so nothing persists. Throwaway venues, staff and auth users only;
 -- never a real or demo venue. Expected: all PASS, 0 FAIL, counts unchanged afterwards.
@@ -195,13 +196,15 @@ begin
   out := out || pg_temp.chk('cosign by the same person is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":500}'), s_boh)->>'ok')::boolean);
   out := out || pg_temp.chk('cosign by a person of another venue is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":500}'), s_oth)->>'ok')::boolean);
   out := out || pg_temp.chk('cosign by a deactivated person is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":500}'), s_gone)->>'ok')::boolean);
-  res := pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":498.5}'), s_boh2);
-  out := out || pg_temp.chk('cosign by a different active person is stored with the name; a small variance passes', (res->>'ok')::boolean and not (res->'res'->>'out_of_range')::boolean and exists(select 1 from compliance_form_submissions where id=(res->'res'->>'id')::uuid and payload->>'cosigned_by_name'='Kit Two'));
-  out := out || pg_temp.chk('a variance over the tolerance fails and needs a note', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":470}'), s_boh2)->>'ok')::boolean
-    and (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":470}', 'Recounted twice, till short'), s_boh2)->'res'->>'out_of_range')::boolean);
-  out := out || pg_temp.chk('money with 3 decimals is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500.123,"counted":500}'), s_boh2)->>'ok')::boolean);
-  out := out || pg_temp.chk('negative money is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":-5,"counted":500}'), s_boh2)->>'ok')::boolean);
-  out := out || pg_temp.chk('a second signature on a form that takes none is refused', not (pg_temp.rc(vT, s_boh, 'B5', array['BOH'], array['BOH'], rules_temp, pg_temp.en('{"item":"x","temp_c":80}'), s_boh2)->>'ok')::boolean);
+  out := out || pg_temp.chk('cosign by a frontline colleague is refused (manager tier only, enforced in the function)', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":500}'), s_boh2)->>'ok')::boolean);
+  out := out || pg_temp.chk('cosign by the owner is accepted', (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":500}'), s_own)->>'ok')::boolean);
+  res := pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":498.5}'), s_mgr);
+  out := out || pg_temp.chk('cosign by a different active person is stored with the name; a small variance passes', (res->>'ok')::boolean and not (res->'res'->>'out_of_range')::boolean and exists(select 1 from compliance_form_submissions where id=(res->'res'->>'id')::uuid and payload->>'cosigned_by_name'='Dave Duty'));
+  out := out || pg_temp.chk('a variance over the tolerance fails and needs a note', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":470}'), s_mgr)->>'ok')::boolean
+    and (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500,"counted":470}', 'Recounted twice, till short'), s_mgr)->'res'->>'out_of_range')::boolean);
+  out := out || pg_temp.chk('money with 3 decimals is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":500.123,"counted":500}'), s_mgr)->>'ok')::boolean);
+  out := out || pg_temp.chk('negative money is refused', not (pg_temp.rc(vT, s_boh, 'F3', array['BOH'], array['BOH'], rules_cash, pg_temp.en('{"expected":-5,"counted":500}'), s_mgr)->>'ok')::boolean);
+  out := out || pg_temp.chk('a second signature on a form that takes none is refused', not (pg_temp.rc(vT, s_boh, 'B5', array['BOH'], array['BOH'], rules_temp, pg_temp.en('{"item":"x","temp_c":80}'), s_mgr)->>'ok')::boolean);
 
   -- ===== register: latest effective row per subject
   perform pg_temp.rc(vT, s_boh, 'B1', array['BOH'], array['BOH'], rules_reg, pg_temp.en('{"name":"  Fresh   Fish Co ","status":"active"}'));
