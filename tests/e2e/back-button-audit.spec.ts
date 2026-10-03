@@ -684,6 +684,9 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
     await page.goto(`/${SLUG}/home`);
     await page.goto(`/${SLUG}/signature`);
     await expectHealthyPage(page);
+    // this page redirects (to modules, as the fixture has not finished). Let that destination finish loading before
+    // going back: going back while it is still streaming aborts the history navigation (net::ERR_ABORTED).
+    await page.waitForLoadState("networkidle");
     await page.goBack();
     await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
     await expectHealthyPage(page);
