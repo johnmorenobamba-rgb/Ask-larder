@@ -164,7 +164,7 @@ test("guide shots F3 till reconciliation with the second signature", async ({ pa
   await shotAll(page, "F3", "empty", role);
   await fillAll(page, def, null, { expected_cash: 500, counted_cash: 500 });
   await shotAll(page, "F3", "progress", role);
-  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
+  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
   await page.locator("#cosign-pin").fill("4821");
   await shotAll(page, "F3", "complete", role);
   await saveRecord(page);
@@ -173,7 +173,7 @@ test("guide shots F3 till reconciliation with the second signature", async ({ pa
   await fillAll(page, def, null, { expected_cash: 500, counted_cash: 470 });
   await shotAll(page, "F3", "fail", role);
   await page.locator("#fail-note").fill("Fixture note: recounted twice, till is short");
-  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
+  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
   await page.locator("#cosign-pin").fill("4821");
   await shotAll(page, "F3", "failnote", role);
 });

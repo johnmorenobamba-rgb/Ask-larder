@@ -3,6 +3,7 @@ import type { Database } from "@/lib/supabase/types";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 import { formatLocalDateTime, formatLocalTime, formatTemp, venueTimeZone } from "../b2";
 import { localMidnightInstant, periodStart } from "./due";
+import { listCosigners } from "./cosigners";
 import { CHAIN_WINDOW_MS, DEFAULT_CUTOFF_HOUR } from "./hubData";
 import { fieldsFor, failFor, findStage, resolvedItems } from "./rules";
 import type { ChecklistItem, FieldDef, FormDef, StageDef } from "./types";
@@ -260,16 +261,7 @@ export async function loadFormPage(
 
   let cosigners: { id: string; name: string }[] = [];
   if (def.cosign) {
-    const { data: people, error: cErr } = await admin
-      .from("app_users")
-      .select("id, name")
-      .eq("venue_id", venueId)
-      .is("deactivated_at", null)
-      .not("pin_hash", "is", null)
-      .neq("id", staffId)
-      .order("name");
-    logQueryError("form page cosigners", cErr);
-    cosigners = (people ?? []).map((p) => ({ id: p.id, name: p.name }));
+    cosigners = await listCosigners(admin, venueId, staffId);
   }
 
   const doneNote =

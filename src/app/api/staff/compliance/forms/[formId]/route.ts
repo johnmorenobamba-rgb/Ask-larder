@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { isEligibleCosigner } from "@/lib/compliance/engine/cosigners";
 import { PinAuthError, verifyStaffPin } from "@/lib/auth/staffPin";
 import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { cleanNote } from "@/lib/compliance/b2";
@@ -134,6 +135,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ for
       return NextResponse.json({ error: "A second person must sign off with their PIN." }, { status: 400 });
     }
     if (co.staffId === staff.id) return NextResponse.json({ error: "The second signature must come from a different person." }, { status: 400 });
+    if (!(await isEligibleCosigner(admin, staff.venue_id, co.staffId))) {
+      return NextResponse.json({ error: "The second signature must come from a manager or supervisor of this venue." }, { status: 403 });
+    }
     try {
       const verified = await verifyStaffPin({ venueId: staff.venue_id, staffUserId: co.staffId, pin: co.pin });
       cosignerId = verified.id;

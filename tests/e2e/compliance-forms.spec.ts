@@ -111,23 +111,48 @@ test("F3 till reconciliation needs a second person with a correct PIN", async ({
   await fillAllShared(page, def, null, { expected_cash: 500, counted_cash: 500 });
   await expect(page.getByRole("button", { name: /^Save/ })).toBeDisabled();
   await expect(page.getByText("A second person must choose their name and enter their PIN.")).toBeVisible();
-  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
+  // P28: only manager tier people can countersign, so a frontline bartender is not offered at all
+  const offered = (await page.locator("#cosign-who option").allInnerTexts()).join("|");
+  expect(offered).toContain(FIXTURE_NAMES.dutyManager);
+  expect(offered).not.toContain(FIXTURE_NAMES.bartender);
+  expect(offered).not.toContain(FIXTURE_NAMES.kitchenHand);
+  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
   await page.locator("#cosign-pin").fill("0000");
   await page.getByRole("button", { name: /^Save/ }).click();
   await expect(page.getByText("That PIN didn't match.")).toBeVisible();
   await page.locator("#cosign-pin").fill(PIN);
   await saveRecord(page);
   const { data } = await adminClient().from("compliance_form_submissions").select("payload").eq("venue_id", fx.venueId).eq("form_id", "F3").order("submitted_at", { ascending: false }).limit(1);
-  expect((data?.[0]?.payload as { cosigned_by_name?: string }).cosigned_by_name).toBe(FIXTURE_NAMES.bartender);
+  expect((data?.[0]?.payload as { cosigned_by_name?: string }).cosigned_by_name).toBe(FIXTURE_NAMES.dutyManager);
   // out by more than the tolerance fails and needs a note
   await openForm(page, "F3");
   await fillAllShared(page, def, null, { expected_cash: 500, counted_cash: 470 });
-  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
+  await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.dutyManager });
   await page.locator("#cosign-pin").fill(PIN);
   await expect(page.getByRole("button", { name: /^Save/ })).toBeDisabled();
   await page.locator("#fail-note").fill("Fixture: recounted twice, till is short");
   await saveRecord(page);
   await expect(page.getByRole("status")).toContainText("flagged for the owner");
+});
+
+test("P28: the till countersigner must be an active manager tier person of this venue (direct API calls)", async ({ page }) => {
+  await loginStaff(page, fx, FIXTURE_NAMES.waiter);
+  const post = (cosign: { staffId: string; pin: string }) =>
+    page.request.post("/api/staff/compliance/forms/F3", { data: { clientRequestId: randomUUID(), values: { expected_cash: 500, counted_cash: 500 }, cosign } });
+  const count = async () => (await adminClient().from("compliance_form_submissions").select("id", { count: "exact", head: true }).eq("venue_id", fx.venueId).eq("form_id", "F3")).count ?? 0;
+  const before = await count();
+  // a frontline colleague with the right PIN is refused, and so is the person signing for themselves
+  expect((await post({ staffId: fx.staff.bartender.id, pin: PIN })).status()).toBe(403);
+  expect((await post({ staffId: fx.staff.kitchenHand.id, pin: PIN })).status()).toBe(403);
+  expect((await post({ staffId: fx.staff.waiter.id, pin: PIN })).status()).toBe(400);
+  expect(await count()).toBe(before);
+  // a deactivated manager is refused too
+  await adminClient().from("app_users").update({ deactivated_at: new Date().toISOString() }).eq("id", fx.staff.dutyManager.id);
+  expect((await post({ staffId: fx.staff.dutyManager.id, pin: PIN })).status()).toBe(403);
+  await adminClient().from("app_users").update({ deactivated_at: null }).eq("id", fx.staff.dutyManager.id);
+  // an active manager tier person with the right PIN is accepted
+  expect((await post({ staffId: fx.staff.headChef.id, pin: PIN })).status()).toBe(200);
+  expect(await count()).toBe(before + 1);
 });
 
 test("a correction links to the latest record only", async ({ page }) => {
