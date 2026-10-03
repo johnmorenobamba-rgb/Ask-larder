@@ -89,6 +89,7 @@ export function NearMissReportButton({
       <button
         ref={magneticRef}
         type="button"
+        data-near-miss-fab
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-40 rounded-full bg-ink px-5 py-3 font-sans text-sm font-medium text-parchment shadow-lg"
       >
