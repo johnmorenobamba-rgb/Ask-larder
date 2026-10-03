@@ -3,9 +3,26 @@ import bcrypt from "bcryptjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PIN_PATTERN = /^\d{4,6}$/;
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_MINUTES = 15;
+// Lockout rules (5 attempts, then a 15 minute lock) live in the database function record_staff_pin_failure.
 const BCRYPT_COST = 10;
+
+/**
+ * P26: reserves ONE PIN attempt with a single atomic database call BEFORE the PIN is compared. The database
+ * counts the attempt (5 attempts then a 15 minute lock) and does not count an attempt on an account that is
+ * already locked. Because the reservation comes first, a burst of parallel requests cannot all compare their
+ * guess: at most 5 guesses per lock window ever reach bcrypt. A correct PIN resets the counter afterwards, as
+ * before. If the database call fails the login FAILS CLOSED (no unlimited guessing).
+ */
+async function reservePinAttempt(admin: ReturnType<typeof createAdminClient>, staffUserId: string): Promise<void> {
+  const { data, error } = await admin.rpc("record_staff_pin_failure", { p_staff_id: staffUserId });
+  if (error) {
+    console.error("[staffPin] could not reserve a PIN attempt:", error.message);
+    throw new PinAuthError(500, "Unexpected error.");
+  }
+  if (!(data as { counted?: boolean } | null)?.counted) {
+    throw new PinAuthError(423, "Too many attempts. Try again in a few minutes.");
+  }
+}
 
 export class PinAuthError extends Error {
   status: number;
@@ -182,17 +199,10 @@ export async function loginWithStaffPin({
     throw new PinAuthError(423, `Too many attempts. Try again after ${lockedUntil.toISOString()}.`);
   }
 
+  await reservePinAttempt(admin, staffUserId);
   const matches = await bcrypt.compare(pin, staff.pin_hash);
 
   if (!matches) {
-    const attempts = (staff.pin_failed_attempts ?? 0) + 1;
-    const update: { pin_failed_attempts: number; pin_locked_until?: string } = {
-      pin_failed_attempts: attempts,
-    };
-    if (attempts >= MAX_FAILED_ATTEMPTS) {
-      update.pin_locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString();
-    }
-    await admin.from("app_users").update(update).eq("id", staffUserId);
     throw new PinAuthError(401, "Incorrect PIN.");
   }
 
@@ -278,13 +288,9 @@ export async function verifyStaffPin({
   if (lockedUntil && lockedUntil.getTime() > Date.now()) {
     throw new PinAuthError(423, "Too many attempts for that person. Try again later.");
   }
+  await reservePinAttempt(admin, staffUserId);
   const matches = await bcrypt.compare(pin, staff.pin_hash);
   if (!matches) {
-    // ONE atomic increment in the database (the same 5 attempts then 15 minute lock as the login), so
-    // parallel wrong PIN requests cannot all read the same count and dodge the lock. The counter is reset
-    // only by a correct PIN, as in the login.
-    const { error: bumpError } = await admin.rpc("bump_staff_pin_failure", { p_staff_id: staffUserId });
-    if (bumpError) console.error("[verifyStaffPin] could not record a failed attempt:", bumpError.message);
     throw new PinAuthError(401, "Incorrect PIN.");
   }
   await admin.from("app_users").update({ pin_failed_attempts: 0, pin_locked_until: null }).eq("id", staffUserId);

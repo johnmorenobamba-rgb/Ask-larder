@@ -2275,6 +2275,7 @@ export type Database = {
         Args: { p_changelog?: string; p_module_id: string }
         Returns: string
       }
+      record_staff_pin_failure: { Args: { p_staff_id: string }; Returns: Json }
       submit_compliance_form: {
         Args: {
           p_device_stamp: string
