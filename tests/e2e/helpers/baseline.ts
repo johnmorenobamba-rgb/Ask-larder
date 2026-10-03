@@ -61,10 +61,14 @@ export async function sweepFixtures(startedAt: string): Promise<{ venues: number
   let logins = 0;
   const ownerRe = new RegExp(`^delivered\+(${FIXTURE_PREFIXES.join("|")})[0-9a-f]{8}@resend\.dev$`);
   const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  // staff logins made during this run whose staff row no longer exists (a spec deleted its venue but not the login)
+  const { data: linked } = await admin.from("app_users").select("auth_id").not("auth_id", "is", null);
+  const linkedIds = new Set((linked ?? []).map((r) => r.auth_id));
+  const syntheticStaff = /^staff-[0-9a-f-]{36}@venue.internal$/;
   for (const u of list?.users ?? []) {
     if (new Date(u.created_at).getTime() < new Date(startedAt).getTime()) continue;
     const email = u.email ?? "";
-    if (staffEmails.includes(email) || ownerRe.test(email)) {
+    if (staffEmails.includes(email) || ownerRe.test(email) || (syntheticStaff.test(email) && !linkedIds.has(u.id))) {
       await admin.auth.admin.deleteUser(u.id);
       logins++;
     }
