@@ -68,7 +68,7 @@ export async function createFixture(prefix = "s0"): Promise<Fixture> {
     await admin.from("stations").insert({ venue_id: venueId, name, qr_code_slug: `fx-${i}-${suffix}` });
   }
 
-  const mkRole = async (name: string, department: "BOH" | "FOH", tier: "frontline" | "authorized") => {
+  const mkRole = async (name: string, department: "BOH" | "FOH" | "BAR", tier: "frontline" | "authorized") => {
     const { data, error: e } = await admin.from("staff_roles").insert({ venue_id: venueId, name, department, fallback_tier: tier }).select("id").single();
     if (e) throw e;
     return data!.id;
@@ -77,7 +77,7 @@ export async function createFixture(prefix = "s0"): Promise<Fixture> {
     kitchenHand: await mkRole("Kitchen Hand", "BOH", "frontline"),
     headChef: await mkRole("Head Chef", "BOH", "authorized"),
     waiter: await mkRole("Waiter", "FOH", "frontline"),
-    bartender: await mkRole("Bartender", "FOH", "frontline"),
+    bartender: await mkRole("Bartender", "BAR", "frontline"),
     dutyManager: await mkRole("Duty Manager", "FOH", "authorized"),
   };
   const pinHash = await bcrypt.hash(PIN, 10);

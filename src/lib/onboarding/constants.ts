@@ -58,6 +58,7 @@ export const DAYS_OF_WEEK = [
 export const DEPARTMENTS = [
   { value: "FOH", label: "Front of house" },
   { value: "BOH", label: "Back of house" },
+  { value: "BAR", label: "Bar" },
 ] as const;
 
 export const FALLBACK_TIERS = [

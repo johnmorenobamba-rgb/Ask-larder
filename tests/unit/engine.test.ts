@@ -440,3 +440,16 @@ describe("trading day (P23): closing forms belong to the day that just ended unt
     expect(FORM_BY_ID.F1.tradingDay).toBeUndefined();
   });
 });
+
+describe("bar department (P24)", () => {
+  it("the bar forms are for the BAR department only", () => {
+    for (const id of ["BAR1", "BAR2", "BAR3", "F10"]) {
+      expect(FORM_BY_ID[id].departments, id).toEqual(["BAR"]);
+      expect(gateRoles(FORM_BY_ID[id], null), id).toEqual(["BAR"]);
+    }
+  });
+  it("no other form lists BAR", () => {
+    const ids = FORMS.filter((f) => f.departments.includes("BAR")).map((f) => f.id).sort();
+    expect(ids).toEqual(["BAR1", "BAR2", "BAR3", "F10"]);
+  });
+});

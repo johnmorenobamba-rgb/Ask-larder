@@ -176,7 +176,7 @@ function StageHome({
                       {c.nextStageLabel}
                     </Link>
                   ) : (
-                    <p className="font-sans text-sm text-ink/70">Waiting for {stage.departments.includes("BOH") ? "the kitchen" : "front of house"}.</p>
+                    <p className="font-sans text-sm text-ink/70">Waiting for {stage.departments.includes("BOH") ? "the kitchen" : stage.departments.includes("BAR") ? "the bar" : "front of house"}.</p>
                   )}
                 </li>
               );

@@ -15,7 +15,7 @@ import type { ComplianceStatusTag, RefrigerationUnitType } from "./types";
 //     required where the venue's Food Safety Program follows FoodSmart.
 // Retention and frequency are NEVER described as legal minimums in the UI.
 
-export type Department = "BOH" | "FOH";
+export type Department = "BOH" | "FOH" | "BAR";
 
 // Owner facing wording per tag. Build Reference legend: every template carries
 // one of four tags, shown as "Legally required" / "Required if..." / "Best practice".

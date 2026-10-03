@@ -12,7 +12,7 @@ export const PLANS: Record<string, Plan[]> = {
   B10: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
   B11: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 1 } } }],
   F1: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  F2: [{ who: "bartender", pass: { items: "ALL" }, fail: { items: { failItem: 2 } } }],
+  F2: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 2 } } }],
   B9: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
   F8: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 1 } } }],
   F6: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],

@@ -35,7 +35,7 @@ export default async function OwnerFormsPage({ params }: { params: Promise<{ ven
       defaultList: !!f.defaultList,
       on: isFormOn(f, rows.get(f.id), ctx),
       reason: activationReason(f, rows.get(f.id), ctx),
-      audience: [...f.departments].map((d) => (d === "BOH" ? "back of house" : "front of house")).join(" and ") + " staff and managers",
+      audience: [...f.departments].map((d) => (d === "BOH" ? "back of house" : d === "BAR" ? "bar" : "front of house")).join(" and ") + " staff and managers",
     })),
   })).filter((g) => g.items.length > 0);
 
