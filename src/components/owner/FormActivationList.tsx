@@ -55,8 +55,8 @@ export function FormActivationList({ groups }: { groups: { heading: string; item
         </p>
       )}
       {groups.map((g) => (
-        <section key={g.heading} aria-labelledby={`g-${g.heading}`} className="space-y-3">
-          <h2 id={`g-${g.heading}`} className="font-display text-xl font-bold text-ink">
+        <section key={g.heading} aria-labelledby={`g-${g.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="space-y-3">
+          <h2 id={`g-${g.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="font-display text-xl font-bold text-ink">
             {g.heading}
           </h2>
           <ul className="space-y-3">
@@ -78,7 +78,7 @@ export function FormActivationList({ groups }: { groups: { heading: string; item
                     type="button"
                     role="switch"
                     aria-checked={on}
-                    aria-label={`${item.title}: ${on ? "on" : "off"}`}
+                    aria-label={item.title}
                     disabled={busy === item.id}
                     onClick={() => toggle(item, !on)}
                     className={`min-h-12 min-w-24 shrink-0 rounded-full border-2 px-5 font-sans text-base font-medium ${

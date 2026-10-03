@@ -110,15 +110,15 @@ export default async function OwnerCompliancePage({ params, searchParams }: { pa
               Every form that is on
             </h2>
             <div className="flex flex-wrap gap-3 font-sans text-sm">
-              <Link className="font-medium underline" href={`/${venueSlug}/owner/forms`}>
+              <Link className="inline-flex min-h-11 items-center font-medium underline" href={`/${venueSlug}/owner/forms`}>
                 Switch forms on or off
               </Link>
-              <Link className="font-medium underline" href={`/${venueSlug}/owner/compliance/records`}>
+              <Link className="inline-flex min-h-11 items-center font-medium underline" href={`/${venueSlug}/owner/compliance/records`}>
                 See and print records
               </Link>
               {/* A file download from an API route, not a page: a plain anchor is correct here */}
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a className="font-medium underline" href="/api/owner/compliance/export">
+              <a className="inline-flex min-h-11 items-center font-medium underline" href="/api/owner/compliance/export">
                 Download all records as CSV
               </a>
             </div>

@@ -51,3 +51,20 @@ test("the owner can still add a manager tier role through the wizard route; a fr
   const { data: none } = await adminClient().from("staff_roles").select("id").eq("venue_id", fx.venueId).eq("name", "Sneaky");
   expect(none?.length ?? 0).toBe(0);
 });
+
+test("a manager can change a role department through the roles route and step; a frontline person and bad values are refused", async ({ page }) => {
+  await loginOwner(page, fx);
+  await page.goto(`/${fx.slug}/owner/onboarding/staff-roles`);
+  const select = page.getByLabel("Department for Bartender");
+  await expect(select).toBeVisible({ timeout: 90_000 });
+  await select.selectOption("BAR");
+  await expect.poll(async () => (await adminClient().from("staff_roles").select("department").eq("id", roleId["Bartender"]).single()).data?.department, { timeout: 60_000 }).toBe("BAR");
+  const bad = await page.request.patch("/api/owner/onboarding/staff-roles", { data: { roleId: roleId["Bartender"], department: "KITCHEN" } });
+  expect(bad.status()).toBe(400);
+  const tier = (await adminClient().from("staff_roles").select("fallback_tier").eq("id", roleId["Bartender"]).single()).data?.fallback_tier;
+  expect(tier).toBe("frontline");
+  await loginStaff(page, fx, FIXTURE_NAMES.kitchenHand);
+  const denied = await page.request.patch("/api/owner/onboarding/staff-roles", { data: { roleId: roleId["Waiter"], department: "BAR" } });
+  expect(denied.status()).toBe(403);
+  expect((await adminClient().from("staff_roles").select("department").eq("id", roleId["Waiter"]).single()).data?.department).toBe("FOH");
+});

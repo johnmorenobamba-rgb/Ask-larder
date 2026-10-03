@@ -265,7 +265,7 @@ export function GenericComplianceForm(props: FormViewProps) {
         {correcting && (
           <p className="rounded-2xl border-2 border-clay-brown px-4 py-3 font-sans text-sm text-ink">
             You are correcting the latest record. The original stays on file and this one is linked to it.{" "}
-            <button type="button" className="font-medium underline" onClick={() => { setCorrecting(null); setValues({}); }}>
+            <button type="button" className="inline-flex min-h-11 items-center font-medium underline" onClick={() => { setCorrecting(null); setValues({}); }}>
               Cancel correction
             </button>
           </p>
@@ -289,7 +289,7 @@ export function GenericComplianceForm(props: FormViewProps) {
               maxLength={1000}
               aria-required="true"
               aria-invalid={noteMissing}
-              className={`w-full rounded-2xl border-2 bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:ring-ink/25 ${noteMissing ? "border-preserve-red" : "border-clay-brown"}`}
+              className={`w-full rounded-2xl border-2 bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60 ${noteMissing ? "border-preserve-red" : "border-clay-brown"}`}
             />
             <div className="flex flex-wrap gap-2">
               {(props.foodForm ? [QUICK_NOTES_GENERAL[0], QUICK_NOTES_GENERAL[1], QUICK_NOTE_FOOD, ...QUICK_NOTES_GENERAL.slice(2)] : QUICK_NOTES_GENERAL).map((q) => (
@@ -337,7 +337,7 @@ export function GenericComplianceForm(props: FormViewProps) {
               maxLength={6}
               value={cosignPin}
               onChange={(e) => setCosignPin(e.target.value.replace(/\D/g, ""))}
-              className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-2xl text-ink outline-none focus:ring-4 focus:ring-ink/25"
+              className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-2xl text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
             />
           </fieldset>
         )}
@@ -355,7 +355,7 @@ export function GenericComplianceForm(props: FormViewProps) {
                     {row.retired ? " (no longer used)" : ""}
                   </p>
                   <p className="font-sans text-sm text-ink/70">{row.detail}</p>
-                  <p className="font-sans text-xs text-ink/60">Updated {row.time}</p>
+                  <p className="font-sans text-xs text-ink/75">Updated {row.time}</p>
                 </div>
                 <button
                   type="button"
@@ -529,7 +529,7 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
             type="time"
             value={v}
             onChange={(e) => onChange(e.target.value)}
-            className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-2xl text-ink outline-none focus:ring-4 focus:ring-ink/25"
+            className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-2xl text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
           />
           <button
             type="button"
@@ -537,6 +537,7 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
               const d = new Date();
               onChange(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
             }}
+            aria-label={`Set ${field.label} to now`}
             className="min-h-14 shrink-0 rounded-2xl border-2 border-clay-brown px-5 font-sans text-base font-medium text-ink hover:border-ink"
           >
             Now
@@ -575,12 +576,12 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
             value={v}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.type === "money" ? "0.00" : "0.0"}
-            className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-3xl font-bold text-ink outline-none focus:ring-4 focus:ring-ink/25"
+            className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-3xl font-bold text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
           />
           {field.type === "number" && field.unit && <span className="flex items-center font-sans text-base text-ink/70">{field.unit}</span>}
         </div>
         {v.trim() !== "" && !isPendingMinus(v) && parseNumber(v) === null && (
-          <p className="font-sans text-sm text-preserve-red">Enter a number, for example {formatTemp(3.5).replace("°C", "")}.</p>
+          <p role="alert" className="font-sans text-sm text-preserve-red">Enter a number, for example {formatTemp(3.5).replace("°C", "")}.</p>
         )}
       </div>
     );
@@ -599,7 +600,7 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
           onChange={(e) => onChange(e.target.value)}
           rows={3}
           maxLength={field.maxLength ?? 300}
-          className="w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:ring-ink/25"
+          className="w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
         />
       ) : (
         <input
@@ -609,7 +610,7 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
           value={v}
           onChange={(e) => onChange(e.target.value)}
           maxLength={field.maxLength ?? 120}
-          className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-sans text-lg text-ink outline-none focus:ring-4 focus:ring-ink/25"
+          className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-sans text-lg text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
         />
       )}
     </div>

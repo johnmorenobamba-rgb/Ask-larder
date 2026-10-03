@@ -46,11 +46,16 @@ export function StaffRolesForm({
   }
 
   async function saveRosterLocation() {
-    await fetch("/api/owner/onboarding/staff-roles", {
+    const res = await fetch("/api/owner/onboarding/staff-roles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rosterLocation }),
     });
+    if (!res.ok) {
+      setError("Couldn't save the roster location. Try again.");
+      return;
+    }
+    setError(null);
     setRosterSaved(true);
     router.refresh();
   }
@@ -91,7 +96,7 @@ export function StaffRolesForm({
       <div className={cardClass}>
         <div className="space-y-1">
           <label className={labelClass}>Roster location</label>
-          <p className="font-sans text-xs text-ink/60">Where staff actually check who is on shift, e.g. physical board, shared doc, or an app name.</p>
+          <p className="font-sans text-xs text-ink/75">Where staff actually check who is on shift, e.g. physical board, shared doc, or an app name.</p>
           <div className="flex gap-2">
             <input
               value={rosterLocation}
@@ -99,7 +104,7 @@ export function StaffRolesForm({
                 setRosterLocation(e.target.value);
                 setRosterSaved(false);
               }}
-              placeholder="Roster location"
+              placeholder="Roster location" aria-label="Roster location"
               className={inputClass}
             />
             <button type="button" onClick={saveRosterLocation} className={secondaryButtonClass}>
@@ -111,7 +116,7 @@ export function StaffRolesForm({
 
       <div className={cardClass}>
         <p className={labelClass}>Add a role</p>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Role name" className={inputClass} />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Role name" aria-label="Role name" className={inputClass} />
         <select aria-label="Department" value={department} onChange={(e) => setDepartment(e.target.value)} className={selectClass}>
           <option value="">No department</option>
           {DEPARTMENTS.map((d) => (
@@ -136,18 +141,22 @@ export function StaffRolesForm({
             ))}
           </select>
           {managerTierLocked ? (
-            <p className="font-sans text-xs text-ink/60">
-              Head Chef, Sous Chef, Manager, and 2IC roles always get Authorized -- full owner-dashboard access and
+            <p className="font-sans text-xs text-ink/75">
+              Head Chef, Sous Chef, Manager, and 2IC roles always get Authorized. That means full owner dashboard access and
               real Ask Larder answers, the same as the owner.
             </p>
           ) : (
-            <p className="font-sans text-xs text-ink/60">
+            <p className="font-sans text-xs text-ink/75">
               Authorized is a deliberate elevation for restricted content like safe or alarm codes. Leave this as
               Frontline unless this role should genuinely hold that access.
             </p>
           )}
         </div>
-        {error && <p className={errorClass}>{error}</p>}
+        {error && (
+          <p role="alert" className={errorClass}>
+            {error}
+          </p>
+        )}
         <button type="button" onClick={addRole} disabled={loading || !name.trim()} className={secondaryButtonClass}>
           {loading ? "Adding…" : "Add role"}
         </button>

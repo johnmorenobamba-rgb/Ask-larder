@@ -253,7 +253,7 @@ export function TemperatureLogForm({
 
                     {showInput && (
                       <div className="space-y-2">
-                        <label htmlFor={fieldId} className="font-mono text-xs uppercase tracking-wide text-clay-brown">
+                        <label htmlFor={fieldId} className="font-sans text-base font-medium text-ink">
                           {st.correcting ? "Corrected reading" : "Reading"} (°C)
                         </label>
                         <div className="flex items-stretch gap-2">
@@ -277,7 +277,7 @@ export function TemperatureLogForm({
                             aria-describedby={`${fieldId}-status`}
                             aria-invalid={typedBad || out}
                             placeholder="0.0"
-                            className={`min-h-14 w-full rounded-2xl border-2 px-4 font-display text-3xl font-bold text-ink outline-none focus:ring-4 focus:ring-ink/25 ${
+                            className={`min-h-14 w-full rounded-2xl border-2 px-4 font-display text-3xl font-bold text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60 ${
                               out
                                 ? "border-preserve-red bg-preserve-red/10"
                                 : inRange
@@ -309,7 +309,7 @@ export function TemperatureLogForm({
                               maxLength={1000}
                               aria-required="true"
                               aria-invalid={noteMissing}
-                              className={`w-full rounded-2xl border-2 bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:ring-ink/25 ${
+                              className={`w-full rounded-2xl border-2 bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60 ${
                                 noteMissing ? "border-preserve-red" : "border-clay-brown"
                               }`}
                             />
