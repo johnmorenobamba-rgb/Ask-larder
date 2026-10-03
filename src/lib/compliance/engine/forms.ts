@@ -979,6 +979,7 @@ export const FORMS: FormDef[] = [
     cadenceNote: "Add a supplier when you start buying from them. Retire them when you stop.",
     estMinutes: 2,
     kind: "register",
+    event: true,
     tag: "recommended",
     tagVerified: false,
     tagNote: "A recommended record. Food must be traceable to its source. A supplier list helps you show that.",
@@ -1014,6 +1015,7 @@ export const FORMS: FormDef[] = [
     cadenceNote: "Add a chemical when you start using it. Retire it when you stop.",
     estMinutes: 2,
     kind: "register",
+    event: true,
     tag: "recommended",
     tagVerified: false,
     tagNote:

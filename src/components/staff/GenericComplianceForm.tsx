@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { StickyBar } from "@/components/staff/StickyBar";
 import { formatTemp, isPendingMinus } from "@/lib/compliance/b2";
 import { parseNumberInput } from "@/lib/compliance/engine/numberInput";
 import { evaluateFail, type FieldValue } from "@/lib/compliance/engine/rules";
@@ -367,7 +368,7 @@ export function GenericComplianceForm(props: FormViewProps) {
       )}
 
       {showBar && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-clay-brown/30 bg-parchment px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+        <StickyBar>
           <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="min-w-0 flex-1 space-y-1">
               {blocker && <p className="font-sans text-sm font-medium text-preserve-red">{blocker}</p>}
@@ -392,7 +393,7 @@ export function GenericComplianceForm(props: FormViewProps) {
               {saving ? "Saving…" : correcting ? "Save correction" : props.isRegister ? "Save entry" : "Save record"}
             </button>
           </div>
-        </div>
+        </StickyBar>
       )}
     </div>
   );

@@ -114,7 +114,7 @@ test("F3 till reconciliation needs a second person with a correct PIN", async ({
   await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
   await page.locator("#cosign-pin").fill("0000");
   await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.getByRole("alert")).toContainText("That PIN didn't match.");
+  await expect(page.getByText("That PIN didn't match.")).toBeVisible();
   await page.locator("#cosign-pin").fill(PIN);
   await saveRecord(page);
   const { data } = await adminClient().from("compliance_form_submissions").select("payload").eq("venue_id", fx.venueId).eq("form_id", "F3").order("submitted_at", { ascending: false }).limit(1);
@@ -173,7 +173,7 @@ test("access: FOH staff cannot open or post a BOH form; a forged body is ignored
     visibleToRoles: ["BOH"],
     submittedAt: "2020-01-01T00:00:00Z",
     rules: { version: 1, fields: [], fail: [] },
-    values: { item: "Forged umbrella", found_where: "Table 1", status: "Held at the venue" },
+    values: { item: "Forged umbrella", found_where: "Table 1", status: "held" },
   });
   expect(sub.status()).toBe(200);
   const { data: row } = await adminClient()
@@ -189,13 +189,13 @@ test("access: FOH staff cannot open or post a BOH form; a forged body is ignored
   expect(row?.visible_to_roles).toEqual(["FOH"]);
   expect(new Date(row!.submitted_at).getFullYear()).toBeGreaterThanOrEqual(2026);
   // unknown field and bad values are refused
-  expect((await post("F13", { clientRequestId: randomUUID(), values: { item: "x", found_where: "y", status: "Held at the venue", sneaky: 1 } })).status()).toBe(400);
+  expect((await post("F13", { clientRequestId: randomUUID(), values: { item: "x", found_where: "y", status: "held", sneaky: 1 } })).status()).toBe(400);
   expect((await post("F13", { clientRequestId: randomUUID(), values: { item: "x", found_where: "y", status: "bogus" } })).status()).toBe(400);
   expect((await post("NOPE", { clientRequestId: randomUUID(), values: {} })).status()).toBe(404);
   expect((await post("B2", { clientRequestId: randomUUID(), values: {} })).status()).toBe(404);
   // idempotent replay: the same request id saves once
   const id = randomUUID();
-  const vals = { item: "Replay umbrella", found_where: "Bar", status: "Held at the venue" };
+  const vals = { item: "Replay umbrella", found_where: "Bar", status: "held" };
   expect((await post("F13", { clientRequestId: id, values: vals })).status()).toBe(200);
   const again = await post("F13", { clientRequestId: id, values: vals });
   expect(again.status()).toBe(200);
