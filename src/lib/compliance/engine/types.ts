@@ -114,6 +114,8 @@ export type FormDef = {
   cadenceNote: string;
   /** daily or shift forms turn Overdue on the same day once the local hour reaches this. */
   dueAfterHour?: number;
+  /** Closing forms: the period is the venue's TRADING day (cutoff in venue_compliance_settings), not the calendar day. */
+  tradingDay?: boolean;
   estMinutes: number;
   tag: FormTag;
   tagVerified: boolean;

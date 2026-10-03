@@ -1810,6 +1810,7 @@ export type Database = {
           id: string
           offers_accommodation: boolean
           trade_waste_agreement: string
+          trading_day_cutoff_hour: number
           updated_at: string
           venue_id: string
         }
@@ -1819,6 +1820,7 @@ export type Database = {
           id?: string
           offers_accommodation?: boolean
           trade_waste_agreement?: string
+          trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id: string
         }
@@ -1828,6 +1830,7 @@ export type Database = {
           id?: string
           offers_accommodation?: boolean
           trade_waste_agreement?: string
+          trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id?: string
         }

@@ -3,7 +3,7 @@ import type { Database } from "@/lib/supabase/types";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 import { formatLocalDateTime, formatLocalTime, formatTemp, venueTimeZone } from "../b2";
 import { localMidnightInstant, periodStart } from "./due";
-import { CHAIN_WINDOW_MS } from "./hubData";
+import { CHAIN_WINDOW_MS, DEFAULT_CUTOFF_HOUR } from "./hubData";
 import { fieldsFor, failFor, findStage, resolvedItems } from "./rules";
 import type { ChecklistItem, FieldDef, FormDef, StageDef } from "./types";
 
@@ -141,10 +141,12 @@ export async function loadFormPage(
   const now = args.now ?? new Date();
   const stage = def.stages ? findStage(def, args.stageKey ?? undefined) : null;
 
-  const [{ data: profile, error: pErr }, { data: stations, error: sErr }] = await Promise.all([
+  const [{ data: profile, error: pErr }, { data: stations, error: sErr }, { data: cutoffRow }] = await Promise.all([
     supabase.from("venue_licence_profile").select("state").eq("venue_id", venueId).maybeSingle(),
     supabase.from("stations").select("id, name").eq("venue_id", venueId).order("created_at").limit(40),
+    supabase.from("venue_compliance_settings").select("trading_day_cutoff_hour").eq("venue_id", venueId).maybeSingle(),
   ]);
+  const cutoff = def.tradingDay ? (typeof cutoffRow?.trading_day_cutoff_hour === "number" ? cutoffRow.trading_day_cutoff_hour : DEFAULT_CUTOFF_HOUR) : 0;
   logQueryError("form page profile", pErr);
   logQueryError("form page stations", sErr);
   const timeZone = venueTimeZone(profile?.state);
@@ -158,7 +160,7 @@ export async function loadFormPage(
     ? new Date(now.getTime() - CHAIN_WINDOW_MS).toISOString()
     : def.event
       ? new Date(now.getTime() - 5 * 24 * 3600 * 1000).toISOString()
-      : localMidnightInstant(periodStart(def.cadence, now, timeZone), timeZone, 0);
+      : localMidnightInstant(periodStart(def.cadence, now, timeZone, cutoff), timeZone, 0);
   const { data: rows, error: rErr } = await supabase
     .from("compliance_form_submissions")
     .select("id, submitted_at, submitted_by_name, out_of_range, corrective_action, corrects_submission_id, payload")
@@ -181,10 +183,10 @@ export async function loadFormPage(
   logQueryError("form page latest", lErr);
   const latestIds = new Set((latestRows ?? []).map((l) => l.id as string));
 
-  const current = periodStart(def.cadence, now, timeZone);
+  const current = periodStart(def.cadence, now, timeZone, cutoff);
   const visible = recs
     .filter((r) => !corrected.has(r.id))
-    .filter((r) => !def.stages && (def.event || periodStart(def.cadence, r.submitted_at, timeZone) === current));
+    .filter((r) => !def.stages && (def.event || periodStart(def.cadence, r.submitted_at, timeZone, cutoff) === current));
 
   const records: RecordSummary[] = visible.slice(0, def.event ? 12 : 6).map((r) => ({
     id: r.id,

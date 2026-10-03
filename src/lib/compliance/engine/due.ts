@@ -42,13 +42,22 @@ function addDays(t: Ymd, days: number): Ymd {
   return { y: u.getUTCFullYear(), m: u.getUTCMonth() + 1, d: u.getUTCDate() };
 }
 
-/** First local day of the period the instant falls in. */
-export function periodStart(cadence: Cadence, instant: Date | string, timeZone: string): string {
+/**
+ * The venue TRADING date of a local moment: before the cutoff hour (default 5 in the app, 0 here means no
+ * cutoff) the moment still belongs to the previous calendar day. Done on calendar fields, so a daylight
+ * saving change cannot shift it. Used for shift and daily forms only.
+ */
+function tradingDate(p: Ymd & { hour: number }, cutoffHour: number): Ymd {
+  return cutoffHour > 0 && p.hour < cutoffHour ? addDays(p, -1) : p;
+}
+
+/** First local day of the period the instant falls in (shift and daily: the trading day when a cutoff is given). */
+export function periodStart(cadence: Cadence, instant: Date | string, timeZone: string, cutoffHour = 0): string {
   const p = parts(instant, timeZone);
   switch (cadence) {
     case "shift":
     case "daily":
-      return key(p);
+      return key(tradingDate(p, cutoffHour));
     case "weekly":
       return key(addDays(p, -p.weekday)); // Monday is weekday 0
     case "monthly":
@@ -61,12 +70,12 @@ export function periodStart(cadence: Cadence, instant: Date | string, timeZone: 
 }
 
 /** First local day of the period before the one the instant falls in. */
-export function previousPeriodStart(cadence: Cadence, instant: Date | string, timeZone: string): string {
+export function previousPeriodStart(cadence: Cadence, instant: Date | string, timeZone: string, cutoffHour = 0): string {
   const p = parts(instant, timeZone);
   switch (cadence) {
     case "shift":
     case "daily":
-      return key(addDays(p, -1));
+      return key(addDays(tradingDate(p, cutoffHour), -1));
     case "weekly":
       return key(addDays(p, -p.weekday - 7));
     case "monthly":
@@ -80,6 +89,12 @@ export function previousPeriodStart(cadence: Cadence, instant: Date | string, ti
 
 export function localHour(instant: Date | string, timeZone: string): number {
   return parts(instant, timeZone).hour;
+}
+
+/** The hour on the trading clock: 1am with a 5am cutoff is hour 25 of the previous trading day. */
+export function tradingHour(instant: Date | string, timeZone: string, cutoffHour: number): number {
+  const h = parts(instant, timeZone).hour;
+  return cutoffHour > 0 && h < cutoffHour ? h + 24 : h;
 }
 
 export type FormStatusKind = "done" | "not_started" | "overdue" | "event";
@@ -100,22 +115,25 @@ export type StatusInput = {
   /** When the form was switched on (or the engine went live), as an instant. */
   activatedAt: Date | string;
   dueAfterHour?: number;
+  /** Venue trading day cutoff hour (local) for closing forms; 0 or omitted means the calendar day. */
+  cutoffHour?: number;
 };
 
 export function formStatus(input: StatusInput): FormStatus {
   const { cadence, now, timeZone, recordTimes, activatedAt, dueAfterHour } = input;
+  const cut = input.cutoffHour ?? 0;
   const sorted = [...recordTimes].sort();
   const lastAt = sorted.length ? sorted[sorted.length - 1] : null;
   if (cadence === "event") return { status: "event", reason: null, lastAt };
 
-  const current = periodStart(cadence, now, timeZone);
-  if (recordTimes.some((t) => periodStart(cadence, t, timeZone) === current)) {
+  const current = periodStart(cadence, now, timeZone, cut);
+  if (recordTimes.some((t) => periodStart(cadence, t, timeZone, cut) === current)) {
     return { status: "done", reason: null, lastAt };
   }
 
-  const previous = previousPeriodStart(cadence, now, timeZone);
-  const activatedDay = periodStart("daily", activatedAt, timeZone);
-  const hadPrevious = recordTimes.some((t) => periodStart(cadence, t, timeZone) === previous);
+  const previous = previousPeriodStart(cadence, now, timeZone, cut);
+  const activatedDay = periodStart("daily", activatedAt, timeZone, cut);
+  const hadPrevious = recordTimes.some((t) => periodStart(cadence, t, timeZone, cut) === previous);
   // The previous period only counts as missed if the form was already on BEFORE the day it began
   // (switching a form on at 9pm must not show it as missed yesterday).
   if (!hadPrevious && previous > activatedDay) {
@@ -123,8 +141,8 @@ export function formStatus(input: StatusInput): FormStatus {
     return { status: "overdue", reason: `Not done ${word}`, lastAt };
   }
   // A form switched on today after its due hour is not overdue today.
-  const onBeforeDueHour = activatedDay < current || localHour(activatedAt, timeZone) < (dueAfterHour ?? 0);
-  if ((cadence === "shift" || cadence === "daily") && dueAfterHour !== undefined && onBeforeDueHour && localHour(now, timeZone) >= dueAfterHour) {
+  const onBeforeDueHour = activatedDay < current || tradingHour(activatedAt, timeZone, cut) < (dueAfterHour ?? 0);
+  if ((cadence === "shift" || cadence === "daily") && dueAfterHour !== undefined && onBeforeDueHour && tradingHour(now, timeZone, cut) >= dueAfterHour) {
     return { status: "overdue", reason: `Due by ${formatHour(dueAfterHour)}`, lastAt };
   }
   return { status: "not_started", reason: null, lastAt };

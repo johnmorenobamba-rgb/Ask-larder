@@ -35,6 +35,8 @@ export type HubForm = {
 export type HubData = {
   degraded: boolean;
   timeZone: string;
+  /** venue trading day cutoff hour (local), used by closing forms */
+  cutoffHour: number;
   now: string;
   forms: HubForm[];
   b2: {
@@ -52,9 +54,9 @@ export async function loadActivationContext(
   supabase: Client,
   admin: Client,
   venueId: string,
-): Promise<{ ctx: ActivationContext; state: string | null; settingsCreatedAt: string | null; degraded: boolean }> {
+): Promise<{ ctx: ActivationContext; state: string | null; settingsCreatedAt: string | null; cutoffHour: number; degraded: boolean }> {
   const [{ data: settings, error: sErr }, { data: profile, error: pErr }, { data: wiz, error: wErr }] = await Promise.all([
-    supabase.from("venue_compliance_settings").select("high_risk_activities, offers_accommodation, trade_waste_agreement, created_at").eq("venue_id", venueId).maybeSingle(),
+    supabase.from("venue_compliance_settings").select("high_risk_activities, offers_accommodation, trade_waste_agreement, created_at, trading_day_cutoff_hour").eq("venue_id", venueId).maybeSingle(),
     supabase.from("venue_licence_profile").select("state, licence_type").eq("venue_id", venueId).maybeSingle(),
     admin.from("wizard_sessions").select("venue_type_flags").eq("venue_id", venueId).maybeSingle(),
   ]);
@@ -71,7 +73,8 @@ export async function loadActivationContext(
     tradeWaste: tw === "yes" || tw === "no" ? tw : "unsure",
     highRiskActivities: settings?.high_risk_activities ?? [],
   };
-  return { ctx, state: profile?.state ?? null, settingsCreatedAt: settings?.created_at ?? null, degraded: !!(sErr || pErr || wErr) };
+  const cutoffHour = typeof settings?.trading_day_cutoff_hour === "number" ? settings.trading_day_cutoff_hour : DEFAULT_CUTOFF_HOUR;
+  return { ctx, state: profile?.state ?? null, settingsCreatedAt: settings?.created_at ?? null, cutoffHour, degraded: !!(sErr || pErr || wErr) };
 }
 
 export async function loadActivationRows(supabase: Client, venueId: string): Promise<{ rows: Map<string, ActivationRow>; degraded: boolean }> {
@@ -82,6 +85,9 @@ export async function loadActivationRows(supabase: Client, venueId: string): Pro
   return { rows, degraded: !!error };
 }
 
+/** Default trading day cutoff (venue local): a closing record made before 5am belongs to the previous day. */
+export const DEFAULT_CUTOFF_HOUR = 5;
+
 type Rec = { id: string; form_id: string; submitted_at: string; out_of_range: boolean; corrects_submission_id: string | null; payload: { stage?: string; chain_id?: string } };
 
 /** The API caps a response at 1000 rows; a window that returns this many may have been cut off. */
@@ -89,7 +95,7 @@ const WINDOW_CAP = 1000;
 export const CHAIN_WINDOW_MS = 3 * 24 * 3600 * 1000;
 
 export async function loadHub(supabase: Client, admin: Client, venueId: string, who: Who, now: Date = new Date()): Promise<HubData> {
-  const [{ ctx, state, settingsCreatedAt, degraded: ctxDegraded }, { rows, degraded: rowsDegraded }, b2] = await Promise.all([
+  const [{ ctx, state, settingsCreatedAt, cutoffHour, degraded: ctxDegraded }, { rows, degraded: rowsDegraded }, b2] = await Promise.all([
     loadActivationContext(supabase, admin, venueId),
     loadActivationRows(supabase, venueId),
     loadB2Overview(supabase, venueId, now),
@@ -99,6 +105,8 @@ export async function loadHub(supabase: Client, admin: Client, venueId: string, 
   // one window per cadence: the start of the PREVIOUS period (event forms: the last 7 days)
   const windowStart = (c: Cadence): string => {
     if (c === "event") return new Date(now.getTime() - 7 * 24 * 3600 * 1000).toISOString();
+    // shift and daily windows reach one more day back so a closing form made after midnight is always inside
+    if (c === "shift" || c === "daily") return localMidnightInstant(previousPeriodStart(c, now, timeZone, cutoffHour), timeZone, -1);
     return localMidnightInstant(previousPeriodStart(c, now, timeZone), timeZone, 0);
   };
   const windows: { key: string; since: string; ids: string[] }[] = [];
@@ -157,6 +165,7 @@ export async function loadHub(supabase: Client, admin: Client, venueId: string, 
       recordTimes: def.cadence === "event" ? (lastLogged.has(def.id) ? [lastLogged.get(def.id)!] : []) : originals.map((r) => r.submitted_at),
       activatedAt: activatedAt(row, settingsCreatedAt),
       dueAfterHour: def.dueAfterHour,
+      cutoffHour: def.tradingDay ? cutoffHour : 0,
     });
     const corrected = new Set(list.map((r) => r.corrects_submission_id).filter((x): x is string => !!x));
 
@@ -188,6 +197,7 @@ export async function loadHub(supabase: Client, admin: Client, venueId: string, 
   return {
     degraded: !!(ctxDegraded || rowsDegraded || windowDegraded || latestErr || b2.degraded),
     timeZone,
+    cutoffHour,
     now: now.toISOString(),
     forms,
     b2: {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formStatus, periodStart, previousPeriodStart } from "../../src/lib/compliance/engine/due";
+import { formStatus, periodStart, previousPeriodStart, tradingHour } from "../../src/lib/compliance/engine/due";
 import { compileRules, evaluateFail, findStage } from "../../src/lib/compliance/engine/rules";
 import { FORMS, FORM_BY_ID, HELD_FORMS } from "../../src/lib/compliance/engine/forms";
 import { parseNumberInput } from "../../src/lib/compliance/engine/numberInput";
@@ -381,5 +381,62 @@ describe("generic number input", () => {
   });
   it("rejects text and half typed numbers", () => {
     for (const bad of ["", "-", ".", "abc", "1.2.3", "12abc", " "]) expect(parseNumberInput(bad), bad).toBeNull();
+  });
+});
+
+describe("trading day (P23): closing forms belong to the day that just ended until the cutoff", () => {
+  const live = new Date("2026-09-01T00:00:00Z");
+  const closing = { cadence: "daily" as const, timeZone: MEL, activatedAt: live, dueAfterHour: 23, cutoffHour: 5 };
+  it("a venue closing at 1am: the 1am record counts for the previous trading day", () => {
+    const record = "2026-10-06T14:00:00Z"; // 1:00am Wed 7 Oct local (AEDT)
+    expect(periodStart("daily", record, MEL, 5)).toBe("2026-10-06");
+    expect(periodStart("daily", record, MEL, 0)).toBe("2026-10-07"); // the calendar day would be wrong
+    // at 2am on the 7th the trading day is still Tuesday the 6th: Done
+    expect(formStatus({ ...closing, now: new Date("2026-10-06T15:00:00Z"), recordTimes: [record] }).status).toBe("done");
+    // at 10:30am on the 7th a new trading day has started: not started, and NOT overdue
+    expect(formStatus({ ...closing, now: new Date("2026-10-06T23:30:00Z"), recordTimes: [record] }).status).toBe("not_started");
+    // the next morning without a record for the 7th is overdue only because yesterday's was missed
+    expect(formStatus({ ...closing, now: new Date("2026-10-07T23:30:00Z"), recordTimes: [record] }).status).toBe("overdue");
+  });
+  it("overdue carries on after midnight until the cutoff, then a new day starts", () => {
+    const none = (iso: string) => formStatus({ ...closing, now: new Date(iso), recordTimes: ["2026-10-04T14:00:00Z"] });
+    expect(none("2026-10-06T13:30:00Z").status).toBe("overdue"); // 12:30am local: still Tuesday's trading day, due by 11pm
+    expect(none("2026-10-06T17:59:00Z").status).toBe("overdue"); // 4:59am
+    expect(none("2026-10-06T18:00:00Z").status).toBe("overdue"); // 5:00am: new day, but Tuesday (the previous day) has no record
+  });
+  it("tradingHour runs past 24 after midnight", () => {
+    expect(tradingHour("2026-10-06T14:00:00Z", MEL, 5)).toBe(25);
+    expect(tradingHour("2026-10-06T18:00:00Z", MEL, 5)).toBe(5);
+    expect(tradingHour("2026-10-06T14:00:00Z", MEL, 0)).toBe(1);
+  });
+  it("Melbourne DST start (4 Oct 2026, 2am jumps to 3am)", () => {
+    expect(periodStart("daily", "2026-10-03T15:30:00Z", MEL, 5)).toBe("2026-10-03"); // 1:30am AEST
+    expect(periodStart("daily", "2026-10-03T16:30:00Z", MEL, 5)).toBe("2026-10-03"); // 3:30am AEDT
+    expect(periodStart("daily", "2026-10-03T17:59:00Z", MEL, 5)).toBe("2026-10-03"); // 4:59am AEDT
+    expect(periodStart("daily", "2026-10-03T18:00:00Z", MEL, 5)).toBe("2026-10-04"); // 5:00am AEDT
+    expect(previousPeriodStart("daily", "2026-10-03T16:30:00Z", MEL, 5)).toBe("2026-10-02");
+  });
+  it("Melbourne DST end (4 Apr 2027, 3am falls back to 2am)", () => {
+    expect(periodStart("daily", "2027-04-03T15:30:00Z", MEL, 5)).toBe("2027-04-03"); // 2:30am AEDT (first pass)
+    expect(periodStart("daily", "2027-04-03T16:30:00Z", MEL, 5)).toBe("2027-04-03"); // 2:30am AEST (second pass)
+    expect(periodStart("daily", "2027-04-03T18:59:00Z", MEL, 5)).toBe("2027-04-03"); // 4:59am AEST
+    expect(periodStart("daily", "2027-04-03T19:00:00Z", MEL, 5)).toBe("2027-04-04"); // 5:00am AEST
+  });
+  it("Brisbane has no DST: the cutoff is always 19:00Z", () => {
+    for (const d of ["2026-10-03", "2027-04-03", "2027-01-15"]) {
+      expect(periodStart("daily", new Date(`${d}T18:59:00Z`), BNE, 5)).not.toBe(periodStart("daily", new Date(`${d}T19:00:00Z`), BNE, 5));
+    }
+    expect(periodStart("daily", "2026-10-03T18:59:00Z", BNE, 5)).toBe("2026-10-03");
+    expect(periodStart("daily", "2026-10-03T19:00:00Z", BNE, 5)).toBe("2026-10-04");
+    expect(periodStart("daily", "2027-04-03T19:00:00Z", BNE, 5)).toBe("2027-04-04");
+  });
+  it("a zero cutoff is exactly the calendar day (opening forms are unchanged)", () => {
+    expect(periodStart("daily", "2026-10-06T14:00:00Z", MEL, 0)).toBe(periodStart("daily", "2026-10-06T14:00:00Z", MEL));
+  });
+  it("only the closing forms use the trading day", () => {
+    const ids = FORMS.filter((f) => f.tradingDay).map((f) => f.id).sort();
+    expect(ids).toEqual(["B11", "B9", "F2", "F3", "F8"]);
+    expect(FORM_BY_ID.B10.tradingDay).toBeUndefined();
+    expect(FORM_BY_ID.F1.tradingDay).toBeUndefined();
   });
 });

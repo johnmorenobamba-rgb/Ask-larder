@@ -3,9 +3,10 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FormActivationList, type ActivationItem } from "@/components/owner/FormActivationList";
+import { TradingDayControl } from "@/components/owner/TradingDayControl";
 import { FORMS } from "@/lib/compliance/engine/forms";
 import { activationReason, isFormOn } from "@/lib/compliance/engine/activation";
-import { loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
+import { DEFAULT_CUTOFF_HOUR, loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
 import { CADENCE_HEADINGS, CADENCE_ORDER, FORM_TAG_LABELS } from "@/lib/compliance/engine/types";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function OwnerFormsPage({ params }: { params: Promise<{ ven
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   const supabase = await createClient();
-  const [{ ctx, degraded }, { rows, degraded: rowsDegraded }] = await Promise.all([
+  const [{ ctx, cutoffHour, degraded }, { rows, degraded: rowsDegraded }] = await Promise.all([
     loadActivationContext(supabase, createAdminClient(), staff!.venue_id!),
     loadActivationRows(supabase, staff!.venue_id!),
   ]);
@@ -56,6 +57,7 @@ export default async function OwnerFormsPage({ params }: { params: Promise<{ ven
             Couldn&apos;t load every setting. What you see may be incomplete. Reload the page to try again.
           </p>
         )}
+        <TradingDayControl initialHour={cutoffHour ?? DEFAULT_CUTOFF_HOUR} />
         <FormActivationList groups={groups} />
       </div>
     </main>
