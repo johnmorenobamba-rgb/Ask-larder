@@ -20,6 +20,7 @@ const VIEWPORTS = [
 ] as const;
 
 let fx: Fixture;
+let cleanFx: Fixture | null = null;
 const only = process.env.GUIDE_ONLY ? new Set(process.env.GUIDE_ONLY.split(",")) : null;
 const want = (id: string) => !only || only.has(id);
 const manifest: { name: string; form: string; state: string; viewport: string; role: string }[] = [];
@@ -52,6 +53,7 @@ test.afterAll(async () => {
   // the catalog as plain data, for the guide builder (functions such as defaultOn are dropped)
   fs.writeFileSync(path.join(OUT, "..", "forms.json"), JSON.stringify(FORMS, (_k, v) => (typeof v === "function" ? undefined : v), 1));
   await destroyFixture(fx);
+  await destroyFixture(cleanFx);
 });
 
 async function startOfChecklistProgress(page: Page, label: string) {
@@ -194,6 +196,13 @@ test("guide shots registers", async ({ page }) => {
 
 test("guide shots hub by role, overdue and the owner screens", async ({ page }) => {
   test.skip(!!only && !only.has("HUB"), "GUIDE_ONLY");
+  // the busy hub from the main fixture (every form already has a record), then a CLEAN fixture venue so Not started and Overdue are true
+  await loginStaff(page, fx, FIXTURE_NAMES.kitchenHand);
+  await page.goto(`/${fx.slug}/forms`);
+  await expect(page.getByRole("heading", { name: "Compliance forms" })).toBeVisible({ timeout: 60_000 });
+  await shotAll(page, "HUB", "boh-active", FIXTURE_NAMES.kitchenHand);
+  cleanFx = await createFixture("gh");
+  fx = cleanFx;
   // 1. hub with nothing done yet, per role
   const roles: [string, string][] = [
     ["boh", FIXTURE_NAMES.kitchenHand],

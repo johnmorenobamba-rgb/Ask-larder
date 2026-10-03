@@ -82,9 +82,9 @@ function StatusChip({ f }: { f: HubForm }) {
     const recent = f.recentFails > 0 ? `${f.recentFails} failed in the last 7 days` : "Log it when it happens";
     return <span className={`font-sans text-sm ${f.recentFails > 0 ? "font-medium text-preserve-red" : "text-ink/70"}`}>{recent}</span>;
   }
-  if (s.status === "done") return <span className="rounded-full bg-bay-green/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-bay-green">Done</span>;
-  if (s.status === "overdue") return <span className="rounded-full bg-preserve-red px-3 py-1 font-mono text-xs uppercase tracking-wide text-parchment">Overdue</span>;
-  return <span className="rounded-full border border-clay-brown px-3 py-1 font-mono text-xs uppercase tracking-wide text-clay-brown">Not started</span>;
+  if (s.status === "done") return <span className="whitespace-nowrap rounded-full bg-bay-green/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-bay-green">Done</span>;
+  if (s.status === "overdue") return <span className="whitespace-nowrap rounded-full bg-preserve-red px-3 py-1 font-mono text-xs uppercase tracking-wide text-parchment">Overdue</span>;
+  return <span className="whitespace-nowrap rounded-full border border-clay-brown px-3 py-1 font-mono text-xs uppercase tracking-wide text-clay-brown">Not started</span>;
 }
 
 function renderGroups(groups: ReturnType<typeof groupHubByCadence>, venueSlug: string, b2: { on: boolean; canFill: boolean; total: number; doneToday: number; openFlags: number }) {
@@ -107,7 +107,7 @@ function renderGroups(groups: ReturnType<typeof groupHubByCadence>, venueSlug: s
                     <div className="flex items-start justify-between gap-3">
                       <p className="font-sans text-lg font-medium text-ink">Temperature log</p>
                       {b2.doneToday >= b2.total ? (
-                        <span className="rounded-full bg-bay-green/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-bay-green">Done</span>
+                        <span className="whitespace-nowrap rounded-full bg-bay-green/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-bay-green">Done</span>
                       ) : (
                         <span className="rounded-full border border-clay-brown px-3 py-1 font-mono text-xs uppercase tracking-wide text-clay-brown">Not started</span>
                       )}
@@ -137,7 +137,7 @@ function renderGroups(groups: ReturnType<typeof groupHubByCadence>, venueSlug: s
                         </p>
                       )}
                       <p className="font-sans text-sm text-ink/70">
-                        {f.def.dueAfterHour !== undefined && f.status.status !== "done" ? `Due by ${formatHour(f.def.dueAfterHour)}. ` : ""}
+                        {f.def.dueAfterHour !== undefined && f.status.status === "not_started" ? `Due by ${formatHour(f.def.dueAfterHour)}. ` : ""}
                         <span className="font-mono text-[11px] uppercase tracking-wide text-clay-brown">{FORM_TAG_LABELS[f.def.tag]}</span>
                       </p>
                     </div>

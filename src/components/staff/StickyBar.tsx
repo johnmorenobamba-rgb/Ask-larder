@@ -13,8 +13,8 @@ export function StickyBar({ children }: { children: React.ReactNode }) {
   if (!mounted) return null;
   return createPortal(
     <>
-      {/* the floating safety button must never sit over Save: lift it above the bar while the bar is showing */}
-      <style>{`[data-near-miss-fab] { bottom: 9.5rem !important; }`}</style>
+      {/* the floating safety and chat buttons must never sit over Save: lift it above the bar while the bar is showing */}
+      <style>{`[data-near-miss-fab], [data-ask-larder-fab] { bottom: 9.5rem !important; }`}</style>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-clay-brown/30 bg-parchment px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">{children}</div>
     </>,
     document.body,

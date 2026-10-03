@@ -56,12 +56,15 @@ export type FormViewProps = {
   /** shown when the form was already done this period */
   doneNote: string | null;
   backHref: string;
+  /** true for kitchen forms, where throwing food out is a sensible quick note */
+  foodForm: boolean;
 };
 
 type ChecklistValue = Record<string, "pass" | "fail" | "na">;
 type Raw = string | ChecklistValue;
 
-const QUICK_NOTES = ["Fixed it on the spot", "Told the manager", "Threw the food out", "Called a technician", "Will recheck soon"];
+const QUICK_NOTES_GENERAL = ["Fixed it on the spot", "Told the manager", "Called a technician", "Will recheck soon"];
+const QUICK_NOTE_FOOD = "Threw the food out";
 
 function newId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -289,7 +292,7 @@ export function GenericComplianceForm(props: FormViewProps) {
               className={`w-full rounded-2xl border-2 bg-parchment px-4 py-3 font-sans text-base text-ink outline-none focus:ring-4 focus:ring-ink/25 ${noteMissing ? "border-preserve-red" : "border-clay-brown"}`}
             />
             <div className="flex flex-wrap gap-2">
-              {QUICK_NOTES.map((q) => (
+              {(props.foodForm ? [QUICK_NOTES_GENERAL[0], QUICK_NOTES_GENERAL[1], QUICK_NOTE_FOOD, ...QUICK_NOTES_GENERAL.slice(2)] : QUICK_NOTES_GENERAL).map((q) => (
                 <button
                   key={q}
                   type="button"
@@ -371,7 +374,7 @@ export function GenericComplianceForm(props: FormViewProps) {
         <StickyBar>
           <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="min-w-0 flex-1 space-y-1">
-              {blocker && <p className="font-sans text-sm font-medium text-preserve-red">{blocker}</p>}
+              {blocker && <p className="font-sans text-base font-medium text-preserve-red">{blocker}</p>}
               {error && (
                 <p role="alert" className="font-sans text-sm font-medium text-preserve-red">
                   {error}

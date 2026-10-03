@@ -115,6 +115,7 @@ export default async function ComplianceFormPage({
               registerRows={data.registerRows}
               doneNote={data.doneNote}
               backHref={backHref}
+              foodForm={def.group === "kitchen"}
             />
           )}
 
