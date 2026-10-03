@@ -217,7 +217,7 @@ begin
   delete from venue_compliance_forms where venue_id = vT and form_id = 'B12';
 
   -- ===== visibility under RLS (impersonated)
-  select count(*) into n from compliance_form_submissions where venue_id = vT and form_id in ('B5','B7','B6','B10','B11','CAB','B1','F3');
+  select count(*) into n from compliance_form_submissions where venue_id = vT and form_id in ('B5','B7','B6','B10','B11','CAB','B1','F3','B12'); -- B12: the switched on again record above is also a BOH audience row
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_boh, 'role', 'authenticated')::text, true);
   execute 'set local role authenticated'; select count(*) into c_boh from compliance_form_submissions where form_id <> 'B2';
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_foh, 'role', 'authenticated')::text, true);
