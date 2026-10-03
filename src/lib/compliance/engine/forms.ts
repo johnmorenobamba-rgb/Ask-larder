@@ -14,7 +14,6 @@ import type { ActivationContext, ChecklistItem, FailRule, FieldDef, FormDef } fr
 // minus sign (U+2212).
 
 const MINUS = "−";
-const BOTH = ["BOH", "FOH"] as const;
 
 const food = (c: ActivationContext) => c.foodService !== "no_food_service";
 const fullKitchen = (c: ActivationContext) => c.foodService === "full_kitchen" || c.foodService === null;

@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatTemp, isPendingMinus, parseReadingInput } from "@/lib/compliance/b2";
+import { formatTemp, isPendingMinus } from "@/lib/compliance/b2";
+import { parseNumberInput } from "@/lib/compliance/engine/numberInput";
 import { evaluateFail, type FieldValue } from "@/lib/compliance/engine/rules";
 import type { FailRule, FieldDef } from "@/lib/compliance/engine/types";
 
@@ -72,7 +73,7 @@ function newId(): string {
 
 function parseNumber(raw: string): number | null {
   if (raw.trim() === "" || isPendingMinus(raw)) return null;
-  return parseReadingInput(raw);
+  return parseNumberInput(raw);
 }
 
 function hasMoreThanTwoDecimals(n: number): boolean {
@@ -222,6 +223,8 @@ export function GenericComplianceForm(props: FormViewProps) {
 
   return (
     <div className="space-y-6">
+      {/* keeps a field that scrolls into view clear of the sticky Save bar */}
+      <style>{`html { scroll-padding-bottom: 14rem; }`}</style>
       {props.records.length > 0 && !props.isRegister && (
         <section aria-label="Records so far" className="space-y-2">
           <h2 className="font-mono text-xs uppercase tracking-wide text-clay-brown">{props.event ? "Recent records" : "Done"}</h2>

@@ -1,8 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { FORMS, FORM_BY_ID } from "../../src/lib/compliance/engine/forms";
-import type { FieldDef, FormDef, StageDef } from "../../src/lib/compliance/engine/types";
+import type { FormDef, StageDef } from "../../src/lib/compliance/engine/types";
 import { adminClient, createFixture, destroyFixture, loginStaff, PIN, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
+import { PLANS, fillAll as fillAllShared, fieldsOf, openForm as openFormShared, saveRecord, type Sample } from "./helpers/formDriver";
 
 // Stage 0 compliance forms, end to end, on a DISPOSABLE fixture venue modelled on the demo pub (see
 // helpers/stage0.ts). For every generic form: the allowed role fills it, a pass saves and the hub shows
@@ -24,110 +25,10 @@ test.afterAll(async () => {
   await destroyFixture(fx);
 });
 
-type Sample = Record<string, string | number | "ALL" | { failItem: number }>;
-type Plan = { who: keyof typeof FIXTURE_NAMES; stage?: string; pass: Sample; fail?: Sample };
-
-const PLANS: Record<string, Plan[]> = {
-  B10: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  B11: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 1 } } }],
-  F1: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  F2: [{ who: "bartender", pass: { items: "ALL" }, fail: { items: { failItem: 2 } } }],
-  B9: [{ who: "kitchenHand", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  F8: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 1 } } }],
-  F6: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  BAR3: [{ who: "bartender", pass: { items: "ALL", cool_room_temp_c: 8 }, fail: { items: { failItem: 0 } } }],
-  BAR2: [
-    {
-      who: "bartender",
-      pass: { wash_temp_c: 60, rinse_temp_c: 85, temps_ok: "Matches", chemicals_ok: "Topped up", filter_ok: "Clean" },
-      fail: { wash_temp_c: 60, rinse_temp_c: 85, temps_ok: "Matches", chemicals_ok: "Topped up", filter_ok: "Needs cleaning" },
-    },
-  ],
-  BAR1: [
-    {
-      who: "bartender",
-      pass: { lines: "Lines 1 to 4", chemical: "Line cleaner", contact_minutes: 20, rinse_ok: "Rinsed clear" },
-      fail: { lines: "Lines 1 to 4", chemical: "Line cleaner", contact_minutes: 20, rinse_ok: "Not clear" },
-    },
-  ],
-  CAFE1: [{ who: "waiter", pass: { cabinet: "Cabinet 1", mode: "Cold food", temp_c: 4 }, fail: { cabinet: "Cabinet 2", mode: "Cold food", temp_c: 8 } }],
-  CAFE2: [{ who: "waiter", pass: { items: "ALL" }, fail: { items: { failItem: 0 } } }],
-  CAFE3: [{ who: "waiter", pass: { descaled: "Done", product: "Descaler" }, fail: { descaled: "Not done" } }],
-  B4: [{ who: "kitchenHand", pass: { thermometer: "Probe 1", ice_c: 0, boil_c: 100 }, fail: { thermometer: "Probe 2", ice_c: 3, boil_c: 100 } }],
-  B3: [
-    {
-      who: "kitchenHand",
-      pass: { supplier: "Fixture Fresh Foods", product: "Chicken thighs", temp_type: "Chilled", temp_c: 3, packaging: "Good", dates: "In date", decision: "Accepted" },
-      fail: { supplier: "Fixture Fresh Foods", product: "Chicken thighs", temp_type: "Chilled", temp_c: 8, packaging: "Good", dates: "In date", decision: "Rejected" },
-    },
-  ],
-  B5: [{ who: "kitchenHand", pass: { item: "Chicken burger", core_temp_c: 80 }, fail: { item: "Chicken burger", core_temp_c: 70 } }],
-  B7: [{ who: "kitchenHand", pass: { item: "Beef ragu", core_temp_c: 80 }, fail: { item: "Beef ragu", core_temp_c: 65 } }],
-  B8: [
-    {
-      who: "kitchenHand",
-      pass: { item: "Sauces", time_out: "now", outcome: "Used or sold within 2 hours" },
-      fail: { item: "Sauces", time_out: "now", outcome: "Thrown out" },
-    },
-  ],
-  B12: [{ who: "kitchenHand", pass: { kind: "Trap check, nothing found", location: "Dry store" }, fail: { kind: "Pest sighting", location: "Dry store", detail: "One cockroach" } }],
-  B13: [{ who: "kitchenHand", pass: { contractor: "Fixture Waste Co", volume_litres: 500, docket: "D1001" } }],
-  B17: [{ who: "kitchenHand", pass: { issue: "Fridge door left open overnight", action_taken: "Checked temperatures and threw out one tray" } }],
-  B18: [{ who: "kitchenHand", pass: { equipment: "Walk in cool room", fault: "Door seal torn", status: "Reported" } }],
-  F10: [{ who: "bartender", pass: { outcome: "Service refused", signs: "Slurred speech and unsteady", action: "Offered water, explained politely" } }],
-  F13: [{ who: "waiter", pass: { item: "Black umbrella", found_where: "Table 6", status: "Held at the venue" } }],
-  B1: [{ who: "kitchenHand", pass: { name: "Fixture Fresh Fish Co", address: "1 Test Street", phone: "0300 000 000", status: "Active" } }],
-  B20: [{ who: "kitchenHand", pass: { product: "Fixture Sanitiser", use: "Benches", dilution: "1 to 100", sds: "Yes", status: "Active" } }],
-};
-
-function fieldsOf(def: FormDef, stage?: StageDef | null): FieldDef[] {
-  return stage ? stage.fields : def.fields;
-}
-
-async function fillField(page: Page, f: FieldDef, v: string | number | "ALL" | { failItem: number }) {
-  if (f.type === "checklist") {
-    await page.getByRole("button", { name: "Mark the rest as pass" }).click();
-    if (typeof v === "object") {
-      const label = f.items[v.failItem]?.label;
-      const row = page.locator("li", { hasText: label }).first();
-      await row.getByRole("button", { name: "Fail", exact: true }).click();
-    }
-    return;
-  }
-  if (f.type === "passfail" || f.type === "choice") {
-    const group = page.locator("fieldset", { has: page.locator("legend", { hasText: f.label }) }).first();
-    await group.getByRole("button", { name: String(v), exact: true }).click();
-    return;
-  }
-  if (f.type === "time") {
-    await page.getByRole("button", { name: "Now" }).click();
-    return;
-  }
-  await page.locator(`#f-${f.key}`).fill(String(v));
-}
-
-async function openForm(page: Page, id: string, stage?: string, chain?: string) {
-  const q = stage ? `?stage=${stage}${chain ? `&chain=${chain}` : ""}` : "";
-  await page.goto(`/${fx.slug}/forms/${id}${q}`);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 60_000 });
-}
-
-async function fillAll(page: Page, def: FormDef, stage: StageDef | null, sample: Sample) {
-  for (const f of fieldsOf(def, stage)) {
-    if (sample[f.key] === undefined) continue;
-    await fillField(page, f, sample[f.key]);
-  }
-}
-
-async function saveRecord(page: Page) {
-  const btn = page.getByRole("button", { name: /^Save/ });
-  await expect(btn).toBeEnabled({ timeout: 15_000 });
-  await btn.click();
-  await expect(page.getByRole("status")).toContainText("saved", { timeout: 30_000 });
-}
+const openForm = (page: Page, id: string, stage?: string, chain?: string) => openFormShared(page, fx, id, stage, chain);
 
 async function failPath(page: Page, def: FormDef, stage: StageDef | null, sample: Sample) {
-  await fillAll(page, def, stage, sample);
+  await fillAllShared(page, def, stage, sample);
   await expect(page.locator('p[aria-live="polite"]').filter({ hasText: /^Fail\./ })).toBeVisible();
   // Save is disabled until the note is written, and the bar says why
   await expect(page.getByRole("button", { name: /^Save/ })).toBeDisabled();
@@ -148,7 +49,7 @@ for (const def of FORMS) {
     for (const plan of plans) {
       await loginStaff(page, fx, FIXTURE_NAMES[plan.who]);
       await openForm(page, def.id);
-      await fillAll(page, def, null, plan.pass);
+      await fillAllShared(page, def, null, plan.pass);
       if (def.fail.length > 0) await expect(page.locator('p[aria-live="polite"]').filter({ hasText: /^Pass\./ })).toBeVisible();
       await saveRecord(page);
       if (def.kind !== "register" && def.cadence !== "event") {
@@ -169,13 +70,13 @@ test("B6 two stage cooling: start, 2 hour check, 6 hour check, and a failing che
   const def = FORM_BY_ID.B6;
   await loginStaff(page, fx, FIXTURE_NAMES.kitchenHand);
   await openForm(page, "B6", "start");
-  await fillAll(page, def, def.stages![0], { item: "Fixture stock", start_temp_c: 85 });
+  await fillAllShared(page, def, def.stages![0], { item: "Fixture stock", start_temp_c: 85 });
   await saveRecord(page);
   await page.goto(`/${fx.slug}/forms/B6`);
   await expect(page.getByText("Fixture stock")).toBeVisible();
   await page.getByRole("link", { name: "2 hour check" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("2 hour check");
-  await fillAll(page, def, def.stages![1], { temp_c: 18 });
+  await fillAllShared(page, def, def.stages![1], { temp_c: 18 });
   await saveRecord(page);
   await page.goto(`/${fx.slug}/forms/B6`);
   await page.getByRole("link", { name: "6 hour check" }).click();
@@ -190,7 +91,7 @@ test("F7 allergen ticket: front of house logs it, only the kitchen can confirm i
   const def = FORM_BY_ID.F7;
   await loginStaff(page, fx, FIXTURE_NAMES.waiter);
   await openForm(page, "F7", "ticket");
-  await fillAll(page, def, def.stages![0], { reference: "Table 4", dish: "Fixture burger", allergens: "Sesame", severity: "Allergy" });
+  await fillAllShared(page, def, def.stages![0], { reference: "Table 4", dish: "Fixture burger", allergens: "Sesame", severity: "Allergy" });
   await saveRecord(page);
   await page.goto(`/${fx.slug}/forms/F7`);
   await expect(page.getByText("Table 4: Fixture burger")).toBeVisible();
@@ -207,7 +108,7 @@ test("F3 till reconciliation needs a second person with a correct PIN", async ({
   const def = FORM_BY_ID.F3;
   await loginStaff(page, fx, FIXTURE_NAMES.waiter);
   await openForm(page, "F3");
-  await fillAll(page, def, null, { expected_cash: 500, counted_cash: 500 });
+  await fillAllShared(page, def, null, { expected_cash: 500, counted_cash: 500 });
   await expect(page.getByRole("button", { name: /^Save/ })).toBeDisabled();
   await expect(page.getByText("A second person must choose their name and enter their PIN.")).toBeVisible();
   await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
@@ -220,7 +121,7 @@ test("F3 till reconciliation needs a second person with a correct PIN", async ({
   expect((data?.[0]?.payload as { cosigned_by_name?: string }).cosigned_by_name).toBe(FIXTURE_NAMES.bartender);
   // out by more than the tolerance fails and needs a note
   await openForm(page, "F3");
-  await fillAll(page, def, null, { expected_cash: 500, counted_cash: 470 });
+  await fillAllShared(page, def, null, { expected_cash: 500, counted_cash: 470 });
   await page.locator("#cosign-who").selectOption({ label: FIXTURE_NAMES.bartender });
   await page.locator("#cosign-pin").fill(PIN);
   await expect(page.getByRole("button", { name: /^Save/ })).toBeDisabled();
@@ -236,7 +137,7 @@ test("a correction links to the latest record only", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Correct this record" })).toHaveCount(1);
   await page.getByRole("button", { name: "Correct this record" }).click();
   await expect(page.getByText("You are correcting the latest record.")).toBeVisible();
-  await fillAll(page, def, null, { items: "ALL" });
+  await fillAllShared(page, def, null, { items: "ALL" });
   await page.getByRole("button", { name: "Save correction" }).click();
   await expect(page.getByRole("status")).toContainText("saved", { timeout: 30_000 });
   await openForm(page, "B10");
@@ -249,7 +150,7 @@ test("registers keep the latest row per name and updating retires a supplier", a
   await openForm(page, "B1");
   await expect(page.getByText("Fixture Fresh Fish Co")).toBeVisible();
   await page.getByRole("button", { name: "Update" }).first().click();
-  await fillAll(page, def, null, { status: "No longer used" });
+  await fillAllShared(page, def, null, { status: "No longer used" });
   await saveRecord(page);
   await openForm(page, "B1");
   await expect(page.getByText("(no longer used)")).toBeVisible();

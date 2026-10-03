@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { formStatus, periodStart, previousPeriodStart } from "../../src/lib/compliance/engine/due";
 import { compileRules, evaluateFail, findStage } from "../../src/lib/compliance/engine/rules";
 import { FORMS, FORM_BY_ID, HELD_FORMS } from "../../src/lib/compliance/engine/forms";
+import { parseNumberInput } from "../../src/lib/compliance/engine/numberInput";
 import { activatedAt, canFillStage, canOpenForm, gateRoles, isFormOn, visibleRoles, ENGINE_LIVE_FROM } from "../../src/lib/compliance/engine/activation";
 import type { ActivationContext, FieldDef, FormDef } from "../../src/lib/compliance/engine/types";
 
@@ -367,5 +368,18 @@ describe("activation defaults and access", () => {
     expect(gateRoles(FORM_BY_ID.F7, confirm)).toEqual(["BOH"]);
     expect(visibleRoles(FORM_BY_ID.F7)).toEqual(["FOH", "BOH"]);
     expect(visibleRoles(FORM_BY_ID.B5)).toEqual(["BOH"]);
+  });
+});
+
+describe("generic number input", () => {
+  it("has no temperature range and accepts comma and minus variants", () => {
+    expect(parseNumberInput("500")).toBe(500);
+    expect(parseNumberInput("1234.5")).toBe(1234.5);
+    expect(parseNumberInput("12,5")).toBe(12.5);
+    expect(parseNumberInput("−18")).toBe(-18);
+    expect(parseNumberInput("-3.5")).toBe(-3.5);
+  });
+  it("rejects text and half typed numbers", () => {
+    for (const bad of ["", "-", ".", "abc", "1.2.3", "12abc", " "]) expect(parseNumberInput(bad), bad).toBeNull();
   });
 });

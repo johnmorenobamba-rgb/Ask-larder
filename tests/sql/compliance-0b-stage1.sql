@@ -211,15 +211,15 @@ begin
   select count(*) into n_all from compliance_form_submissions where venue_id = vT;
   select count(*) into n_foh_expected from compliance_form_submissions where venue_id = vT and ('FOH' = any(visible_to_roles) or submitted_by = s_foh);
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_boh, 'role', 'authenticated')::text, true);
-  execute 'set local role authenticated'; select count(*) into c_boh from compliance_form_submissions;
+  execute 'set local role authenticated'; select count(*) into c_boh from compliance_form_submissions where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_mgr, 'role', 'authenticated')::text, true);
-  select count(*) into c_mgr from compliance_form_submissions;
+  select count(*) into c_mgr from compliance_form_submissions where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_owner, 'role', 'authenticated')::text, true);
-  select count(*) into c_owner from compliance_form_submissions;
+  select count(*) into c_owner from compliance_form_submissions where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_foh, 'role', 'authenticated')::text, true);
-  select count(*) into c_foh from compliance_form_submissions;
+  select count(*) into c_foh from compliance_form_submissions where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_nod, 'role', 'authenticated')::text, true);
-  select count(*) into c_nod from compliance_form_submissions;
+  select count(*) into c_nod from compliance_form_submissions where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_mgro, 'role', 'authenticated')::text, true);
   select count(*) into c_oth from compliance_form_submissions where venue_id = vT;
   execute 'reset role';
@@ -232,15 +232,15 @@ begin
 
   -- the view and the alert log under RLS
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_boh, 'role', 'authenticated')::text, true);
-  execute 'set local role authenticated'; select count(*) into c_boh from compliance_b2_latest_readings;
-  select count(*) into n from compliance_alert_log;
+  execute 'set local role authenticated'; select count(*) into c_boh from compliance_b2_latest_readings where venue_id = vT;
+  select count(*) into n from compliance_alert_log where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_mgr, 'role', 'authenticated')::text, true);
-  select count(*) into c_mgr from compliance_b2_latest_readings;
-  select count(*) into n2 from compliance_alert_log;
+  select count(*) into c_mgr from compliance_b2_latest_readings where venue_id = vT;
+  select count(*) into n2 from compliance_alert_log where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_owner, 'role', 'authenticated')::text, true);
-  select count(*) into c_owner from compliance_b2_latest_readings;
+  select count(*) into c_owner from compliance_b2_latest_readings where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_nod, 'role', 'authenticated')::text, true);
-  select count(*) into c_nod from compliance_b2_latest_readings;
+  select count(*) into c_nod from compliance_b2_latest_readings where venue_id = vT;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_mgro, 'role', 'authenticated')::text, true);
   select count(*) into c_oth from compliance_b2_latest_readings where venue_id = vT;
   execute 'reset role';

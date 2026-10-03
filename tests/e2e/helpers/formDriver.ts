@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type { FieldDef, FormDef, StageDef } from "../../../src/lib/compliance/engine/types";
 import type { FIXTURE_NAMES, Fixture } from "./stage0";
 
@@ -65,26 +65,34 @@ export function fieldsOf(def: FormDef, stage?: StageDef | null): FieldDef[] {
   return stage ? stage.fields : def.fields;
 }
 
+/** Scrolls an element to the middle of the screen, then clicks it: the sticky Save bar can cover the bottom edge. */
+async function centreClick(loc: Locator) {
+  await loc.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await loc.click();
+}
+
 export async function fillField(page: Page, f: FieldDef, v: SampleValue) {
   if (f.type === "checklist") {
-    await page.getByRole("button", { name: "Mark the rest as pass" }).click();
+    await centreClick(page.getByRole("button", { name: "Mark the rest as pass" }));
     if (typeof v === "object") {
       const label = f.items[v.failItem]?.label;
       const row = page.locator("li", { hasText: label }).first();
-      await row.getByRole("button", { name: "Fail", exact: true }).click();
+      await centreClick(row.getByRole("button", { name: "Fail", exact: true }));
     }
     return;
   }
   if (f.type === "passfail" || f.type === "choice") {
     const group = page.locator("fieldset", { has: page.locator("legend", { hasText: f.label }) }).first();
-    await group.getByRole("button", { name: String(v), exact: true }).click();
+    await centreClick(group.getByRole("button", { name: String(v), exact: true }));
     return;
   }
   if (f.type === "time") {
-    await page.getByRole("button", { name: "Now" }).click();
+    await centreClick(page.getByRole("button", { name: "Now" }));
     return;
   }
-  await page.locator(`#f-${f.key}`).fill(String(v));
+  const input = page.locator(`#f-${f.key}`);
+  await input.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await input.fill(String(v));
 }
 
 export async function fillAll(page: Page, def: FormDef, stage: StageDef | null, sample: Sample, only?: number) {
@@ -96,6 +104,8 @@ export async function openForm(page: Page, fx: Fixture, id: string, stage?: stri
   const q = stage ? `?stage=${stage}${chain ? `&chain=${chain}` : ""}${extra}` : extra ? `?${extra.replace(/^&/, "")}` : "";
   await page.goto(`/${fx.slug}/forms/${id}${q}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 60_000 });
+  // the app uses smooth scrolling, which races scripted clicks: switch it off for the test
+  await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
 }
 
 export async function saveRecord(page: Page) {

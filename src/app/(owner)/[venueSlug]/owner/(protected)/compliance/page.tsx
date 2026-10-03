@@ -116,6 +116,8 @@ export default async function OwnerCompliancePage({ params, searchParams }: { pa
               <Link className="font-medium underline" href={`/${venueSlug}/owner/compliance/records`}>
                 See and print records
               </Link>
+              {/* A file download from an API route, not a page: a plain anchor is correct here */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a className="font-medium underline" href="/api/owner/compliance/export">
                 Download all records as CSV
               </a>

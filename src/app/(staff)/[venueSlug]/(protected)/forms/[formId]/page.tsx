@@ -51,7 +51,7 @@ export default async function ComplianceFormPage({
   const backHref = `/${venueSlug}/forms`;
 
   return (
-    <main className="min-h-screen bg-parchment px-6 pb-44 pt-24">
+    <main className="min-h-screen bg-parchment px-6 pb-64 pt-24">
       <PassSlide>
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="space-y-2">

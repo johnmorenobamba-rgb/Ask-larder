@@ -49,6 +49,8 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   fs.writeFileSync(path.join(OUT, "..", "manifest.json"), JSON.stringify(manifest, null, 1));
+  // the catalog as plain data, for the guide builder (functions such as defaultOn are dropped)
+  fs.writeFileSync(path.join(OUT, "..", "forms.json"), JSON.stringify(FORMS, (_k, v) => (typeof v === "function" ? undefined : v), 1));
   await destroyFixture(fx);
 });
 
@@ -239,4 +241,24 @@ test("guide shots hub by role, overdue and the owner screens", async ({ page }) 
   await page.goto(`/${fx.slug}/owner/dashboard`);
   await page.waitForTimeout(3500);
   await shotAll(page, "OWNER", "dashboard", FIXTURE_NAMES.owner);
+});
+
+test("guide shots B2 temperature log", async ({ page }) => {
+  test.skip(!want("B2"), "GUIDE_ONLY");
+  const role = FIXTURE_NAMES.kitchenHand;
+  await loginStaff(page, fx, role);
+  await page.goto(`/${fx.slug}/temperature`);
+  await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible({ timeout: 60_000 });
+  await shotAll(page, "B2", "empty", role);
+  await page.locator(`#reading-${fx.unitIds.coolroom}`).fill("3.5");
+  await shotAll(page, "B2", "progress", role);
+  await page.locator(`#reading-${fx.unitIds.barfridge}`).fill("8");
+  await shotAll(page, "B2", "fail", role);
+  await page.locator(`#note-${fx.unitIds.barfridge}`).fill("Fixture note: moved the stock to the cool room");
+  await page.locator(`#reading-${fx.unitIds.freezer}`).fill("-18");
+  await page.locator(`#reading-${fx.unitIds.bain}`).fill("65");
+  await shotAll(page, "B2", "failnote", role);
+  await page.getByRole("button", { name: /^Save/ }).click();
+  await expect(page.getByRole("status")).toContainText("saved", { timeout: 30_000 });
+  await shotAll(page, "B2", "failsaved", role);
 });
