@@ -5,7 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const typedName = typeof body?.typedName === "string" ? body.typedName.trim() : "";
-  if (!typedName) {
+  // Same rule as the signature form (at least 2 characters); the database function refuses anything over 200.
+  if (typedName.length < 2 || typedName.length > 200) {
     return NextResponse.json({ error: "typedName is required." }, { status: 400 });
   }
 
