@@ -112,7 +112,7 @@ export function PromotionsForm({ venueSlug, existing }: { venueSlug: string; exi
           </>
         )}
 
-        <p className={labelClass}>Regulatory research on numeric happy-hour limits is still weak. State a discount only if it's confirmed, never a guessed threshold.</p>
+        <p className={labelClass}>Regulatory research on numeric happy-hour limits is still weak. State a discount only if it&apos;s confirmed, never a guessed threshold.</p>
         <button type="button" onClick={continueWizard} disabled={runsHappyHour === null} className={primaryButtonClass}>
           Continue
         </button>

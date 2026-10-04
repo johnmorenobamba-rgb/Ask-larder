@@ -61,7 +61,7 @@ export function CertificateTypesForm({
     <div className="space-y-6">
       <div>
         <h2 className="font-display text-2xl font-bold text-ink">Certificate types</h2>
-        <p className="font-sans text-sm text-ink/70">RSA, Food Handling, and Food Safety Supervisor are already set up if this venue's answers triggered them.</p>
+        <p className="font-sans text-sm text-ink/70">RSA, Food Handling, and Food Safety Supervisor are already set up if this venue&apos;s answers triggered them.</p>
       </div>
 
       <div className={cardClass}>
