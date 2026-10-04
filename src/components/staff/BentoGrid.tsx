@@ -149,6 +149,8 @@ export function BentoGrid({
   activityPhotoUrl,
   stations,
   suggestions,
+  temperature,
+  forms,
   remotionFrame,
 }: {
   venueSlug: string;
@@ -171,6 +173,10 @@ export function BentoGrid({
    * fetches suggestion data for a frontline account, so undefined here
    * means "don't render the tile at all", not "zero suggestions". */
   suggestions?: { count: number; preview: string | null };
+  /** B2 temperature log tile: BOH staff and manager tier only (undefined hides it). */
+  temperature?: { done: number; total: number; openFlags: number; degraded: boolean };
+  /** Compliance forms hub tile (every staff member): forms still to do and overdue. */
+  forms?: { todo: number; overdue: number; degraded: boolean };
   /** Block N3 only -- drives per-cell entrance from a Remotion frame instead of the CSS keyframe. Leave undefined in the live app. */
   remotionFrame?: number;
 }) {
@@ -417,6 +423,82 @@ export function BentoGrid({
             </ElevatedCell>
           </a>
         </div>
+
+        {/* Temperature log (B2) -- BOH staff and manager tier only. Ink by default, Preserve
+            Red when a unit is still out of range, so the one thing that needs action is
+            the one thing that is loud. No Stamp: a routine log is not a trust moment. */}
+        {temperature && (
+          <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 420)}>
+            <a href={`/${venueSlug}/temperature`} className="block h-full">
+              <ElevatedCell
+                glowColor={temperature.openFlags > 0 ? "var(--color-preserve-red)" : "var(--color-saffron)"}
+                floatDurationS={6.1}
+                floatDelayS={0.7}
+                depth="secondary"
+                tilt={false}
+                className={`flex h-full flex-col justify-between rounded-2xl px-4 py-4 ${temperature.openFlags > 0 ? "bg-preserve-red" : "bg-ink"}`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke="var(--color-parchment)" strokeWidth="1.5" strokeLinejoin="round" />
+                    <line x1="12" y1="9" x2="12" y2="16" stroke="var(--color-parchment)" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <p className="font-mono text-xs uppercase tracking-wide text-parchment">Temperature log</p>
+                </div>
+                {temperature.degraded ? (
+                  <p className="font-sans text-sm text-parchment">Couldn&apos;t load readings</p>
+                ) : temperature.total === 0 ? (
+                  <p className="font-sans text-sm text-parchment">No units set up yet</p>
+                ) : (
+                  <div>
+                    <p className="font-sans text-sm text-parchment">
+                      <span className="font-display text-3xl font-bold">{temperature.done}</span> of {temperature.total} logged today
+                    </p>
+                    {temperature.openFlags > 0 && (
+                      <p className="mt-1 font-sans text-base font-medium text-parchment">{temperature.openFlags} out of range</p>
+                    )}
+                  </div>
+                )}
+              </ElevatedCell>
+            </a>
+          </div>
+        )}
+
+        {/* Compliance forms hub -- every staff member. Overdue is on screen only. */}
+        {forms && (
+          <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 440)}>
+            <a href={`/${venueSlug}/forms`} className="block h-full">
+              <ElevatedCell
+                glowColor={forms.overdue > 0 ? "var(--color-preserve-red)" : "var(--color-saffron)"}
+                floatDurationS={6.4}
+                floatDelayS={0.9}
+                depth="secondary"
+                tilt={false}
+                className={`flex h-full flex-col justify-between rounded-2xl px-4 py-4 ${forms.overdue > 0 ? "bg-preserve-red" : "bg-ink"}`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="5" y="4" width="14" height="17" rx="2" stroke="var(--color-parchment)" strokeWidth="1.5" />
+                    <path d="M8.5 12l1.8 1.8L14 10.5M8.5 17h7" stroke="var(--color-parchment)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <p className="font-mono text-xs uppercase tracking-wide text-parchment">Compliance forms</p>
+                </div>
+                {forms.degraded ? (
+                  <p className="font-sans text-sm text-parchment">Couldn&apos;t load your forms</p>
+                ) : forms.todo === 0 ? (
+                  <p className="font-sans text-sm text-parchment">Nothing to do right now</p>
+                ) : (
+                  <div>
+                    <p className="font-sans text-sm text-parchment">
+                      <span className="font-display text-3xl font-bold">{forms.todo}</span> to do
+                    </p>
+                    {forms.overdue > 0 && <p className="mt-1 font-sans text-base font-medium text-parchment">{forms.overdue} overdue</p>}
+                  </div>
+                )}
+              </ElevatedCell>
+            </a>
+          </div>
+        )}
 
         {/* Suggestions -- manager-tier only (Head Chef/Sous Chef/Manager/
             2IC), same tile as the owner dashboard's own, reusing ChitMark's

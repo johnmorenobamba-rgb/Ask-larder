@@ -16,6 +16,8 @@ const SECTIONS = [
   { href: "weekly-report", label: "Weekly report" },
   { href: "escalations", label: "Escalations" },
   { href: "near-misses", label: "Near-misses" },
+  { href: "temperature", label: "Temperature log" },
+  { href: "compliance", label: "Compliance" },
   { href: "stations", label: "Stations" },
   { href: "photo-library", label: "Photos" },
   { href: "contacts", label: "Contacts" },

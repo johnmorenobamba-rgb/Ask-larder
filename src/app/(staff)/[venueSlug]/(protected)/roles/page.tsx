@@ -28,6 +28,8 @@ export default async function RolesPage({
     .from("staff_roles")
     .select("id, name, department")
     .eq("venue_id", staff.venue_id!)
+    // Manager tier roles are assigned by the owner or a manager, never self picked (the database enforces this too).
+    .neq("fallback_tier", "authorized")
     .order("name");
   logQueryError(`[${venueSlug}] staff roles`, rolesError);
 

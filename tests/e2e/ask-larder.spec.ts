@@ -1,4 +1,6 @@
 import { config } from "dotenv";
+import { nativeClick } from "./helpers/stage0";
+import { fixturePin } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -34,7 +36,7 @@ async function embed(text: string): Promise<number[]> {
 
 const suffix = randomUUID().slice(0, 8);
 const SLUG = `ask-larder-test-${suffix}`;
-const STAFF_PIN = "1234";
+const STAFF_PIN = fixturePin();
 const STAFF_NAME = "Ask Larder Tester";
 const SECTION_CONTENT =
   "The venue's closing checklist: turn off the fryers, wipe down the pass, and take the bins out to the rear laneway before locking the back door.";
@@ -108,7 +110,7 @@ async function loginAsTester(page: Page) {
   await page.goto(`/${SLUG}/login`);
   await page.getByRole("button", { name: STAFF_NAME }).click();
   await page.locator('input[type="password"]').fill(STAFF_PIN);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
   await page.waitForURL(/\/(welcome|modules|roles)$/);
 }
 

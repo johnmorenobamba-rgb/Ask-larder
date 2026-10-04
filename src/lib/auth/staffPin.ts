@@ -3,9 +3,26 @@ import bcrypt from "bcryptjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PIN_PATTERN = /^\d{4,6}$/;
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_MINUTES = 15;
+// Lockout rules (5 attempts, then a 15 minute lock) live in the database function record_staff_pin_failure.
 const BCRYPT_COST = 10;
+
+/**
+ * P26: reserves ONE PIN attempt with a single atomic database call BEFORE the PIN is compared. The database
+ * counts the attempt (5 attempts then a 15 minute lock) and does not count an attempt on an account that is
+ * already locked. Because the reservation comes first, a burst of parallel requests cannot all compare their
+ * guess: at most 5 guesses per lock window ever reach bcrypt. A correct PIN resets the counter afterwards, as
+ * before. If the database call fails the login FAILS CLOSED (no unlimited guessing).
+ */
+async function reservePinAttempt(admin: ReturnType<typeof createAdminClient>, staffUserId: string): Promise<void> {
+  const { data, error } = await admin.rpc("record_staff_pin_failure", { p_staff_id: staffUserId });
+  if (error) {
+    console.error("[staffPin] could not reserve a PIN attempt:", error.message);
+    throw new PinAuthError(500, "Unexpected error.");
+  }
+  if (!(data as { counted?: boolean } | null)?.counted) {
+    throw new PinAuthError(423, "Too many attempts. Try again in a few minutes.");
+  }
+}
 
 export class PinAuthError extends Error {
   status: number;
@@ -182,17 +199,10 @@ export async function loginWithStaffPin({
     throw new PinAuthError(423, `Too many attempts. Try again after ${lockedUntil.toISOString()}.`);
   }
 
+  await reservePinAttempt(admin, staffUserId);
   const matches = await bcrypt.compare(pin, staff.pin_hash);
 
   if (!matches) {
-    const attempts = (staff.pin_failed_attempts ?? 0) + 1;
-    const update: { pin_failed_attempts: number; pin_locked_until?: string } = {
-      pin_failed_attempts: attempts,
-    };
-    if (attempts >= MAX_FAILED_ATTEMPTS) {
-      update.pin_locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString();
-    }
-    await admin.from("app_users").update(update).eq("id", staffUserId);
     throw new PinAuthError(401, "Incorrect PIN.");
   }
 
@@ -247,4 +257,42 @@ export async function loginWithStaffPin({
     expiresAt: otpData.session.expires_at,
     userId: authId,
   };
+}
+
+/**
+ * Compliance Forms Stage 0 (two person sign off, F3): confirm that a SECOND staff member of this venue
+ * knows their own PIN, without creating a session. It uses the SAME failed attempt counter and lockout
+ * as the login (5 wrong PINs lock that person for 15 minutes), so this route cannot be used to guess a
+ * colleague's PIN any faster than the login page allows. Returns the verified person's id and name.
+ */
+export async function verifyStaffPin({
+  venueId,
+  staffUserId,
+  pin,
+}: {
+  venueId: string;
+  staffUserId: string;
+  pin: string;
+}): Promise<{ id: string; name: string }> {
+  if (!PIN_PATTERN.test(pin)) throw new PinAuthError(401, "Incorrect PIN.");
+  const admin = createAdminClient();
+  const { data: staff, error } = await admin
+    .from("app_users")
+    .select("id, name, pin_hash, pin_failed_attempts, pin_locked_until, deactivated_at, venue_id")
+    .eq("id", staffUserId)
+    .eq("venue_id", venueId)
+    .maybeSingle();
+  if (error) throw new PinAuthError(500, error.message);
+  if (!staff || staff.deactivated_at || !staff.pin_hash) throw new PinAuthError(404, "That person can't sign off.");
+  const lockedUntil = staff.pin_locked_until ? new Date(staff.pin_locked_until) : null;
+  if (lockedUntil && lockedUntil.getTime() > Date.now()) {
+    throw new PinAuthError(423, "Too many attempts for that person. Try again later.");
+  }
+  await reservePinAttempt(admin, staffUserId);
+  const matches = await bcrypt.compare(pin, staff.pin_hash);
+  if (!matches) {
+    throw new PinAuthError(401, "Incorrect PIN.");
+  }
+  await admin.from("app_users").update({ pin_failed_attempts: 0, pin_locked_until: null }).eq("id", staffUserId);
+  return { id: staff.id, name: staff.name };
 }

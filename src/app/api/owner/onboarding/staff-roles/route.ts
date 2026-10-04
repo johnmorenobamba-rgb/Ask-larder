@@ -59,10 +59,43 @@ export async function POST(request: Request) {
   });
 
   if (error) {
+    if (error.message?.includes("Only the owner")) {
+      return NextResponse.json({ error: "Only the owner can add a manager tier role." }, { status: 403 });
+    }
     console.error("staff-roles insert unexpected error:", error);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }
 
   const flags = await upsertWizardSession(supabase, staff.venue_id, { currentStep: "staff-roles" });
   return NextResponse.json({ ok: true, flags });
+}
+
+// Change which department an existing role belongs to (for example Bartender from front of house to Bar). Manager tier
+// only (the database enforces it too); the tier is never changed here (owner only, enforced by the database).
+export async function PATCH(request: Request) {
+  const staff = await getCurrentStaff();
+  if (!staff || !staff.venue_id || !staff.isManagerTier) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+  const body = await request.json().catch(() => null);
+  const roleId = typeof body?.roleId === "string" ? body.roleId : "";
+  const department = typeof body?.department === "string" ? body.department : "";
+  if (!roleId) return NextResponse.json({ error: "roleId is required." }, { status: 400 });
+  if (department && !VALID_DEPARTMENTS.has(department)) {
+    return NextResponse.json({ error: "Choose a valid department." }, { status: 400 });
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("staff_roles")
+    .update({ department: department || null })
+    .eq("id", roleId)
+    .eq("venue_id", staff.venue_id)
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    console.error("staff-roles department update unexpected error:", error.message);
+    return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+  }
+  if (!data) return NextResponse.json({ error: "Role not found." }, { status: 404 });
+  return NextResponse.json({ ok: true });
 }

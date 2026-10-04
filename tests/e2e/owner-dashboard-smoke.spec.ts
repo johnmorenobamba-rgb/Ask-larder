@@ -1,4 +1,6 @@
 import { config } from "dotenv";
+import { nativeClick } from "./helpers/stage0";
+import { randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -23,7 +25,7 @@ function adminClient() {
 const suffix = randomUUID().slice(0, 8);
 const SLUG = `owner-dashboard-smoke-${suffix}`;
 const OWNER_EMAIL = `owner-dashboard-smoke-${suffix}@example.com`;
-const PASSWORD = "OwnerDashboardSmoke123!";
+const PASSWORD = randomPassword();
 const QR_SLUG = `owner-dashboard-smoke-station-${suffix}`;
 
 let venueId: string;
@@ -121,7 +123,7 @@ async function loginAsOwner(page: Page) {
   await page.goto(`/${SLUG}/owner/login`);
   await page.getByPlaceholder("Email").fill(OWNER_EMAIL);
   await page.getByPlaceholder("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
   await page.waitForURL(/\/owner\/dashboard$/);
 }
 

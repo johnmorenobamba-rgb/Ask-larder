@@ -10,7 +10,7 @@ import { NavDrawer } from "@/components/staff/NavDrawer";
 // persistent tab bar. Same route scope as the bar it replaces (self-hides
 // outside the ongoing app's four sections) — the linear new-hire flow
 // still uses StaffTopBar.
-const NAV_SEGMENTS = ["home", "modules", "certs", "settings"];
+const NAV_SEGMENTS = ["home", "modules", "certs", "settings", "temperature", "forms"];
 
 /**
  * The tradeoff the spec calls out explicitly: a hamburger trades the tab
@@ -22,7 +22,16 @@ const NAV_SEGMENTS = ["home", "modules", "certs", "settings"];
  * mobile-bottom/desktop-top split to reason about — it's one placement,
  * pinned, always.
  */
-export function StaffHeader({ venueSlug, venueName }: { venueSlug: string; venueName: string }) {
+export function StaffHeader({
+  venueSlug,
+  venueName,
+  showTemperature = false,
+}: {
+  venueSlug: string;
+  venueName: string;
+  /** BOH staff and manager tier only (B2 temperature log audience). */
+  showTemperature?: boolean;
+}) {
   const pathname = usePathname();
   const segment = pathname?.split("/")[2];
   const [open, setOpen] = useState(false);
@@ -57,7 +66,13 @@ export function StaffHeader({ venueSlug, venueName }: { venueSlug: string; venue
           </button>
         </div>
       </header>
-      <NavDrawer venueSlug={venueSlug} activeSegment={segment} open={open} onClose={() => setOpen(false)} />
+      <NavDrawer
+        venueSlug={venueSlug}
+        activeSegment={segment}
+        open={open}
+        onClose={() => setOpen(false)}
+        showTemperature={showTemperature}
+      />
     </>
   );
 }

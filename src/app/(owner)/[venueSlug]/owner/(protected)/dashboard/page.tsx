@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { getNeedsAttention } from "@/lib/owner/needsAttention";
+import { loadB2Overview } from "@/lib/compliance/b2Data";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { getWeeklyDigest } from "@/lib/reports/weeklyDigest";
 import { OwnerDashboardBoard, type FlagItem } from "@/components/owner/OwnerDashboardBoard";
@@ -113,7 +114,24 @@ export default async function OwnerDashboardPage({
   // Handling, Food Safety Supervisor, First Aid) is never a compliance
   // breach, so it never gets red or "expired" wording -- overdue refreshers
   // read as Saffron (same urgency tier as "expiring soon"), not Red.
+  // Temperature log (B2): an open out of range flag is a real "needs attention" item, so the
+  // hero card never says "nothing needs attention" next to a unit that is out of range.
+  const b2 = await loadB2Overview(supabase, venueId);
+  const openTemperatureUnits = b2.statuses.filter((s) => s.openFlag).map((s) => s.unit.name);
+
   const flags: FlagItem[] = [
+    ...(openTemperatureUnits.length > 0
+      ? [
+          {
+            key: "b2-open-flags",
+            tier: "red",
+            href: `/${venueSlug}/owner/temperature`,
+            glyph: "temperature",
+            primary: `${openTemperatureUnits.length} unit${openTemperatureUnits.length === 1 ? " is" : "s are"} out of range`,
+            secondary: openTemperatureUnits.slice(0, 3).join(", ") + (openTemperatureUnits.length > 3 ? " and more" : ""),
+          } satisfies FlagItem,
+        ]
+      : []),
     ...needsAttention.expiredCerts.map(
       (c): FlagItem =>
         c.trackingType === "hard_expiry"
@@ -200,6 +218,7 @@ export default async function OwnerDashboardPage({
         weeklyTopQuestion={weeklyDigest.outOfScope[0]?.question ?? weeklyDigest.escalations[0]?.question ?? null}
         suggestionCount={sortedSuggestions.length}
         suggestionPreview={sortedSuggestions[0]?.headline ?? null}
+        temperature={{ done: b2.summary.doneToday, total: b2.summary.total, openFlags: b2.summary.openFlags, degraded: b2.degraded }}
       />
     </main>
   );

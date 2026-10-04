@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
 import { test, expect, type Page } from "@playwright/test";
@@ -67,8 +68,8 @@ test.describe.serial("back-button audit: onboarding wizard (15 pages)", () => {
   // used one) -- a real domain with a disposable alias, same convention
   // already used for every other throwaway account in this project.
   const OWNER_EMAIL = `john.moreno.bamba+back-audit-wizard-${suffix}@gmail.com`;
-  const PASSWORD = "BackAuditWizard123!";
-  const SPECIALIST_PIN = "8823";
+  const PASSWORD = randomPassword();
+  const SPECIALIST_PIN = fixturePin();
   let venueId: string | undefined;
   let specialistId: string | undefined;
 
@@ -151,6 +152,27 @@ test.describe.serial("back-button audit: onboarding wizard (15 pages)", () => {
       await expectHealthyPage(page);
     });
   }
+
+  // The loop above derives its expectation from getPreviousStep itself, so
+  // it can't catch that function and getNextStep drifting apart. Hardcoded
+  // expectations for the Compliance Forms 0a step and its neighbours.
+  test("wizard step: compliance-setup sits between equipment and promotions", async ({ page }) => {
+    await loginOwner(page);
+    const expectBack = async (from: string, to: string) => {
+      await page.goto(`/${SLUG}/owner/onboarding/${from}`);
+      await expectHealthyPage(page);
+      const backLink = page.getByRole("link", { name: "← Back" });
+      await expect(backLink).toHaveCount(1);
+      expect(await backLink.getAttribute("href")).toBe(`/${SLUG}/owner/onboarding/${to}`);
+    };
+    await expectBack("compliance-setup", "equipment");
+    await expectBack("promotions", "compliance-setup");
+    // Unlicensed venues skip promotions: contacts goes back to compliance-setup.
+    const admin = adminClient();
+    await admin.from("wizard_sessions").upsert({ venue_id: venueId!, venue_type_flags: { licensed: false } }, { onConflict: "venue_id" });
+    await expectBack("contacts", "compliance-setup");
+    await admin.from("wizard_sessions").upsert({ venue_id: venueId!, venue_type_flags: {} }, { onConflict: "venue_id" });
+  });
 });
 
 // ============================================================================
@@ -160,7 +182,7 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
   const suffix = randomUUID().slice(0, 8);
   const SLUG = `back-audit-owner-${suffix}`;
   const OWNER_EMAIL = `back-audit-owner-${suffix}@example.com`;
-  const PASSWORD = "BackAuditOwner123!";
+  const PASSWORD = randomPassword();
   const QR_SLUG = `back-audit-owner-station-${suffix}`;
 
   let venueId: string;
@@ -301,6 +323,8 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
     { href: "weekly-report", label: "Weekly report" },
     { href: "escalations", label: "Escalations" },
     { href: "near-misses", label: "Near-misses" },
+    { href: "temperature", label: "Temperature log" },
+    { href: "compliance", label: "Compliance" },
     { href: "stations", label: "Stations" },
     { href: "photo-library", label: "Photos" },
     { href: "contacts", label: "Contacts" },
@@ -320,6 +344,31 @@ test.describe.serial("back-button audit: owner pages (19 pages)", () => {
       await expectHealthyPage(page);
     });
   }
+
+  test("owner compliance: overview -> switch forms (nested) -> back to overview", async ({ page }) => {
+    await loginOwner(page);
+    await page.goto(`/${SLUG}/owner/compliance`);
+    await expectHealthyPage(page);
+    await page.getByRole("link", { name: "Switch forms on or off" }).click();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/forms$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance forms" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("owner compliance: overview -> records (nested) -> back to overview", async ({ page }) => {
+    await loginOwner(page);
+    await page.goto(`/${SLUG}/owner/compliance`);
+    await page.getByRole("link", { name: "See and print records" }).click();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance/records$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance records" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/owner/compliance$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
 
   test("owner nested: module versions (from Modules list)", async ({ page }) => {
     await loginOwner(page);
@@ -395,7 +444,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const QR_SLUG = `back-audit-staff-station-${suffix}`;
   const FRESH_NAME = "Back Audit Fresh Staff";
   const SET_NAME = "Back Audit Set Staff";
-  const PIN = "7412";
+  const PIN = fixturePin();
 
   let venueId: string;
   let liveModuleId: string;
@@ -408,7 +457,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
 
     const { data: role } = await admin
       .from("staff_roles")
-      .insert({ venue_id: venueId, name: "Back Audit Staff Role" })
+      .insert({ venue_id: venueId, name: "Back Audit Staff Role", department: "BOH" })
       .select("id")
       .single();
 
@@ -525,6 +574,8 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const DRAWER_ITEMS = [
     { segment: "modules", label: "Modules" },
     { segment: "certs", label: "Certificates" },
+    { segment: "forms", label: "Compliance forms" },
+    { segment: "temperature", label: "Temperature log" },
     { segment: "settings", label: "Settings" },
   ];
 
@@ -574,6 +625,41 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
     await expectHealthyPage(page);
   });
 
+  test("temperature log (direct, BOH staff, no units set up: empty state)", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    await page.goto(`/${SLUG}/home`);
+    await page.goto(`/${SLUG}/temperature`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("compliance forms hub (direct, BOH staff) -> a form -> back to the hub", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    await page.goto(`/${SLUG}/home`);
+    await page.goto(`/${SLUG}/forms`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Compliance forms" })).toBeVisible();
+    await page.goto(`/${SLUG}/forms/B10`);
+    await expectHealthyPage(page);
+    await expect(page.getByRole("heading", { name: "Kitchen opening checklist" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/${SLUG}/forms$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
+  test("compliance form (direct): an unknown form id is a clean not found, B2 sends you to the temperature log", async ({ page }) => {
+    await loginStaff(page, SET_NAME);
+    await page.goto(`/${SLUG}/forms/NOPE`);
+    // the app streams its response, so the status is already 200 when notFound() renders: check the page instead
+    await expect(page.getByText(/could not be found|not found|404/i).first()).toBeVisible();
+    await page.goto(`/${SLUG}/forms/B2`);
+    await page.waitForURL(new RegExp(`/${SLUG}/temperature$`), { waitUntil: "commit" });
+    await expectHealthyPage(page);
+  });
+
   test("intro (direct, Ask Larder explainer)", async ({ page }) => {
     await loginStaff(page, SET_NAME);
     await page.goto(`/${SLUG}/home`);
@@ -599,6 +685,9 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
     await page.goto(`/${SLUG}/home`);
     await page.goto(`/${SLUG}/signature`);
     await expectHealthyPage(page);
+    // this page redirects (to modules, as the fixture has not finished). Let that destination finish loading before
+    // going back: going back while it is still streaming aborts the history navigation (net::ERR_ABORTED).
+    await page.waitForLoadState("networkidle");
     await page.goBack();
     await page.waitForURL(new RegExp(`/${SLUG}/home$`), { waitUntil: "commit" });
     await expectHealthyPage(page);

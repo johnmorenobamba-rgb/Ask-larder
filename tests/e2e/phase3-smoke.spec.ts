@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { nativeClick } from "./helpers/stage0";
+
+// The seeded smoke venue staff PIN comes from the environment, never from the repo.
+const SMOKE_PIN = process.env.E2E_SMOKE_PIN ?? "";
 
 // Quick smoke check for Phase 3's certs -> signature -> completion -> Ask
 // Larder explainer flow, against the same disposable "Smoke Test Venue"
@@ -10,8 +14,8 @@ test("certs -> signature -> completion -> Ask Larder intro", async ({ page }) =>
   test.setTimeout(90_000);
   await page.goto("/smoke-test-venue/login");
   await page.getByRole("button", { name: "Smoke Tester" }).click();
-  await page.locator('input[type="password"]').fill("1234");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.locator('input[type="password"]').fill(SMOKE_PIN);
+  await nativeClick(page, "Log in"); // the login form sits in an animated cell, a plain click never settles
 
   // Login always lands on welcome first, regardless of prior progress.
   await expect(page).toHaveURL(/\/welcome$/);

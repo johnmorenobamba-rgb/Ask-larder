@@ -14,7 +14,7 @@ import { ExportDataButton } from "@/components/owner/ExportDataButton";
 import type { StationDisplay } from "@/lib/stations/getStationsWithDisplay";
 
 export type FlagTier = "red" | "saffron" | "brown";
-export type FlagGlyphKey = "cert" | "module" | "escalation";
+export type FlagGlyphKey = "cert" | "module" | "escalation" | "temperature";
 
 export type FlagItem = {
   key: string;
@@ -105,10 +105,20 @@ export function PhoneGlyph({ color }: { color: string }) {
   );
 }
 
+function TemperatureGlyph({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1="12" y1="9" x2="12" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const GLYPHS: Record<FlagGlyphKey, (props: { color: string }) => React.JSX.Element> = {
   cert: CertGlyph,
   module: ModuleGlyph,
   escalation: EscalationGlyph,
+  temperature: TemperatureGlyph,
 };
 
 // The individual flag row, unchanged from J6 -- reused inside K1's popup
@@ -344,6 +354,65 @@ function EscalationsCell({
   );
 }
 
+// Temperature log (B2) -- standing tile. Preserve Red only when a unit is still out of
+// range (the flag stays open until a LATER in range reading, however old), Bay Green
+// otherwise. Plain numbers, no Stamp: a routine log is not a trust moment.
+function TemperatureCell({
+  temperature,
+  href,
+}: {
+  temperature: { done: number; total: number; openFlags: number; degraded: boolean };
+  href: string;
+}) {
+  const [entered, setEntered] = useState(false);
+  const flagged = temperature.openFlags > 0;
+  const color = flagged ? "var(--color-preserve-red)" : "var(--color-bay-green)";
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <Link href={href} className="block h-full w-full">
+      <ElevatedCell
+        glowColor={color}
+        floatDurationS={5.9}
+        floatDelayS={0.6}
+        depth="secondary"
+        className="flex h-full flex-col justify-between rounded-2xl bg-parchment px-4 py-4"
+      >
+        <div className="flex items-center gap-1.5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 5a2 2 0 1 1 4 0v8.2a4 4 0 1 1-4 0V5Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+            <line x1="12" y1="9" x2="12" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Temperature log</p>
+        </div>
+        {temperature.degraded ? (
+          <p className="font-sans text-sm text-preserve-red">Couldn&apos;t load readings</p>
+        ) : temperature.total === 0 ? (
+          <p className="font-sans text-sm text-clay-brown">No units set up yet</p>
+        ) : (
+          <div>
+            <p className="font-sans text-sm text-ink">
+              <span className="font-display text-2xl font-bold">
+                <AnimatedNumber value={temperature.done} animate={entered} />
+              </span>{" "}
+              of {temperature.total} logged today
+            </p>
+            {flagged ? (
+              <p className="mt-1 font-sans text-sm font-medium text-preserve-red">{temperature.openFlags} out of range</p>
+            ) : (
+              <p className="mt-1 font-sans text-sm text-bay-green">None out of range</p>
+            )}
+          </div>
+        )}
+      </ElevatedCell>
+    </Link>
+  );
+}
+
 // Weekly report -- standing tile, Ink flat treatment (matches staff
 // dashboard's one dark cell language, reserved for a single always-there
 // anchor point rather than an alert color). Gives owners the same "what
@@ -561,6 +630,7 @@ export function OwnerDashboardBoard({
   weeklyTopQuestion,
   suggestionCount,
   suggestionPreview,
+  temperature,
 }: {
   venueSlug: string;
   flags: FlagItem[];
@@ -575,6 +645,7 @@ export function OwnerDashboardBoard({
   weeklyTopQuestion: string | null;
   suggestionCount: number;
   suggestionPreview: string | null;
+  temperature: { done: number; total: number; openFlags: number; degraded: boolean };
 }) {
   const showQuietState = flags.length === 0 && nearMissCount === 0;
   const isGenuinelyNewVenue = staff.length === 0;
@@ -631,6 +702,10 @@ export function OwnerDashboardBoard({
             recentStation={escalationRecentStation}
             href={`/${venueSlug}/owner/escalations`}
           />
+        </div>
+
+        <div className="col-span-4 sm:col-span-1">
+          <TemperatureCell temperature={temperature} href={`/${venueSlug}/owner/temperature`} />
         </div>
 
         <div className="col-span-4 sm:col-span-1">

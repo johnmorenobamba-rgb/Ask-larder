@@ -28,7 +28,9 @@ export default async function LicenceDetailPage({ params }: { params: Promise<{ 
       <LicenceDetailForm
         venueSlug={venueSlug}
         initial={{
-          licenceType: profile?.licence_type ?? "",
+          // Null on a licensed venue means "Other or unsure" was chosen, which
+          // is carried by the founder-escalation flag, not the column.
+          licenceType: profile?.licence_type ?? (flags.founder_escalation?.includes("licence_type_other_unsure") ? "other_unsure" : ""),
           licenceNumber: profile?.licence_number ?? "",
           licensedCapacity: profile?.licensed_capacity ? String(profile.licensed_capacity) : "",
           lateNightEndorsement: profile?.late_night_endorsement ?? false,

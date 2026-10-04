@@ -285,6 +285,7 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={() => iconState === "listening" && stopListening()}
+        data-ask-larder-fab
         className="fixed bottom-6 left-6 z-40 flex h-16 w-16 items-center justify-center rounded-full shadow-lg"
       >
         <AskLarderTriggerIcon

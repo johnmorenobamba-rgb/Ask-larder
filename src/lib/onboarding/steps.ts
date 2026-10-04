@@ -31,6 +31,7 @@ export const WIZARD_STEP_SLUGS = [
   "food-service",
   "menu",
   "equipment",
+  "compliance-setup",
   "promotions",
   "contacts",
   "staff-roles",
@@ -51,6 +52,7 @@ export const WIZARD_STEPS: { slug: WizardStepSlug; label: string }[] = [
   { slug: "food-service", label: "Food service" },
   { slug: "menu", label: "Menu" },
   { slug: "equipment", label: "Equipment" },
+  { slug: "compliance-setup", label: "Fridges and compliance" },
   { slug: "promotions", label: "Promotions" },
   { slug: "contacts", label: "Contacts" },
   { slug: "staff-roles", label: "Staff roles" },
@@ -101,6 +103,8 @@ export function getNextStep(slug: WizardStepSlug, flags: VenueTypeFlags): Wizard
     case "menu":
       return "equipment";
     case "equipment":
+      return "compliance-setup";
+    case "compliance-setup":
       return licensed ? "promotions" : "contacts";
     case "promotions":
       return "contacts";
@@ -146,10 +150,12 @@ export function getPreviousStep(slug: WizardStepSlug, flags: VenueTypeFlags): Wi
       return "food-service";
     case "equipment":
       return "menu";
-    case "promotions":
+    case "compliance-setup":
       return "equipment";
+    case "promotions":
+      return "compliance-setup";
     case "contacts":
-      return licensed ? "promotions" : "equipment";
+      return licensed ? "promotions" : "compliance-setup";
     case "staff-roles":
       return "contacts";
     case "staff-invite":
