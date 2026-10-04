@@ -1446,6 +1446,48 @@ export type Database = {
           },
         ]
       }
+      staff_role_changes: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_role_name: string | null
+          new_staff_role_id: string | null
+          new_tier: string | null
+          old_role_name: string | null
+          old_staff_role_id: string | null
+          old_tier: string | null
+          staff_user_id: string
+          venue_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_role_name?: string | null
+          new_staff_role_id?: string | null
+          new_tier?: string | null
+          old_role_name?: string | null
+          old_staff_role_id?: string | null
+          old_tier?: string | null
+          staff_user_id: string
+          venue_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_role_name?: string | null
+          new_staff_role_id?: string | null
+          new_tier?: string | null
+          old_role_name?: string | null
+          old_staff_role_id?: string | null
+          old_tier?: string | null
+          staff_user_id?: string
+          venue_id?: string
+        }
+        Relationships: []
+      }
       staff_roles: {
         Row: {
           department: string | null

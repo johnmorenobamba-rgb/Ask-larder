@@ -48,7 +48,7 @@ export function StaffLifecycleActions({ staffUserId, staffName }: { staffUserId:
           type="button"
           onClick={resetPin}
           disabled={loading !== null}
-          className="rounded-full border-2 border-clay-brown/40 px-4 py-2 font-sans text-sm text-ink disabled:opacity-50"
+          className="min-h-11 whitespace-nowrap rounded-full border-2 border-clay-brown/40 px-4 py-2 font-sans text-sm text-ink disabled:opacity-50"
         >
           {loading === "reset" ? "Resetting…" : "Reset PIN"}
         </button>
@@ -57,7 +57,7 @@ export function StaffLifecycleActions({ staffUserId, staffName }: { staffUserId:
             type="button"
             onClick={() => setConfirmingDeactivate(true)}
             disabled={loading !== null}
-            className="rounded-full border-2 border-preserve-red/60 px-4 py-2 font-sans text-sm text-preserve-red disabled:opacity-50"
+            className="min-h-11 whitespace-nowrap rounded-full border-2 border-preserve-red/60 px-4 py-2 font-sans text-sm text-preserve-red disabled:opacity-50"
           >
             Deactivate
           </button>

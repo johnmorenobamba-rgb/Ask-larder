@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentStaff } from "@/lib/auth/session";
+import { StaffRoleSelect, type RoleOption } from "@/components/owner/StaffRoleSelect";
 import { StaffLifecycleActions } from "@/components/owner/StaffLifecycleActions";
 import { ReactivateStaffButton } from "@/components/owner/ReactivateStaffButton";
 import { InviteStaffForm } from "@/components/owner/InviteStaffForm";
@@ -18,13 +20,14 @@ import { StaffCompletionList, type StaffCompletionRow } from "@/components/owner
 // completions/page.tsx, which deliberately has no such filter.
 export default async function OwnerStaffPage() {
   const supabase = await createClient();
+  const viewer = await getCurrentStaff();
 
   // app_users_select_own_venue (reconcile_schema_drift) scopes this to the
   // caller's own venue already -- no explicit venue_id filter needed.
-  const [{ data: staff }, { data: deactivatedStaff }, { data: liveModules }, { data: progress }] = await Promise.all([
+  const [{ data: staff }, { data: deactivatedStaff }, { data: liveModules }, { data: progress }, { data: roleRows }] = await Promise.all([
     supabase
       .from("app_users")
-      .select("id, name, role, staff_roles(name, department)")
+      .select("id, name, role, staff_role_id, staff_roles(name, department, fallback_tier)")
       .neq("role", "owner")
       .is("deactivated_at", null)
       .order("name"),
@@ -36,7 +39,14 @@ export default async function OwnerStaffPage() {
       .order("name"),
     supabase.from("modules").select("id").eq("status", "live"),
     supabase.from("staff_module_progress").select("user_id, module_id, status"),
+    supabase.from("staff_roles").select("id, name, department, fallback_tier").order("name"),
   ]);
+  const roleOptions: RoleOption[] = (roleRows ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    department: r.department,
+    tier: r.fallback_tier === "authorized" ? "authorized" : "frontline",
+  }));
 
   const liveModuleCount = (liveModules ?? []).length;
   // Counts distinct completed module_ids per user, not raw rows -- a real
@@ -79,13 +89,17 @@ export default async function OwnerStaffPage() {
             </p>
           )}
           <InviteStaffForm />
+          {viewer?.role === "manager" && (
+            <p className="font-sans text-sm text-ink/75">You can move people between Frontline roles. Only the owner can give or remove an Authorized role.</p>
+          )}
           <div className="space-y-3">
             {(staff ?? []).map((member) => (
               <div
                 key={member.id}
                 data-testid="staff-row"
-                className="flex items-center justify-between rounded-2xl border-2 border-clay-brown/40 px-4 py-4"
+                className="space-y-3 rounded-2xl border-2 border-clay-brown/40 px-4 py-4"
               >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-display text-ink">{member.name}</p>
                   <p className="font-mono text-xs text-clay-brown">
@@ -94,6 +108,17 @@ export default async function OwnerStaffPage() {
                   </p>
                 </div>
                 <StaffLifecycleActions staffUserId={member.id} staffName={member.name} />
+                </div>
+                <StaffRoleSelect
+                  staffUserId={member.id}
+                  staffName={member.name}
+                  currentRoleId={member.staff_role_id}
+                  currentTier={member.staff_roles ? (member.staff_roles.fallback_tier === "authorized" ? "authorized" : "frontline") : null}
+                  roles={roleOptions}
+                  viewerIsOwner={viewer?.role === "owner"}
+                  isSelf={viewer?.id === member.id}
+                  canChange={viewer?.role === "owner" || viewer?.role === "manager"}
+                />
               </div>
             ))}
             {(staff ?? []).length === 0 && (

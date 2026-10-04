@@ -124,7 +124,7 @@ begin
   perform pg_temp.imp(a_mgr);
   begin update app_users set staff_role_id = r_dm where id = s_fl2; get diagnostics n = row_count; ok := true; exception when others then ok := false; n := 0; end;
   execute 'reset role';
-  out := out || pg_temp.chk('manager can assign a colleague a role (even a manager tier one)', ok and n = 1 and (select staff_role_id from app_users where id = s_fl2) = r_dm);
+  out := out || pg_temp.chk('manager cannot give a colleague an Authorized role (owner only, 20261005060000)', (select staff_role_id from app_users where id = s_fl2) = r_fl);
   perform pg_temp.imp(a_mgr);
   begin update app_users set role = 'owner' where id = s_fl2; ok := true; exception when others then ok := false; end;
   execute 'reset role';
