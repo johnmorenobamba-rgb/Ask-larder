@@ -8,6 +8,8 @@ import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { cleanNote } from "@/lib/compliance/b2";
 import { getGenericForm } from "@/lib/compliance/engine/forms";
 import { canFillStage, gateRoles, isFormOn, visibleRoles } from "@/lib/compliance/engine/activation";
+import { processAlerts } from "@/lib/compliance/alerts";
+import { isGenericForm } from "@/lib/compliance/genericAlert";
 import { loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
 import { compileRules, fieldsFor, findStage } from "@/lib/compliance/engine/rules";
 import type { ChecklistItem } from "@/lib/compliance/engine/types";
@@ -175,6 +177,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ for
     const friendly = mapRpcError(error.message ?? "");
     if (friendly.status >= 500) console.error(`[forms ${def.id}] submit_compliance_record failed:`, error.message);
     return NextResponse.json({ error: friendly.error }, { status: friendly.status });
+  }
+
+  // Owner alert for a failing B3, B6 or B12 record: the database trigger wrote one alert row for the episode; this sends it.
+  // Best effort, off unless COMPLIANCE_ALERT_EMAIL_ENABLED is set, and the record is already stored.
+  const saved = (data ?? {}) as { id?: string; out_of_range?: boolean; inserted?: boolean };
+  if (saved.id && saved.inserted && saved.out_of_range && isGenericForm(def.id)) {
+    try {
+      await processAlerts(admin, staff.venue_id, [saved.id]);
+    } catch (err) {
+      console.error(`[forms ${def.id}] alert processing failed:`, err instanceof Error ? err.message : "unknown error");
+    }
   }
 
   const r = (data ?? {}) as { id?: string; out_of_range?: boolean; inserted?: boolean; chain_id?: string | null; fail_reasons?: string[] };
