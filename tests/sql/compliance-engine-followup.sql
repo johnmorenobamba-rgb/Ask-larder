@@ -1,5 +1,5 @@
 -- Follow up migration suite (20261003010000): service role activation insert, soft prior stages, the all n/a
--- checklist guard, and the atomic PIN failure counter. One DO block, forced RAISE, throwaway venue only.
+-- checklist guard (the old atomic PIN failure counter was dropped, see 20261005090000). One DO block, forced RAISE, throwaway venue only.
 do $$
 declare
   vT uuid := gen_random_uuid();
@@ -51,26 +51,8 @@ begin
   out := out || pg_temp.chk('a checklist with every item not applicable is refused', not (pg_temp.rc(vT, s_boh, 'B10', rules_check, pg_temp.en('{"items":{"a":"na","b":"na"}}'))->>'ok')::boolean);
   out := out || pg_temp.chk('a checklist with one applicable item is accepted', (pg_temp.rc(vT, s_boh, 'B10', rules_check, pg_temp.en('{"items":{"a":"na","b":"pass"}}'))->>'ok')::boolean);
 
-  -- atomic PIN failure counter: 5 bumps lock for 15 minutes, via service_role only
-  out := out || pg_temp.chk('bump_staff_pin_failure: anon and authenticated cannot execute', not has_function_privilege('anon','public.bump_staff_pin_failure(uuid)','EXECUTE') and not has_function_privilege('authenticated','public.bump_staff_pin_failure(uuid)','EXECUTE'));
-  out := out || pg_temp.chk('bump_staff_pin_failure: service_role can execute', has_function_privilege('service_role','public.bump_staff_pin_failure(uuid)','EXECUTE'));
-  execute 'set local role service_role';
-  for n in 1..4 loop perform public.bump_staff_pin_failure(s_other); end loop;
-  execute 'reset role';
-  select pin_failed_attempts, pin_locked_until into att, locked from app_users where id = s_other;
-  out := out || pg_temp.chk('after 4 failures: counted 4, not locked', att = 4 and locked is null);
-  execute 'set local role service_role';
-  perform public.bump_staff_pin_failure(s_other);
-  execute 'reset role';
-  select pin_failed_attempts, pin_locked_until into att, locked from app_users where id = s_other;
-  out := out || pg_temp.chk('the 5th failure locks for about 15 minutes', att = 5 and locked > now() + interval '14 minutes' and locked < now() + interval '16 minutes');
-  execute 'set local role service_role';
-  out := out || pg_temp.chk('an unknown id returns null and changes nothing', public.bump_staff_pin_failure(gen_random_uuid()) is null);
-  execute 'reset role';
-  execute 'set local role authenticated';
-  begin perform public.bump_staff_pin_failure(s_other); ok := true; exception when others then ok := false; end;
-  execute 'reset role';
-  out := out || pg_temp.chk('a signed in client cannot call it', not ok);
+  -- the old atomic PIN counter public.bump_staff_pin_failure was dropped (20261005090000); record_staff_pin_failure is covered by staff-pin-failure.sql
+  out := out || pg_temp.chk('the unused bump_staff_pin_failure function is gone', to_regprocedure('public.bump_staff_pin_failure(uuid)') is null);
 
   begin delete from venues where id = vT; ok := true; exception when others then ok := false; end;
   out := out || pg_temp.chk('cleanup cascade works', ok);
