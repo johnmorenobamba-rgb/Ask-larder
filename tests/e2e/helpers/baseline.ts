@@ -1,16 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
-import { adminClient } from "./stage0";
+import { adminClient, listObjects, removeFixtureObjects } from "./stage0";
 
 // Run level safety net for every Playwright run (wired in as globalSetup and globalTeardown):
 //  1. setup records baseline counts of the shared database,
 //  2. teardown removes any DISPOSABLE fixture left behind by a failed or killed spec (service role, only venues made by
 //     createFixture during this run and the synthetic logins made with them), then
 //  3. compares the counts to the baseline and FAILS the run if anything differs. Never touches a venue it did not create.
-export const FIXTURE_PREFIXES = ["s0", "td", "pl", "gd", "gh", "rg", "tl", "ev", "al"];
+export const FIXTURE_PREFIXES = ["s0", "td", "pl", "gd", "gh", "rg", "tl", "ev", "al", "ca", "es", "rc", "vt", "ge", "ex", "gp"];
 const FILE = path.join("test-results", ".baseline.json");
 
-export type Counts = { venues: number; records: number; logins: number; appUsers: number; roles: number; activation: number };
+export type Counts = { venues: number; records: number; logins: number; appUsers: number; roles: number; activation: number; signatures: number; certs: number; nearMissPhotos: number; onboardingUploads: number; photoLibrary: number };
 
 async function count(table: string): Promise<number> {
   const { count: c, error } = await adminClient().from(table as never).select("*", { count: "exact", head: true });
@@ -38,6 +38,11 @@ export async function snapshot(): Promise<Counts> {
     appUsers: await count("app_users"),
     roles: await count("staff_roles"),
     activation: await count("venue_compliance_forms"),
+    signatures: await count("esignatures"),
+    certs: (await listObjects("certs")).length,
+    nearMissPhotos: (await listObjects("near-miss-photos")).length,
+    onboardingUploads: (await listObjects("onboarding-uploads")).length,
+    photoLibrary: (await listObjects("photo-library")).length,
   };
 }
 
@@ -56,6 +61,7 @@ export async function sweepFixtures(startedAt: string): Promise<{ venues: number
   if (ids.length) {
     const { data: staff } = await admin.from("app_users").select("id").in("venue_id", ids);
     for (const s of staff ?? []) staffEmails.push(`staff-${s.id}@venue.internal`);
+    for (const id of ids) await removeFixtureObjects(id); // only objects under the fixture's own venue folder
     await admin.from("venues").delete().in("id", ids); // cascades over records, activation rows, units, stations, staff
   }
   let logins = 0;

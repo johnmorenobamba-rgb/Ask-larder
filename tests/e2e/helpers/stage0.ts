@@ -109,9 +109,39 @@ export async function createFixture(prefix = "s0"): Promise<Fixture> {
   return { slug, venueId, ownerEmail, ownerAuthId: authData.user.id, staff, stations: stationNames, unitIds };
 }
 
+export const STORAGE_BUCKETS = ["certs", "near-miss-photos", "onboarding-uploads", "photo-library"];
+
+/** Every object path under a prefix of one bucket (the storage API lists one folder level at a time). */
+export async function listObjects(bucket: string, prefix = ""): Promise<string[]> {
+  const admin = adminClient();
+  const out: string[] = [];
+  const { data, error } = await admin.storage.from(bucket).list(prefix, { limit: 1000 });
+  if (error) throw new Error(`could not list ${bucket}/${prefix}`);
+  for (const item of data ?? []) {
+    const full = prefix ? `${prefix}/${item.name}` : item.name;
+    if (item.id) out.push(full);
+    else out.push(...(await listObjects(bucket, full)));
+  }
+  return out;
+}
+
+/**
+ * Remove the storage objects a DISPOSABLE fixture venue created. Only paths under the fixture's own venue id folder
+ * (a uuid made during this run) are ever touched; nothing outside it can match.
+ */
+export async function removeFixtureObjects(venueId: string) {
+  if (!/^[0-9a-f-]{36}$/.test(venueId)) return;
+  const admin = adminClient();
+  for (const bucket of STORAGE_BUCKETS) {
+    const paths = await listObjects(bucket, venueId);
+    if (paths.length) await admin.storage.from(bucket).remove(paths);
+  }
+}
+
 export async function destroyFixture(fx: Fixture | null) {
   if (!fx) return;
   const admin = adminClient();
+  await removeFixtureObjects(fx.venueId);
   await admin.from("venues").delete().eq("id", fx.venueId); // cascades over records, activation rows, units, stations, staff
   const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
   for (const u of authList?.users ?? []) {
