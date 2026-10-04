@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HIGH_RISK_ACTIVITIES, TRADE_WASTE_OPTIONS, UNIT_TYPES } from "@/lib/onboarding/constants";
+import { HIGH_RISK_ACTIVITIES, TRADE_WASTE_OPTIONS, UNIT_TYPES, VENUE_TYPES } from "@/lib/onboarding/constants";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { inputClass, selectClass, labelClass, cardClass, primaryButtonClass, secondaryButtonClass, errorClass } from "./fieldStyles";
 
@@ -36,6 +36,7 @@ export function ComplianceSetupForm({
     highRiskActivities: string[];
     offersAccommodation: boolean;
     tradeWasteAgreement: string;
+    venueType: string;
   };
 }) {
   const router = useRouter();
@@ -43,6 +44,7 @@ export function ComplianceSetupForm({
   const [activities, setActivities] = useState<string[]>(initial.highRiskActivities);
   const [offersAccommodation, setOffersAccommodation] = useState(initial.offersAccommodation);
   const [tradeWaste, setTradeWaste] = useState(initial.tradeWasteAgreement);
+  const [venueType, setVenueType] = useState(initial.venueType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,6 +82,7 @@ export function ComplianceSetupForm({
         highRiskActivities: activities,
         offersAccommodation,
         tradeWasteAgreement: tradeWaste,
+        venueType,
       }),
     });
     const body = await res.json().catch(() => null);
@@ -106,6 +109,24 @@ export function ComplianceSetupForm({
           The cold and hot hold limits are the legal limits. The frozen limit follows Victorian FoodSmart guidance.
           Change a limit only if the venue&apos;s Food Safety Program says otherwise.
         </p>
+      </div>
+
+      <div className={cardClass}>
+        <h3 className="font-display text-lg font-bold text-ink">Venue type</h3>
+        <p className="font-sans text-sm text-ink/70">
+          This sets which compliance forms start switched on. Cafes get the cafe forms, pubs and bars get the bar forms. You can switch any form on or off later on the Compliance forms page, and your choice there always wins.
+        </p>
+        <div className="space-y-1">
+          <label htmlFor="venue-type" className={labelClass}>What kind of venue is this?</label>
+          <select id="venue-type" value={venueType} onChange={(e) => setVenueType(e.target.value)} className={selectClass}>
+            <option value="">Choose one</option>
+            {VENUE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className={cardClass}>

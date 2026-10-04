@@ -18,6 +18,9 @@ const MINUS = "−";
 const food = (c: ActivationContext) => c.foodService !== "no_food_service";
 const fullKitchen = (c: ActivationContext) => c.foodService === "full_kitchen" || c.foodService === null;
 const licensedBar = (c: ActivationContext) => ["general", "on_premises", "late_night"].includes(c.licenceType ?? "");
+// Venue type (P27): pubs and bars start with the bar forms on, cafes with the cafe pack on. An owner's own switch always wins.
+const barVenue = (c: ActivationContext) => licensedBar(c) || c.venueType === "pub" || c.venueType === "bar";
+const cafeVenue = (c: ActivationContext) => c.venueType === "cafe";
 
 const item = (key: string, label: string): ChecklistItem => ({ key, label });
 
@@ -299,8 +302,8 @@ export const FORMS: FormDef[] = [
     ],
     failBehaviour: "Write what you did, for example cleaned the filter or called the technician, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: licensedBar,
-    defaultOnNote: "On for venues with a bar licence.",
+    defaultOn: barVenue,
+    defaultOnNote: "On for venues with a bar licence, and for pubs and bars.",
     version: "1",
   },
   {
@@ -330,8 +333,8 @@ export const FORMS: FormDef[] = [
     fail: [anyFail("items")],
     failBehaviour: "Mark the check as failed, write what you did about it, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: licensedBar,
-    defaultOnNote: "On for venues with a bar licence.",
+    defaultOn: barVenue,
+    defaultOnNote: "On for venues with a bar licence, and for pubs and bars.",
     version: "1",
   },
   {
@@ -368,8 +371,8 @@ export const FORMS: FormDef[] = [
     ],
     failBehaviour: "Write what you did, for example moved or threw out the food, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: () => false,
-    defaultOnNote: "Off until the owner switches it on. The wizard does not yet record whether a venue runs a cafe.",
+    defaultOn: cafeVenue,
+    defaultOnNote: "On for cafes. Off until the owner switches it on for other venues.",
     version: "1",
   },
   {
@@ -398,8 +401,8 @@ export const FORMS: FormDef[] = [
     fail: [anyFail("items")],
     failBehaviour: "Mark the check as failed, write what you did about it, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: () => false,
-    defaultOnNote: "Off until the owner switches it on.",
+    defaultOn: cafeVenue,
+    defaultOnNote: "On for cafes. Off until the owner switches it on for other venues.",
     version: "1",
   },
 
@@ -426,8 +429,8 @@ export const FORMS: FormDef[] = [
     fail: [{ field: "rinse_ok", op: "eq", value: "fail", label: "Lines did not rinse clear" }],
     failBehaviour: "Write what you did, for example rinsed again, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: licensedBar,
-    defaultOnNote: "On for venues with a bar licence.",
+    defaultOn: barVenue,
+    defaultOnNote: "On for venues with a bar licence, and for pubs and bars.",
     version: "1",
   },
   {
@@ -449,8 +452,8 @@ export const FORMS: FormDef[] = [
     fail: [{ field: "descaled", op: "eq", value: "fail", label: "Descale not completed" }],
     failBehaviour: "Write why it was not done, then save. The owner sees it flagged.",
     allowCorrection: true,
-    defaultOn: () => false,
-    defaultOnNote: "Off until the owner switches it on.",
+    defaultOn: cafeVenue,
+    defaultOnNote: "On for cafes. Off until the owner switches it on for other venues.",
     version: "1",
   },
   {
@@ -933,8 +936,8 @@ export const FORMS: FormDef[] = [
     fail: [],
     failBehaviour: "This form has no pass or fail. Never enter patron names.",
     allowCorrection: true,
-    defaultOn: licensedBar,
-    defaultOnNote: "On for venues with a bar licence.",
+    defaultOn: barVenue,
+    defaultOnNote: "On for venues with a bar licence, and for pubs and bars.",
     version: "1",
   },
   {

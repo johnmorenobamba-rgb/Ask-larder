@@ -96,6 +96,8 @@ export type ActivationContext = {
   offersAccommodation: boolean;
   tradeWaste: "yes" | "no" | "unsure";
   highRiskActivities: string[];
+  /** The wizard's venue type (20261005070000). Null when the venue never chose one: the older defaults apply unchanged. */
+  venueType: "cafe" | "restaurant" | "pub" | "bar" | "other" | null;
 };
 
 export type FormGroup = "kitchen" | "front" | "bar" | "venue" | "cafe";

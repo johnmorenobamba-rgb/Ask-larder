@@ -64,7 +64,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
     .maybeSingle();
   if (error) {
     // the database guards use plain sentences; anything they refuse is a permission problem, not a server fault
-    if (/Only the owner|cannot change your own|Not allowed|belongs to another venue|Only a manager/i.test(error.message)) {
+    if (/Only the owner|cannot change your own|Not allowed|belongs to another venue|Only a manager|at least one active owner|Identity and venue/i.test(error.message)) {
       return NextResponse.json({ error: "You can't make that change." }, { status: 403 });
     }
     console.error("role change unexpected error:", error.message);

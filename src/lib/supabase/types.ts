@@ -1855,6 +1855,7 @@ export type Database = {
           trading_day_cutoff_hour: number
           updated_at: string
           venue_id: string
+          venue_type: string | null
         }
         Insert: {
           created_at?: string
@@ -1865,6 +1866,7 @@ export type Database = {
           trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id: string
+          venue_type?: string | null
         }
         Update: {
           created_at?: string
@@ -1875,6 +1877,7 @@ export type Database = {
           trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id?: string
+          venue_type?: string | null
         }
         Relationships: [
           {

@@ -107,6 +107,16 @@ export const HIGH_RISK_ACTIVITIES = [
   { value: "modified_atmosphere", label: "Modified atmosphere packaging" },
 ] as const;
 
+// Venue type (P27). Stored on venue_compliance_settings.venue_type (20261005070000). It only picks which compliance forms
+// start switched on; an owner's own choice on the forms page always wins.
+export const VENUE_TYPES = [
+  { value: "cafe", label: "Cafe" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "pub", label: "Pub" },
+  { value: "bar", label: "Bar" },
+  { value: "other", label: "Other" },
+] as const;
+
 export const TRADE_WASTE_OPTIONS = [
   { value: "yes", label: "Yes, we have a Trade Waste Agreement" },
   { value: "no", label: "No Trade Waste Agreement" },
