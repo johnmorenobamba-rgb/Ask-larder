@@ -2251,6 +2251,10 @@ export type Database = {
         Args: { p_device: string; p_ip: string; p_typed_name: string }
         Returns: Json
       }
+      record_onboarding_signature: {
+        Args: { p_device: string; p_ip: string; p_typed_name: string; p_user_id: string }
+        Returns: Json
+      }
       match_knowledge_chunks: {
         Args: { p_match_count?: number; p_query_embedding: string }
         Returns: {
