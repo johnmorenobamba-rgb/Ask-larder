@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { ComplianceSetupForm } from "@/components/onboarding/ComplianceSetupForm";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -9,7 +9,7 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 // ranges (feeds the B2 temperature log) plus three compliance settings.
 export default async function ComplianceSetupPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [

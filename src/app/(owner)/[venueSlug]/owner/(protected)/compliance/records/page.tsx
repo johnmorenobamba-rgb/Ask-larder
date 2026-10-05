@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { createClient } from "@/lib/supabase/server";
 import { FORM_OPTIONS, parseFilters, queryRecords, tagLabel } from "@/lib/compliance/engine/records";
 import { PrintRecordsButton } from "@/components/owner/PrintRecordsButton";
@@ -18,7 +18,7 @@ export default async function OwnerRecordsPage({
   const { venueSlug } = await params;
   const sp = await searchParams;
   const filters = parseFilters(sp);
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const { records, timeZone, degraded, truncated, venueName } = await queryRecords(supabase, staff!.venue_id!, filters, 500);
 

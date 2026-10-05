@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { CrowdControlForm } from "@/components/onboarding/CrowdControlForm";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep } from "@/lib/onboarding/steps";
@@ -8,7 +8,7 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function CrowdControlPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const { data: contacts, error: contactsError } = await supabase

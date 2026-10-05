@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { fetchSopDocumentData } from "@/lib/sop/fetchSopDocumentData";
 import { SopDocumentView } from "@/components/owner/SopDocumentView";
 import { PrintButton } from "@/components/owner/PrintButton";
@@ -15,7 +15,7 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 // must be honest about what it's actually printing.
 export default async function PrintAllSopsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [{ data: venue, error: venueError }, { data: modules, error: modulesError }] = await Promise.all([

@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { ContactsManager } from "@/components/owner/ContactsManager";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
-export default async function OwnerContactsPage() {
-  const staff = await getCurrentStaff();
+export default async function OwnerContactsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
+  const { venueSlug } = await params;
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const { data: contacts, error } = await supabase

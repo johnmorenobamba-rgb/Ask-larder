@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { PrintButton } from "@/components/owner/PrintButton";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
@@ -17,7 +17,7 @@ export default async function StationLabelPage({
   params: Promise<{ venueSlug: string; stationId: string }>;
 }) {
   const { venueSlug, stationId } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [{ data: station, error: stationError }, { data: venue, error: venueError }] = await Promise.all([

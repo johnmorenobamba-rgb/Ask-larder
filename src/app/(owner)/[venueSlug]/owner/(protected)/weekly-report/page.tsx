@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getWeeklyDigest, type DigestQuestion } from "@/lib/reports/weeklyDigest";
 
-export default async function WeeklyReportPage() {
-  const staff = await getCurrentStaff();
+export default async function WeeklyReportPage({ params }: { params: Promise<{ venueSlug: string }> }) {
+  const { venueSlug } = await params;
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const since = new Date();
