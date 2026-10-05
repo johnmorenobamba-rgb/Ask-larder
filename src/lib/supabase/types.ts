@@ -1316,6 +1316,39 @@ export type Database = {
           },
         ]
       }
+      staff_access_changes: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          role_name: string | null
+          staff_user_id: string
+          tier: string | null
+          venue_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          role_name?: string | null
+          staff_user_id: string
+          tier?: string | null
+          venue_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          role_name?: string | null
+          staff_user_id?: string
+          tier?: string | null
+          venue_id?: string
+        }
+        Relationships: []
+      }
       staff_certificates: {
         Row: {
           certificate_type_id: string | null

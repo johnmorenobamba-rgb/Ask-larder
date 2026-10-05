@@ -41,6 +41,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
     if (isAuthorizedHolderRefusal(error.message)) {
       return NextResponse.json({ error: AUTHORIZED_HOLDER_MESSAGE }, { status: 403 });
     }
+    if (/Only an owner|Only a manager|at least one active owner|Not allowed/i.test(error.message)) {
+      return NextResponse.json({ error: "You can't make that change." }, { status: 403 });
+    }
     console.error("deactivate unexpected error:", error.message);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }

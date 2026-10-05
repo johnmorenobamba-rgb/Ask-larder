@@ -53,7 +53,7 @@ test("a manager deactivates a Frontline person on the staff screen, but is not o
   await page.goto(`/${fx.slug}/owner/staff`);
   const hc = page.getByTestId("staff-row").filter({ hasText: FIXTURE_NAMES.headChef });
   await expect(hc).toBeVisible({ timeout: 90_000 });
-  await expect(hc.getByText("Only the owner can deactivate someone with an Authorized role.")).toBeVisible();
+  await expect(hc.getByText("Only the owner can deactivate or reset the PIN of someone with an Authorized role.")).toBeVisible();
   await expect(hc.getByRole("button", { name: "Deactivate" })).toHaveCount(0);
   const kh = page.getByTestId("staff-row").filter({ hasText: FIXTURE_NAMES.kitchenHand });
   await kh.getByRole("button", { name: "Deactivate" }).click();
@@ -68,6 +68,8 @@ test("a manager calling the API directly is refused for an Authorized role holde
   expect(res.status()).toBe(403);
   expect((await res.json()).error).toBe("Only the owner can do this for someone with an Authorized role.");
   expect(await deactivatedAt(fx.staff.headChef.id)).toBeNull();
+  const pinRes = await page.request.post(`/api/owner/staff/${fx.staff.headChef.id}/reset-pin`);
+  expect(pinRes.status()).toBe(403);
   const dutyRes = await page.request.post(`/api/owner/staff/${fx.staff.dutyManager.id}/deactivate`);
   expect(dutyRes.status()).toBe(403);
   const del = await page.request.delete(`/api/owner/onboarding/staff-invite?id=${inviteId}`);

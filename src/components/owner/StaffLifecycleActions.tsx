@@ -44,6 +44,7 @@ export function StaffLifecycleActions({ staffUserId, staffName, canDeactivate = 
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2">
+        {canDeactivate && (
         <button
           type="button"
           onClick={resetPin}
@@ -52,8 +53,9 @@ export function StaffLifecycleActions({ staffUserId, staffName, canDeactivate = 
         >
           {loading === "reset" ? "Resetting…" : "Reset PIN"}
         </button>
+        )}
         {!canDeactivate ? (
-          <p className="max-w-48 font-sans text-xs text-clay-brown">Only the owner can deactivate someone with an Authorized role.</p>
+          <p className="max-w-48 font-sans text-xs text-clay-brown">Only the owner can deactivate or reset the PIN of someone with an Authorized role.</p>
         ) : !confirmingDeactivate ? (
           <button
             type="button"
