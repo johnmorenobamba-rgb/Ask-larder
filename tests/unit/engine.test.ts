@@ -497,3 +497,43 @@ describe("venue type defaults (P27)", () => {
     expect(FORM_BY_ID.BAR1.defaultOnNote).toContain("pubs and bars");
   });
 });
+
+describe("B4 probe thermometer check is monthly by default", () => {
+  const live = new Date("2026-06-01T00:00:00Z");
+  const base = { timeZone: MEL, activatedAt: live, cadence: FORM_BY_ID.B4.cadence };
+  const now = new Date("2026-10-06T02:00:00Z"); // 1pm 6 Oct local
+  it("the default cadence is monthly and the wording says so without claiming a legal frequency", () => {
+    const b4 = FORM_BY_ID.B4;
+    expect(b4.cadence).toBe("monthly");
+    expect(b4.cadenceNote).toBe("Once a month. Check more often if a probe is dropped.");
+    expect(b4.tag).toBe("recommended");
+    expect(b4.tagNote).toContain("no check frequency is stated in law");
+    expect(b4.cadenceNote).not.toMatch(/law|legal|required|must|mandatory/i);
+    expect(b4.ruleTag?.text).toBe("A thermometer used to check food temperatures must be accurate to within 1°C."); // the accuracy duty is unchanged
+  });
+  it("the fields and the accuracy comparison are unchanged", () => {
+    const b4 = FORM_BY_ID.B4;
+    expect(b4.fields.map((f) => f.key)).toEqual(["thermometer", "ice_c", "boil_c"]);
+    expect(b4.fail.map((r) => [r.field, r.op, r.min, r.max])).toEqual([["ice_c", "outside", -1, 1], ["boil_c", "outside", 99, 101]]);
+    expect(b4.failBehaviour).toContain("replaced or adjusted");
+  });
+  it("done when there is a record this calendar month in venue time", () => {
+    expect(formStatus({ ...base, now, recordTimes: ["2026-10-01T01:00:00Z"] }).status).toBe("done");
+  });
+  it("a record at 00:30 local on 1 October counts for October, one at 23:30 local on 30 September counts for September", () => {
+    expect(formStatus({ ...base, now, recordTimes: ["2026-09-30T14:30:00Z"] }).status).toBe("done"); // 00:30 AEST, 1 Oct
+    expect(formStatus({ ...base, now, recordTimes: ["2026-09-30T13:30:00Z"] }).status).toBe("not_started"); // 23:30 AEST, 30 Sep: last month done
+  });
+  it("not started when this month is empty and last month was done", () => {
+    expect(formStatus({ ...base, now, recordTimes: ["2026-09-12T01:00:00Z"] }).status).toBe("not_started");
+  });
+  it("overdue only when last month was missed and the form was already on", () => {
+    const missed = formStatus({ ...base, now, recordTimes: ["2026-08-12T01:00:00Z"] });
+    expect(missed.status).toBe("overdue");
+    expect(missed.reason).toBe("Not done last month");
+    expect(formStatus({ ...base, activatedAt: new Date("2026-09-20T00:00:00Z"), now, recordTimes: [] }).status).toBe("not_started"); // switched on mid September: no instant overdue
+  });
+  it("the previously yearly record from last year no longer keeps it done", () => {
+    expect(formStatus({ ...base, now, recordTimes: ["2025-10-20T01:00:00Z"] }).status).toBe("overdue");
+  });
+});
