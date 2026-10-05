@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect as baseExpect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -14,6 +14,11 @@ import type { Database } from "../../src/lib/supabase/types";
 // removed with the service role afterwards (cascade). Owner alert emails are OFF in
 // this spec (COMPLIANCE_ALERT_EMAIL_ENABLED is never set), so nothing is ever emailed.
 // The demo venue is never touched.
+
+// A page's first request in a dev server compiles the route on demand (several seconds on a cold route), and the default 5 second
+// expect timeout lost the race (B5, a 5 second heading timeout seen once on a cold compile). Every assertion in this spec waits up to
+// 30 seconds for the page to be ready; the assertions themselves are unchanged.
+const expect = baseExpect.configure({ timeout: 30_000 });
 
 function adminClient() {
   return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
