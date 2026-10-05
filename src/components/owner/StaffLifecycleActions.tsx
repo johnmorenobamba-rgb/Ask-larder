@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 // thing this block was asked to stop doing (same principle as never
 // letting an admin see or set a password). Reset now only ever clears the
 // PIN; the staff member sets their own new one on next login.
-export function StaffLifecycleActions({ staffUserId, staffName }: { staffUserId: string; staffName: string }) {
+export function StaffLifecycleActions({ staffUserId, staffName, canDeactivate = true }: { staffUserId: string; staffName: string; canDeactivate?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState<"reset" | "deactivate" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -52,7 +52,9 @@ export function StaffLifecycleActions({ staffUserId, staffName }: { staffUserId:
         >
           {loading === "reset" ? "Resetting…" : "Reset PIN"}
         </button>
-        {!confirmingDeactivate ? (
+        {!canDeactivate ? (
+          <p className="max-w-48 font-sans text-xs text-clay-brown">Only the owner can deactivate someone with an Authorized role.</p>
+        ) : !confirmingDeactivate ? (
           <button
             type="button"
             onClick={() => setConfirmingDeactivate(true)}
