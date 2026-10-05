@@ -69,7 +69,7 @@ export function FormActivationList({ groups }: { groups: { heading: string; item
                     <p className="font-sans text-sm text-ink/80">{item.summary}</p>
                     <p className="font-sans text-sm text-ink/70">
                       <span className="mr-2 inline-block rounded-full border border-clay-brown px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide text-clay-brown">{item.tagLabel}</span>
-                      {item.cadenceLabel}. Filled by {item.audience}.{item.defaultList ? " Default list, review before use." : ""}
+                      {item.cadenceLabel.replace(/.$/, "")}. Filled by {item.audience}.{item.defaultList ? " Default list, review before use." : ""}
                     </p>
                     <p className="font-sans text-sm text-ink/70">{item.tagNote}</p>
                     <p className="font-sans text-sm text-ink/70">{item.reason}</p>

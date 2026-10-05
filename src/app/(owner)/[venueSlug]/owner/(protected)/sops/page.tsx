@@ -48,7 +48,7 @@ export default async function SopsPage({ params }: { params: Promise<{ venueSlug
                 <div>
                   <p className="font-sans font-medium text-ink">{m.title}</p>
                   <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">
-                    {m.status} · {hasDoc ? "SOP document ready" : "No SOP document yet"}
+                    {(m.status ?? "").replace(/_/g, " ")} · {hasDoc ? "SOP document ready" : "No SOP document yet"}
                   </p>
                 </div>
                 {hasDoc ? (
