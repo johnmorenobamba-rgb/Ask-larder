@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { adminClient, createFixture, destroyFixture, loginStaff, nativeClick, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
+import { createClient } from "@supabase/supabase-js";
+import { adminClient, fixtureOwnerPassword, createFixture, destroyFixture, loginStaff, nativeClick, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
 
 // E-signature stamp (20261005040000), through the real app on a disposable venue: the route computes the IP and device from the
 // request headers, a forged ip or device in the request body is ignored, the signature page still signs through the UI, and the
@@ -58,4 +59,20 @@ test("a forged ip or device in the request body is ignored; the stamp comes from
   expect((await page.request.post("/api/staff/complete-signature", { data: { typedName: "   " } })).status()).toBe(400);
   await page.context().clearCookies();
   expect((await page.request.post("/api/staff/complete-signature", { data: { typedName: "Nobody" } })).status()).toBe(401);
+});
+
+// Part 2 (20261005040100): a signed in client calling the old database function directly, with its own ip and device, is denied
+// and nothing is written. Needs the migration applied (it is, once the new route is live).
+test("a client calling the old signature function directly is denied", async () => {
+  const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+  const { error: signInError } = await client.auth.signInWithPassword({ email: fx.ownerEmail, password: fixtureOwnerPassword() });
+  expect(signInError).toBeNull();
+  const { data: owner } = await adminClient().from("app_users").select("id").eq("auth_id", fx.ownerAuthId).single();
+  const count = async () => (await adminClient().from("esignatures").select("id", { count: "exact", head: true }).eq("user_id", owner!.id)).count;
+  const before = await count();
+  const { error } = await client.rpc("complete_onboarding_signature", { p_typed_name: "Forged", p_ip: "6.6.6.6", p_device: "forged device" });
+  expect(error).not.toBeNull();
+  expect(error!.message).toMatch(/permission denied|not allowed|not found/i);
+  const after = await count();
+  expect(after).toBe(before);
 });

@@ -23,6 +23,7 @@ export function adminClient() {
 
 export const PIN = fixturePin();
 const OWNER_PASSWORD = randomPassword();
+export const fixtureOwnerPassword = () => OWNER_PASSWORD; // for specs that sign in as the fixture owner through the API
 
 export type Fixture = {
   slug: string;
