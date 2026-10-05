@@ -22,7 +22,7 @@ export default async function StationTrainingPage({
 
   const supabase = await createClient();
 
-  let module: { id: string; title: string; status: string | null } | null = null;
+  let trainingModule: { id: string; title: string; status: string | null } | null = null;
   if (station.primary_module_id) {
     const { data, error: moduleError } = await supabase
       .from("modules")
@@ -30,14 +30,14 @@ export default async function StationTrainingPage({
       .eq("id", station.primary_module_id)
       .maybeSingle();
     logQueryError(`[${venueSlug}/${qrCodeSlug}] training module`, moduleError);
-    if (data && ["approved", "live"].includes(data.status ?? "")) module = data;
+    if (data && ["approved", "live"].includes(data.status ?? "")) trainingModule = data;
   }
 
   // A station can exist and be reachable from the hub without training
   // linked yet (a QR label can be printed before its module is ready) --
   // shown instead of notFound() so this always tells a real staff member
   // something true.
-  if (!module) {
+  if (!trainingModule) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-parchment px-6 text-center">
         <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">{station.name}</p>
@@ -52,17 +52,17 @@ export default async function StationTrainingPage({
   const { data: sections, error: sectionsError } = await supabase
     .from("module_sections")
     .select("id, section_order, content")
-    .eq("module_id", module.id)
+    .eq("module_id", trainingModule.id)
     .order("section_order");
   logQueryError(`[${venueSlug}/${qrCodeSlug}] training sections`, sectionsError);
 
   const { data: questions, error: questionsError } = await supabase
     .from("check_questions")
     .select("id, question, options, correct_option_index, expected_answer_context, section_order")
-    .eq("module_id", module.id);
+    .eq("module_id", trainingModule.id);
   logQueryError(`[${venueSlug}/${qrCodeSlug}] training questions`, questionsError);
 
-  const stationPhoto = await getModuleStationPhoto(supabase, module.id);
+  const stationPhoto = await getModuleStationPhoto(supabase, trainingModule.id);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
@@ -71,8 +71,8 @@ export default async function StationTrainingPage({
       </div>
       <ModuleRunner
         venueSlug={venueSlug}
-        moduleId={module.id}
-        moduleTitle={module.title}
+        moduleId={trainingModule.id}
+        moduleTitle={trainingModule.title}
         stationPhoto={stationPhoto}
         sections={sections ?? []}
         questions={(questions ?? []).map((q) => ({

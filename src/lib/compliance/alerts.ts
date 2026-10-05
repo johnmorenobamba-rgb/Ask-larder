@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { renderBrandedEmailHtml, escapeHtml } from "@/lib/email/brandedEmail";
 import { formatLocalDateTime, formatTemp, venueTimeZone } from "./b2";
+import { isGenericForm, sendGenericAlert, type GenericSub } from "./genericAlert";
 
 // Owner alert for a B2 out of range EPISODE (one email per unit per episode).
 // The database decides what starts an episode and writes the compliance_alert_log
@@ -157,7 +158,7 @@ export async function processAlerts(admin: Admin, venueId: string, submissionIds
       }
       const { data: sub } = await admin
         .from("compliance_form_submissions")
-        .select("id, out_of_range, corrective_action, submitted_at, submitted_by_name, payload")
+        .select("id, form_id, out_of_range, corrective_action, submitted_at, submitted_by_name, payload")
         .eq("id", row.submission_id)
         .maybeSingle();
       const { data: corrections } = await admin
@@ -169,7 +170,9 @@ export async function processAlerts(admin: Admin, venueId: string, submissionIds
       const { data: latest } = unitId
         ? await admin.from("compliance_b2_latest_readings").select("id, out_of_range").eq("venue_id", venueId).eq("unit_id", unitId).maybeSingle()
         : { data: null };
-      const stillOpen = !!latest && latest.out_of_range === true;
+      // a generic (B3, B6, B12) episode is judged by its own record: not corrected away and still a failure; B2 by the unit's latest reading
+      const generic = isGenericForm(sub?.form_id);
+      const stillOpen = generic ? true : !!latest && latest.out_of_range === true;
       if (!sub || !sub.out_of_range || (corrections ?? []).length > 0 || !stillOpen) {
         // corrected away, or the unit has since been back in range: nothing to tell the owner
         await admin
@@ -184,6 +187,10 @@ export async function processAlerts(admin: Admin, venueId: string, submissionIds
       // 2. claim, then send
       if (!(await claim(admin, row))) {
         results.push({ submissionId: row.submission_id, outcome: "not_claimed" });
+        continue;
+      }
+      if (generic) {
+        results.push({ submissionId: row.submission_id, outcome: await sendGenericAlert(admin, resend, decision.to, row, sub as unknown as GenericSub, venue ?? null, tz) });
         continue;
       }
       const p = sub.payload as { unit_name?: string; reading_c?: number; limit_kind?: string; limit_c?: number };

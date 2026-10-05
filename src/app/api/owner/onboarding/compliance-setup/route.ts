@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { upsertWizardSession } from "@/lib/onboarding/wizardSession";
-import { HIGH_RISK_ACTIVITIES, TRADE_WASTE_OPTIONS, UNIT_TYPES } from "@/lib/onboarding/constants";
+import { HIGH_RISK_ACTIVITIES, TRADE_WASTE_OPTIONS, UNIT_TYPES, VENUE_TYPES } from "@/lib/onboarding/constants";
 
 const VALID_ACTIVITIES: Set<string> = new Set(HIGH_RISK_ACTIVITIES.map((a) => a.value));
 const VALID_TRADE_WASTE: Set<string> = new Set(TRADE_WASTE_OPTIONS.map((o) => o.value));
+const VALID_VENUE_TYPES: Set<string> = new Set(VENUE_TYPES.map((o) => o.value));
 
 const MAX_UNITS = 60;
 const MAX_NAME_LENGTH = 80;
@@ -36,9 +37,14 @@ export async function POST(request: Request) {
     : [];
   const offersAccommodation = body?.offersAccommodation === true;
   const tradeWaste = typeof body?.tradeWasteAgreement === "string" ? body.tradeWasteAgreement : "";
+  // Venue type is optional here: when it is absent the stored value is left exactly as it is (an older client, or a venue that has not chosen).
+  const venueType = typeof body?.venueType === "string" && body.venueType !== "" ? body.venueType : null;
 
   if (!VALID_TRADE_WASTE.has(tradeWaste)) {
     return NextResponse.json({ error: "Choose a Trade Waste Agreement status." }, { status: 400 });
+  }
+  if (venueType !== null && !VALID_VENUE_TYPES.has(venueType)) {
+    return NextResponse.json({ error: "Choose a venue type from the list." }, { status: 400 });
   }
   if (activities.some((a) => !VALID_ACTIVITIES.has(a))) {
     return NextResponse.json({ error: "One of the high risk activities isn't recognised." }, { status: 400 });
@@ -134,6 +140,7 @@ export async function POST(request: Request) {
       high_risk_activities: activities,
       offers_accommodation: offersAccommodation,
       trade_waste_agreement: tradeWaste,
+      ...(venueType !== null ? { venue_type: venueType } : {}),
       updated_at: now,
     },
     { onConflict: "venue_id" },

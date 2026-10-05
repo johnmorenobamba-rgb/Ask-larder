@@ -56,7 +56,7 @@ export async function loadActivationContext(
   venueId: string,
 ): Promise<{ ctx: ActivationContext; state: string | null; settingsCreatedAt: string | null; cutoffHour: number; degraded: boolean }> {
   const [{ data: settings, error: sErr }, { data: profile, error: pErr }, { data: wiz, error: wErr }] = await Promise.all([
-    supabase.from("venue_compliance_settings").select("high_risk_activities, offers_accommodation, trade_waste_agreement, created_at, trading_day_cutoff_hour").eq("venue_id", venueId).maybeSingle(),
+    supabase.from("venue_compliance_settings").select("high_risk_activities, offers_accommodation, trade_waste_agreement, created_at, trading_day_cutoff_hour, venue_type").eq("venue_id", venueId).maybeSingle(),
     supabase.from("venue_licence_profile").select("state, licence_type").eq("venue_id", venueId).maybeSingle(),
     admin.from("wizard_sessions").select("venue_type_flags").eq("venue_id", venueId).maybeSingle(),
   ]);
@@ -72,6 +72,7 @@ export async function loadActivationContext(
     offersAccommodation: !!settings?.offers_accommodation,
     tradeWaste: tw === "yes" || tw === "no" ? tw : "unsure",
     highRiskActivities: settings?.high_risk_activities ?? [],
+    venueType: settings?.venue_type === "cafe" || settings?.venue_type === "restaurant" || settings?.venue_type === "pub" || settings?.venue_type === "bar" || settings?.venue_type === "other" ? settings.venue_type : null,
   };
   const cutoffHour = typeof settings?.trading_day_cutoff_hour === "number" ? settings.trading_day_cutoff_hour : DEFAULT_CUTOFF_HOUR;
   return { ctx, state: profile?.state ?? null, settingsCreatedAt: settings?.created_at ?? null, cutoffHour, degraded: !!(sErr || pErr || wErr) };

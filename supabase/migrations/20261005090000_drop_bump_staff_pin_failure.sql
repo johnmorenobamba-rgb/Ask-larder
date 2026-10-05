@@ -1,0 +1,26 @@
+-- Drop the unused PIN counter function public.bump_staff_pin_failure(uuid) (hardening-2 task 8).
+-- It was added in 20261003010000 and replaced by public.record_staff_pin_failure(uuid) in 20261004000000. Proof that nothing uses it (5 Oct 2026):
+--   * no code calls it: grep of src, scripts and supabase/functions on this branch AND on origin/main (production) finds only the
+--     generated types file, its own migration and its SQL test;
+--   * no database object depends on it: no other function body, cron job, trigger, policy or view mentions it, and pg_depend lists no
+--     dependent object;
+--   * the Supabase API log for the last 24 hours holds 0 calls to /rest/v1/rpc/bump_staff_pin_failure (and 243 to the replacement).
+-- It was service role only, so no client could ever call it.
+--
+-- ROLLBACK (original body from 20261003010000_compliance_engine_followup.sql):
+--   create or replace function public.bump_staff_pin_failure(p_staff_id uuid)
+--   returns int
+--   language sql
+--   security definer
+--   set search_path to 'public', 'pg_temp'
+--   as $$
+--     update app_users
+--     set pin_failed_attempts = coalesce(pin_failed_attempts, 0) + 1,
+--         pin_locked_until = case when coalesce(pin_failed_attempts, 0) + 1 >= 5 then now() + interval '15 minutes' else pin_locked_until end
+--     where id = p_staff_id
+--     returning pin_failed_attempts;
+--   $$;
+--   revoke all on function public.bump_staff_pin_failure(uuid) from public, anon, authenticated;
+--   grant execute on function public.bump_staff_pin_failure(uuid) to service_role;
+
+drop function if exists public.bump_staff_pin_failure(uuid);

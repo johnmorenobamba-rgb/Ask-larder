@@ -114,7 +114,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   const admin = adminClient();
   await admin.from("venues").delete().eq("id", venueId);
-  const { data: authList } = await admin.auth.admin.listUsers();
+  const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 }); // the default page is 50 of 120 logins
   const u = authList.users.find((x) => x.email === OWNER_EMAIL);
   if (u) await admin.auth.admin.deleteUser(u.id);
 });
@@ -131,7 +131,9 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
   test("E0: login and dashboard hub", async ({ page }) => {
     await loginAsOwner(page);
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    const nav = page.getByRole("navigation");
+    // the owner nav lives in a drawer behind the menu button
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const nav = page.locator("div[aria-hidden=false]").filter({ has: page.getByRole("link", { name: "Staff", exact: true }) }).last(); // the drawer is a plain div, not a nav element
     for (const label of ["Staff", "Completions", "Certificates", "Modules", "Escalations", "Near-misses", "Stations"]) {
       await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
@@ -142,7 +144,7 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
     await page.goto(`/${SLUG}/owner/staff`);
     const row = page.getByTestId("staff-row").filter({ hasText: "Smoke Staff" });
     await expect(row.getByText("Smoke Staff", { exact: true })).toBeVisible();
-    await expect(row.getByText("Smoke Staff Role")).toBeVisible();
+    await expect(row.locator("p").filter({ hasText: "Smoke Staff Role" })).toBeVisible(); // the role also shows in the role select (task 4), so look at the label line
   });
 
   test("E2: completions show the seeded completed module", async ({ page }) => {
@@ -156,7 +158,7 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
     await loginAsOwner(page);
     await page.goto(`/${SLUG}/owner/certs`);
     await expect(page.getByText("Smoke Cert")).toBeVisible();
-    await expect(page.getByText(/Expires in \d+ day\(s\)/)).toBeVisible();
+    await expect(page.getByText(/(Expires in|Refresher recommended in) \d+ day\(s\)/)).toBeVisible();
   });
 
   test("E4: approve a pending module, then publish a new version", async ({ page }) => {

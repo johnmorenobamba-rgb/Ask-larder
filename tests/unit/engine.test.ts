@@ -321,8 +321,8 @@ describe("catalog integrity", () => {
 });
 
 describe("activation defaults and access", () => {
-  const pub: ActivationContext = { foodService: "full_kitchen", licenceType: "general", offersAccommodation: false, tradeWaste: "yes", highRiskActivities: [] };
-  const barOnly: ActivationContext = { foodService: "no_food_service", licenceType: "on_premises", offersAccommodation: false, tradeWaste: "no", highRiskActivities: [] };
+  const pub: ActivationContext = { foodService: "full_kitchen", licenceType: "general", offersAccommodation: false, tradeWaste: "yes", highRiskActivities: [], venueType: null };
+  const barOnly: ActivationContext = { foodService: "no_food_service", licenceType: "on_premises", offersAccommodation: false, tradeWaste: "no", highRiskActivities: [], venueType: null };
   const lowRisk: ActivationContext = { ...pub, foodService: "bar_snacks_low_risk", tradeWaste: "unsure" };
   const unknown: ActivationContext = { ...pub, foodService: null, licenceType: null, tradeWaste: "unsure" };
   it("a pub with a full kitchen and a trade waste agreement turns on the food, bar and grease trap forms", () => {
@@ -451,5 +451,49 @@ describe("bar department (P24)", () => {
   it("no other form lists BAR", () => {
     const ids = FORMS.filter((f) => f.departments.includes("BAR")).map((f) => f.id).sort();
     expect(ids).toEqual(["BAR1", "BAR2", "BAR3", "F10"]);
+  });
+});
+
+describe("venue type defaults (P27)", () => {
+  const base: ActivationContext = { foodService: "full_kitchen", licenceType: null, offersAccommodation: false, tradeWaste: "unsure", highRiskActivities: [], venueType: null };
+  const withType = (venueType: ActivationContext["venueType"], extra: Partial<ActivationContext> = {}): ActivationContext => ({ ...base, ...extra, venueType });
+  const on = (ctx: ActivationContext) => FORMS.filter((f) => isFormOn(f, undefined, ctx)).map((f) => f.id).sort();
+  const CAFE = ["CAFE1", "CAFE2", "CAFE3"];
+  const BAR = ["BAR1", "BAR2", "BAR3", "F10"];
+
+  it("a venue with no type keeps exactly today's defaults", () => {
+    const today = on(base);
+    expect(CAFE.some((id) => today.includes(id))).toBe(false);
+    expect(BAR.some((id) => today.includes(id))).toBe(false); // no licence type known
+  });
+  it("restaurant and other change nothing", () => {
+    expect(on(withType("restaurant"))).toEqual(on(base));
+    expect(on(withType("other"))).toEqual(on(base));
+  });
+  it("a cafe turns on the cafe pack and nothing else changes", () => {
+    const cafe = on(withType("cafe"));
+    for (const id of CAFE) expect(cafe, id).toContain(id);
+    expect(cafe.filter((id) => !CAFE.includes(id))).toEqual(on(base));
+  });
+  it("a pub or a bar turns on the bar forms even with no licence type recorded, and nothing else changes", () => {
+    for (const t of ["pub", "bar"] as const) {
+      const got = on(withType(t, { foodService: "no_food_service" }));
+      for (const id of BAR) expect(got, t + " " + id).toContain(id);
+      expect(got.filter((id) => !BAR.includes(id))).toEqual(on(withType(null, { foodService: "no_food_service" })));
+    }
+  });
+  it("a licensed venue keeps its bar forms whatever type it picks", () => {
+    for (const t of [null, "cafe", "restaurant", "other"] as const) for (const id of BAR) expect(on(withType(t, { licenceType: "general" })), t + " " + id).toContain(id);
+  });
+  it("an owner's own choice beats the venue type both ways", () => {
+    const row = (id: string, enabled: boolean) => ({ form_id: id, enabled, enabled_at: "2026-10-05T00:00:00Z" });
+    expect(isFormOn(FORM_BY_ID.CAFE1, row("CAFE1", false), withType("cafe"))).toBe(false);
+    expect(isFormOn(FORM_BY_ID.BAR1, row("BAR1", false), withType("pub"))).toBe(false);
+    expect(isFormOn(FORM_BY_ID.CAFE1, row("CAFE1", true), withType("restaurant"))).toBe(true);
+    expect(isFormOn(FORM_BY_ID.BAR1, row("BAR1", true), withType("cafe"))).toBe(true);
+  });
+  it("the owner page explains the default in plain words", () => {
+    expect(FORM_BY_ID.CAFE1.defaultOnNote).toContain("On for cafes");
+    expect(FORM_BY_ID.BAR1.defaultOnNote).toContain("pubs and bars");
   });
 });

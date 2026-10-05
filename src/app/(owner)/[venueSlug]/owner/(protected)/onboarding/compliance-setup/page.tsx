@@ -25,7 +25,7 @@ export default async function ComplianceSetupPage({ params }: { params: Promise<
       .order("created_at"),
     supabase
       .from("venue_compliance_settings")
-      .select("high_risk_activities, offers_accommodation, trade_waste_agreement")
+      .select("high_risk_activities, offers_accommodation, trade_waste_agreement, venue_type")
       .eq("venue_id", staff!.venue_id!)
       .maybeSingle(),
     supabase.from("stations").select("id, name").eq("venue_id", staff!.venue_id!).order("name"),
@@ -55,6 +55,7 @@ export default async function ComplianceSetupPage({ params }: { params: Promise<
           highRiskActivities: settings?.high_risk_activities ?? [],
           offersAccommodation: settings?.offers_accommodation ?? false,
           tradeWasteAgreement: settings?.trade_waste_agreement ?? "",
+          venueType: settings?.venue_type ?? "",
         }}
       />
     </>

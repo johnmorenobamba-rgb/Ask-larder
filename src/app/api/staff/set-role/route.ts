@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   if (error) {
     // The database refuses a self pick of a manager tier role, or a second change (20261005000000 role write guard).
-    if (error.message?.includes("Only a manager can assign")) {
+    if (/Only a manager can assign|Only the owner can assign|cannot change your own role/i.test(error.message ?? "")) {
       return NextResponse.json({ error: "Ask your manager to assign that role." }, { status: 403 });
     }
     console.error("set-role unexpected error:", error);

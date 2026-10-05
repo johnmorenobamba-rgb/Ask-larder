@@ -21,11 +21,18 @@ export async function POST(request: Request) {
 
   const { data: appUser } = await supabase
     .from("app_users")
-    .select("id")
+    .select("id, venue_id")
     .eq("auth_id", user.id)
     .single();
   if (!appUser) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
+  // The photo must be a file this person uploaded into their own folder (venue id, then their own staff id). Without this,
+  // a staff member could point their certificate record at a colleague's file, or a planted one, and it would then show to
+  // a manager and go into the export as evidence.
+  if (typeof body.photoRef !== "string" || !body.photoRef.startsWith(`${appUser.venue_id}/${appUser.id}/`) || body.photoRef.includes("..")) {
+    return NextResponse.json({ error: "That photo isn't yours to attach." }, { status: 400 });
   }
 
   // Scoped to the caller's own row, same reasoning as set-role/complete-module

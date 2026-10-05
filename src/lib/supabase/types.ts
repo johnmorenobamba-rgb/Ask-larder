@@ -1446,6 +1446,48 @@ export type Database = {
           },
         ]
       }
+      staff_role_changes: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_role_name: string | null
+          new_staff_role_id: string | null
+          new_tier: string | null
+          old_role_name: string | null
+          old_staff_role_id: string | null
+          old_tier: string | null
+          staff_user_id: string
+          venue_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_role_name?: string | null
+          new_staff_role_id?: string | null
+          new_tier?: string | null
+          old_role_name?: string | null
+          old_staff_role_id?: string | null
+          old_tier?: string | null
+          staff_user_id: string
+          venue_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_role_name?: string | null
+          new_staff_role_id?: string | null
+          new_tier?: string | null
+          old_role_name?: string | null
+          old_staff_role_id?: string | null
+          old_tier?: string | null
+          staff_user_id?: string
+          venue_id?: string
+        }
+        Relationships: []
+      }
       staff_roles: {
         Row: {
           department: string | null
@@ -1813,6 +1855,7 @@ export type Database = {
           trading_day_cutoff_hour: number
           updated_at: string
           venue_id: string
+          venue_type: string | null
         }
         Insert: {
           created_at?: string
@@ -1823,6 +1866,7 @@ export type Database = {
           trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id: string
+          venue_type?: string | null
         }
         Update: {
           created_at?: string
@@ -1833,6 +1877,7 @@ export type Database = {
           trading_day_cutoff_hour?: number
           updated_at?: string
           venue_id?: string
+          venue_type?: string | null
         }
         Relationships: [
           {
@@ -2246,9 +2291,12 @@ export type Database = {
         }
         Returns: Json
       }
-      bump_staff_pin_failure: { Args: { p_staff_id: string }; Returns: number }
       complete_onboarding_signature: {
         Args: { p_device: string; p_ip: string; p_typed_name: string }
+        Returns: Json
+      }
+      record_onboarding_signature: {
+        Args: { p_device: string; p_ip: string; p_typed_name: string; p_user_id: string }
         Returns: Json
       }
       match_knowledge_chunks: {

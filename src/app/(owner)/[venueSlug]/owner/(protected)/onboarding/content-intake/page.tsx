@@ -21,10 +21,12 @@ export default async function ContentIntakePage({ params }: { params: Promise<{ 
   const venueId = staff!.venue_id!;
   const supabase = await createClient();
 
-  let { data: decisions, error: decisionsError } = await supabase
+  const decisionsResult = await supabase
     .from("sop_topic_decisions")
     .select("topic_key, applicable, confidence, source, rationale")
     .eq("venue_id", venueId);
+  let decisions = decisionsResult.data;
+  const decisionsError = decisionsResult.error;
   logQueryError(`[${venueSlug}] onboarding content-intake decisions`, decisionsError);
   // A query error must not trigger determineSopTopics() below the same way
   // "genuinely no decisions exist yet" does -- that's a real AI call, not

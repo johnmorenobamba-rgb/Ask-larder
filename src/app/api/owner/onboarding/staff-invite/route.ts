@@ -37,6 +37,10 @@ export async function POST(request: Request) {
   });
 
   if (error) {
+    // the database lets only the owner give a new person an Authorized role (20261005060000)
+    if (/Only the owner can assign/i.test(error.message ?? "")) {
+      return NextResponse.json({ error: "Only the owner can give someone an Authorized role." }, { status: 403 });
+    }
     console.error("staff-invite insert unexpected error:", error);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }
