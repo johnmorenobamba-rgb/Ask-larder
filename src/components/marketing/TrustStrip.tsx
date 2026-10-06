@@ -15,7 +15,7 @@ export function TrustStrip() {
           {POINTS.map((p) => (
             <li key={p.title}>
               <p className="font-display text-lg font-bold text-ink">{p.title}</p>
-              <p className="mt-1 font-sans text-sm text-ink/75">{p.body}</p>
+              <p className="mt-1 font-sans text-sm text-ink/85">{p.body}</p>
             </li>
           ))}
         </ul>

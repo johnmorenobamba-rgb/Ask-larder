@@ -50,7 +50,7 @@ const FEATURES = [
   {
     glyph: DocumentGlyph,
     title: "Built from your SOPs",
-    body: "Not a generic course. Trained on how your venue actually runs.",
+    body: "Not a generic course. Built from how your venue actually runs.",
   },
   {
     glyph: BadgeGlyph,
@@ -65,7 +65,7 @@ const FEATURES = [
   {
     glyph: DashboardGlyph,
     title: "Owner visibility",
-    body: "Completions, certificates, compliance records and near misses on one screen.",
+    body: "Completions, certificates, failed readings and near misses on one screen.",
   },
 ];
 

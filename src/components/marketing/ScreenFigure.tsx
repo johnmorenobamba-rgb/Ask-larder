@@ -39,7 +39,7 @@ export function ScreenFigure({
           className="h-auto w-full"
         />
       </div>
-      {caption && <figcaption className={`mt-3 font-sans text-sm ${tone === "dark" ? "text-parchment/80" : "text-ink/70"}`}>{caption}</figcaption>}
+      {caption && <figcaption className={`mt-3 font-sans text-sm ${tone === "dark" ? "text-parchment/90" : "text-ink/80"}`}>{caption}</figcaption>}
     </figure>
   );
 }

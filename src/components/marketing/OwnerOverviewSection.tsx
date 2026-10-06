@@ -31,7 +31,7 @@ export function OwnerOverviewSection() {
         <Reveal className="mt-10">
           <ul className="mx-auto grid max-w-3xl gap-3 font-sans text-base text-ink sm:grid-cols-2">
             {points.map((p) => (
-              <li key={p} className="rounded-2xl border-2 border-clay-brown/40 px-4 py-3">
+              <li key={p} className="border-l-4 border-saffron py-1 pl-4">
                 {p}
               </li>
             ))}

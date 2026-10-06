@@ -16,7 +16,7 @@ export function ComplianceFormsSection() {
             The forms you fill in every day, on the iPad already in your kitchen.
           </h2>
           <p className="font-sans text-lg text-parchment/80">
-            You know your venue has to keep records. The hard part is how many there are: forms every shift, every day,
+            Venues keep a lot of records. The hard part is how many there are: forms every shift, every day,
             every week and every month, and all of it has to be filed.
           </p>
           <p className="mt-4 font-sans text-lg text-parchment/80">
