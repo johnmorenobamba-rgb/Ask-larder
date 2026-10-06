@@ -52,6 +52,8 @@ export default async function ProtectedStaffLayout({
     <>
       {venueName && <StaffTopBar venueName={venueName} />}
       <StaffHeader venueSlug={venueSlug} venueName={venueName} showTemperature={showTemperature} />
+      {/* On a phone the two floating buttons (near miss, Ask Larder) sit in the bottom corners: leave room under every page so a primary action is never underneath them. */}
+      <style>{`@media (max-width: 639px) { main { padding-bottom: 6rem !important; } [data-near-miss-fab] { bottom: 1rem !important; } }`}</style>
       {children}
       {staff.venue_id && (
         <>
