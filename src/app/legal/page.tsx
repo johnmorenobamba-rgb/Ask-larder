@@ -24,7 +24,7 @@ export default function LegalPage() {
         <section className="mt-8 space-y-3">
           <h2 className="font-display text-xl font-bold text-ink">Who owns it</h2>
           <p className="font-sans text-ink/80">
-            Your venue owns everything entered into Larder and can export it at any time, including on cancellation.
+            Your venue owns everything entered into Larder. We export your records for you on request, including when you cancel.
             Larder processes and structures your content. It does not acquire ownership of it.
           </p>
         </section>

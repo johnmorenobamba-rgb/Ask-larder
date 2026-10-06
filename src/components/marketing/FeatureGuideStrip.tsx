@@ -54,8 +54,8 @@ const FEATURES = [
   },
   {
     glyph: BadgeGlyph,
-    title: "Certs, tracked automatically",
-    body: "RSA, food handling, first aid, and WWCC, all nudged before they lapse.",
+    title: "Certificates in one place",
+    body: "Staff upload RSA, food handling and first aid certificates with their dates. You see what is expiring.",
   },
   {
     glyph: ChatGlyph,
@@ -65,7 +65,7 @@ const FEATURES = [
   {
     glyph: DashboardGlyph,
     title: "Owner visibility",
-    body: "Completions, certificates, and escalations, all in one place.",
+    body: "Completions, certificates, compliance records and near misses on one screen.",
   },
 ];
 

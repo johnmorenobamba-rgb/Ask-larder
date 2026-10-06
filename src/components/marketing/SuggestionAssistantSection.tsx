@@ -64,7 +64,7 @@ export function SuggestionAssistantSection() {
           <ElevatedCell depth="hero" glowColor="var(--color-saffron)" className="overflow-hidden rounded-3xl bg-parchment">
             <Image
               src="/images/marketing/suggestion-assistant-feed.png"
-              alt="A real Larder suggestion, drafted from staff near-miss reports, with Approve and Dismiss buttons"
+              alt="An example Larder suggestion, drafted from staff near miss reports, with Approve and Dismiss buttons"
               width={1000}
               height={900}
               loading="eager"
@@ -73,8 +73,8 @@ export function SuggestionAssistantSection() {
           </ElevatedCell>
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center font-sans text-sm text-ink/60">
-          A real draft, from a real venue: three staff reported broken glass near the bar, worded differently each
-          time, and Larder proposed a real addition to Workplace health &amp; safety, evidence attached. If nothing
+          An example draft: three staff reported broken glass near the bar, worded differently each
+          time, and Larder proposed an addition to Workplace health &amp; safety, evidence attached. If nothing
           genuinely fits an existing module, Larder says so plainly instead of guessing.
         </p>
       </div>

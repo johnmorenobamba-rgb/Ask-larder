@@ -3,7 +3,12 @@ import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { FeatureGuideStrip } from "@/components/marketing/FeatureGuideStrip";
 import { ExplainerVideoSection } from "@/components/marketing/ExplainerVideoSection";
 import { ProblemSolutionSection } from "@/components/marketing/ProblemSolutionSection";
-import { ComplianceSection } from "@/components/marketing/ComplianceSection";
+import { ComplianceFormsSection } from "@/components/marketing/ComplianceFormsSection";
+import { OwnerOverviewSection } from "@/components/marketing/OwnerOverviewSection";
+import { StationGallerySection } from "@/components/marketing/StationGallerySection";
+import { CertsSignSection } from "@/components/marketing/CertsSignSection";
+import { TrustStrip } from "@/components/marketing/TrustStrip";
+import { FaqSection } from "@/components/marketing/FaqSection";
 import { HowItWorksSection } from "@/components/marketing/HowItWorksSection";
 import { SuggestionAssistantSection } from "@/components/marketing/SuggestionAssistantSection";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
@@ -41,12 +46,17 @@ export default function Home() {
         </nav>
       </header>
       <MarketingHero />
-      <FeatureGuideStrip />
-      <ExplainerVideoSection />
       <ProblemSolutionSection />
-      <ComplianceSection />
-      <HowItWorksSection />
+      <FeatureGuideStrip />
+      <ComplianceFormsSection />
+      <OwnerOverviewSection />
+      <StationGallerySection />
+      <CertsSignSection />
       <SuggestionAssistantSection />
+      <ExplainerVideoSection />
+      <HowItWorksSection />
+      <TrustStrip />
+      <FaqSection />
 
       <div id="cta" className="border-t border-ink/10 bg-parchment px-6 py-16 text-center sm:px-10 md:px-16">
         <p className="font-display text-2xl font-bold text-ink">Want to see it on your own venue?</p>
