@@ -7,7 +7,7 @@ import { adminClient, listObjects, removeFixtureObjects } from "./stage0";
 //  2. teardown removes any DISPOSABLE fixture left behind by a failed or killed spec (service role, only venues made by
 //     createFixture during this run and the synthetic logins made with them), then
 //  3. compares the counts to the baseline and FAILS the run if anything differs. Never touches a venue it did not create.
-export const FIXTURE_PREFIXES = ["s0", "td", "pl", "gd", "gh", "rg", "tl", "ev", "al", "ca", "es", "rc", "vt", "ge", "ex", "gp", "nh"];
+export const FIXTURE_PREFIXES = ["s0", "td", "pl", "gd", "gh", "rg", "tl", "ev", "al", "ca", "es", "rc", "vt", "ge", "ex", "gp", "nh", "ah", "cs", "lo", "qr", "h3", "mk"];
 const FILE = path.join("test-results", ".baseline.json");
 
 export type Counts = { venues: number; records: number; logins: number; appUsers: number; roles: number; activation: number; signatures: number; certs: number; nearMissPhotos: number; onboardingUploads: number; photoLibrary: number };

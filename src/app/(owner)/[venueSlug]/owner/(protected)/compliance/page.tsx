@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { resolveNow } from "@/lib/compliance/engine/testClock";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadHub, groupHubByCadence } from "@/lib/compliance/engine/hubData";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function OwnerCompliancePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
   const sp = await searchParams;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const now = resolveNow(sp.asof);
   const hub = await loadHub(supabase, createAdminClient(), staff!.venue_id!, { isManagerTier: true, department: null }, now);

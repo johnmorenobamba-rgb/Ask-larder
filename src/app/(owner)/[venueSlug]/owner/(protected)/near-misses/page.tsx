@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatDateTime, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { getNearMissPhotoUrl } from "@/lib/owner/nearMissPhotoUrl";
 import { ResolveNearMissButton } from "@/components/owner/ResolveNearMissButton";
@@ -15,6 +16,7 @@ export default async function OwnerNearMissesPage({
   const { venueSlug } = await params;
   const { status } = await searchParams;
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase);
 
   let query = supabase
     .from("near_miss_reports")
@@ -53,7 +55,7 @@ export default async function OwnerNearMissesPage({
               <p className="font-mono text-xs text-clay-brown">
                 {r.is_anonymous ? "Anonymous" : (r.app_users?.name ?? "Unknown staff")}
                 {r.stations?.name ? ` · ${r.stations.name}` : ""} ·{" "}
-                {r.created_at ? new Date(r.created_at).toLocaleString() : ""}
+                {r.created_at ? formatDateTime(r.created_at, tz) : ""}
               </p>
               <p className="font-sans text-ink">{r.description}</p>
               {r.photoUrl && (

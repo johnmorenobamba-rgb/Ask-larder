@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { UploadPhotoForm } from "@/components/owner/UploadPhotoForm";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -16,7 +16,7 @@ export default async function OwnerPhotoLibraryPage({
 }) {
   const { venueSlug } = await params;
   const { tag } = await searchParams;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   // Real bug found live (data-provenance audit, 14 Sep): plain `stations(name)`

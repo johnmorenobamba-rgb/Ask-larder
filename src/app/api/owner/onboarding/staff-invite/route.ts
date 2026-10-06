@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { AUTHORIZED_HOLDER_MESSAGE, isAuthorizedHolderRefusal, isProtectedTarget, loadTarget } from "@/lib/auth/authorizedHolder";
 import { upsertWizardSession } from "@/lib/onboarding/wizardSession";
 
 // Q2 Page 11b — named staff for invite. Writes an app_users row with no
@@ -58,9 +59,20 @@ export async function DELETE(request: Request) {
   if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 });
 
   const supabase = await createClient();
+  const target = await loadTarget(supabase, staff.venue_id, id);
+  if (target && staff.role !== "owner" && isProtectedTarget(target)) {
+    return NextResponse.json({ error: AUTHORIZED_HOLDER_MESSAGE }, { status: 403 });
+  }
   // Only ever removes an as-yet-unauthenticated invite row, never a staff
   // member who has already logged in (auth_id set) — an owner correcting a
   // typo'd invite before it's used, not an offboarding action.
-  await supabase.from("app_users").delete().eq("id", id).eq("venue_id", staff.venue_id).is("auth_id", null);
+  const { error } = await supabase.from("app_users").delete().eq("id", id).eq("venue_id", staff.venue_id).is("auth_id", null);
+  if (error) {
+    if (isAuthorizedHolderRefusal(error.message)) {
+      return NextResponse.json({ error: AUTHORIZED_HOLDER_MESSAGE }, { status: 403 });
+    }
+    console.error("staff-invite delete unexpected error:", error.message);
+    return NextResponse.json({ error: "Couldn't remove this person. Try again." }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

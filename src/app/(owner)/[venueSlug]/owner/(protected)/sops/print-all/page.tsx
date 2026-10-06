@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { formatDate, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { fetchSopDocumentData } from "@/lib/sop/fetchSopDocumentData";
 import { SopDocumentView } from "@/components/owner/SopDocumentView";
 import { PrintButton } from "@/components/owner/PrintButton";
@@ -15,8 +16,9 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 // must be honest about what it's actually printing.
 export default async function PrintAllSopsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase, staff.venue_id);
 
   const [{ data: venue, error: venueError }, { data: modules, error: modulesError }] = await Promise.all([
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
@@ -48,7 +50,7 @@ export default async function PrintAllSopsPage({ params }: { params: Promise<{ v
         <section className="space-y-2 break-after-page bg-parchment px-8 py-16 text-center print:bg-white">
           <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Standard operating procedures</p>
           <h1 className="font-display text-4xl font-bold text-ink">{venue?.name ?? "Venue"}</h1>
-          <p className="font-mono text-xs text-clay-brown">Printed {new Date().toLocaleDateString()}</p>
+          <p className="font-mono text-xs text-clay-brown">Printed {formatDate(new Date(), tz)}</p>
         </section>
 
         {/* Table of contents */}

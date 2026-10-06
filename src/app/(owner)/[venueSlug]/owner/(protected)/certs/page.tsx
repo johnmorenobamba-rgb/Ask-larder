@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { formatCalendarDate } from "@/lib/format/date";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -10,8 +11,9 @@ function daysUntil(dateStr: string): number {
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
 
-export default async function OwnerCertsPage() {
-  const staff = await getCurrentStaff();
+export default async function OwnerCertsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
+  const { venueSlug } = await params;
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [{ data: certs, error: certsError }, { data: venue, error: venueError }] = await Promise.all([
@@ -67,7 +69,7 @@ export default async function OwnerCertsPage() {
                       Expires in <AnimatedNumber value={days!} animate /> day(s)
                     </>
                   ) : tier === "valid" ? (
-                    `Expires ${c.expiry_date}`
+                    `Expires ${formatCalendarDate(c.expiry_date ?? "")}`
                   ) : tier === "refresherOverdue" ? (
                     <>
                       Refresher recommended, overdue by <AnimatedNumber value={Math.abs(days!)} animate /> day(s)
@@ -77,7 +79,7 @@ export default async function OwnerCertsPage() {
                       Refresher recommended in <AnimatedNumber value={days!} animate /> day(s)
                     </>
                   ) : tier === "refresherUpcoming" ? (
-                    `Refresher recommended by ${c.expiry_date}`
+                    `Refresher recommended by ${formatCalendarDate(c.expiry_date ?? "")}`
                   ) : (
                     "No date on file"
                   )}

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { formatDate, getVenueTimeZone } from "@/lib/format/date";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { CompleteScreen } from "@/components/staff/CompleteScreen";
@@ -14,6 +15,7 @@ export default async function CompletePage({
   if (!staff) redirect(`/${venueSlug}/login`);
 
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase, staff.venue_id!);
   const { data: venue, error: venueError } = await supabase
     .from("venues")
     .select("name")
@@ -26,7 +28,7 @@ export default async function CompletePage({
       venueSlug={venueSlug}
       staffName={staff.name}
       venueName={venue?.name ?? "the team"}
-      completedDate={new Date().toLocaleDateString()}
+      completedDate={formatDate(new Date(), tz)}
       hasSeenIntro={staff.has_seen_ask_larder_intro}
     />
   );

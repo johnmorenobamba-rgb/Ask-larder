@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { resolveNow } from "@/lib/compliance/engine/testClock";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { createClient } from "@/lib/supabase/server";
 import { COMPLIANCE_FORMS, STATUS_TAG_LABELS } from "@/lib/compliance/catalog";
 import { loadB2Overview } from "@/lib/compliance/b2Data";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export default async function OwnerTemperaturePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
   const sp = await searchParams;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const now = resolveNow(sp.asof);
   const overview = await loadB2Overview(supabase, staff!.venue_id!, now);

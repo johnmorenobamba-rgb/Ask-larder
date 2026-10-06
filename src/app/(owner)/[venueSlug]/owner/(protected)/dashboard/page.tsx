@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getNeedsAttention } from "@/lib/owner/needsAttention";
 import { loadB2Overview } from "@/lib/compliance/b2Data";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
@@ -23,7 +23,7 @@ export default async function OwnerDashboardPage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const venueId = staff!.venue_id!;
 

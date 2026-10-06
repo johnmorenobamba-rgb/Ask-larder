@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import type { VenueTypeFlags } from "@/lib/onboarding/steps";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -19,12 +19,12 @@ export default async function OnboardingLayout({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [{ data: venue, error: venueError }, { data: session, error: sessionError }] = await Promise.all([
-    supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
-    supabase.from("wizard_sessions").select("current_step, venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
+    supabase.from("venues").select("name").eq("id", staff.venue_id).maybeSingle(),
+    supabase.from("wizard_sessions").select("current_step, venue_type_flags").eq("venue_id", staff.venue_id).maybeSingle(),
   ]);
   logQueryError(`[${venueSlug}] onboarding layout venue`, venueError);
   logQueryError(`[${venueSlug}] onboarding layout session`, sessionError);

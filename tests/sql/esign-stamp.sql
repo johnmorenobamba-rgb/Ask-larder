@@ -64,15 +64,13 @@ begin
   out := out || pg_temp.chk('a missing ip or device is stored as unknown, never empty', (r->>'modules_signed')::int >= 1 and exists (select 1 from esignatures where user_id = s_id and ip_address = 'unknown' and device_info = 'unknown'));
 
   -- part 2 (20261005040100), applied inside this rolled back test only
-  out := out || pg_temp.chk('before part 2 the old function is still callable by a signed in user (production code keeps working)', has_function_privilege('authenticated','public.complete_onboarding_signature(text,text,text)','EXECUTE'));
-  execute 'revoke execute on function public.complete_onboarding_signature(text, text, text) from public, anon, authenticated';
-  out := out || pg_temp.chk('after part 2 the old function is not callable by authenticated or anon', not has_function_privilege('authenticated','public.complete_onboarding_signature(text,text,text)','EXECUTE') and not has_function_privilege('anon','public.complete_onboarding_signature(text,text,text)','EXECUTE'));
+  out := out || pg_temp.chk('the old function is not callable by authenticated or anon (part 2 applied)', not has_function_privilege('authenticated','public.complete_onboarding_signature(text,text,text)','EXECUTE') and not has_function_privilege('anon','public.complete_onboarding_signature(text,text,text)','EXECUTE'));
   perform set_config('request.jwt.claims', jsonb_build_object('sub', a_s, 'role', 'authenticated')::text, true);
   execute 'set local role authenticated';
   begin perform public.complete_onboarding_signature('Forged', '6.6.6.6', 'forged device'); ok := true; exception when others then ok := false; end;
   execute 'reset role';
-  out := out || pg_temp.chk('after part 2 a forged direct call is denied', not ok);
-  out := out || pg_temp.chk('after part 2 service_role still holds execute', has_function_privilege('service_role','public.complete_onboarding_signature(text,text,text)','EXECUTE'));
+  out := out || pg_temp.chk('a forged direct call is denied', not ok);
+  out := out || pg_temp.chk('service_role still holds execute on the old function', has_function_privilege('service_role','public.complete_onboarding_signature(text,text,text)','EXECUTE'));
 
   begin delete from venues where id = vT; ok := true; exception when others then ok := false; end;
   out := out || pg_temp.chk('cleanup cascade works', ok);

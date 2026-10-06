@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { AUTHORIZED_HOLDER_MESSAGE, isAuthorizedHolderRefusal, isProtectedTarget, loadTarget } from "@/lib/auth/authorizedHolder";
 
 // Block U1 -- soft-delete only. staff_module_progress/staff_certificates/
 // esignatures are never touched, so a staff member leaving doesn't erase
@@ -21,6 +22,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
   }
 
   const supabase = await createClient();
+  const target = await loadTarget(supabase, staff.venue_id, staffUserId);
+  if (!target) {
+    return NextResponse.json({ error: "Staff user not found." }, { status: 404 });
+  }
+  if (staff.role !== "owner" && isProtectedTarget(target)) {
+    return NextResponse.json({ error: AUTHORIZED_HOLDER_MESSAGE }, { status: 403 });
+  }
   const { data, error } = await supabase
     .from("app_users")
     .update({ deactivated_at: new Date().toISOString() })
@@ -30,6 +38,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
     .maybeSingle();
 
   if (error) {
+    if (isAuthorizedHolderRefusal(error.message)) {
+      return NextResponse.json({ error: AUTHORIZED_HOLDER_MESSAGE }, { status: 403 });
+    }
+    if (/Only an owner|Only a manager|at least one active owner|Not allowed/i.test(error.message)) {
+      return NextResponse.json({ error: "You can't make that change." }, { status: 403 });
+    }
     console.error("deactivate unexpected error:", error.message);
     return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
   }

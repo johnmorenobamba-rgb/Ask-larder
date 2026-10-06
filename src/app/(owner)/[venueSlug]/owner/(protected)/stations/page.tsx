@@ -2,7 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
 import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { DeleteStationButton } from "@/components/owner/DeleteStationButton";
@@ -18,7 +18,7 @@ export default async function OwnerStationsPage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const headerList = await headers();
   const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;

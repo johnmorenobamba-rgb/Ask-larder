@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FormActivationList, type ActivationItem } from "@/components/owner/FormActivationList";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 // service, licence type, accommodation, trade waste agreement); an explicit choice here always wins.
 export default async function OwnerFormsPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
   const [{ ctx, cutoffHour, degraded }, { rows, degraded: rowsDegraded }] = await Promise.all([
     loadActivationContext(supabase, createAdminClient(), staff!.venue_id!),

@@ -3,6 +3,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { StaffRoleSelect, type RoleOption } from "@/components/owner/StaffRoleSelect";
 import { StaffLifecycleActions } from "@/components/owner/StaffLifecycleActions";
 import { ReactivateStaffButton } from "@/components/owner/ReactivateStaffButton";
+import { isProtectedTarget } from "@/lib/auth/authorizedHolder";
 import { InviteStaffForm } from "@/components/owner/InviteStaffForm";
 import { StaffCompletionList, type StaffCompletionRow } from "@/components/owner/StaffCompletionList";
 
@@ -33,7 +34,7 @@ export default async function OwnerStaffPage() {
       .order("name"),
     supabase
       .from("app_users")
-      .select("id, name")
+      .select("id, name, role, staff_roles(fallback_tier)")
       .neq("role", "owner")
       .not("deactivated_at", "is", null)
       .order("name"),
@@ -107,7 +108,11 @@ export default async function OwnerStaffPage() {
                     {member.staff_roles?.department ? ` · ${member.staff_roles.department}` : ""}
                   </p>
                 </div>
-                <StaffLifecycleActions staffUserId={member.id} staffName={member.name} />
+                <StaffLifecycleActions
+                  staffUserId={member.id}
+                  staffName={member.name}
+                  canDeactivate={viewer?.role === "owner" || !isProtectedTarget(member)}
+                />
                 </div>
                 <StaffRoleSelect
                   staffUserId={member.id}
@@ -140,7 +145,11 @@ export default async function OwnerStaffPage() {
                   className="flex items-center justify-between rounded-2xl border-2 border-clay-brown/20 px-4 py-4 opacity-70"
                 >
                   <p className="font-display text-ink">{member.name}</p>
-                  <ReactivateStaffButton staffUserId={member.id} />
+                  {viewer?.role === "owner" || !isProtectedTarget(member) ? (
+                    <ReactivateStaffButton staffUserId={member.id} />
+                  ) : (
+                    <p className="max-w-48 font-sans text-xs text-clay-brown">Only the owner can reactivate someone with an Authorized role.</p>
+                  )}
                 </div>
               ))}
             </div>

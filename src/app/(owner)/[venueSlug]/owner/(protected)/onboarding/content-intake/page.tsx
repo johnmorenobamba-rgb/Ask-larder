@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { SopInterview, type TopicEntry } from "@/components/onboarding/SopInterview";
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { PART_B_TOPICS } from "@/lib/onboarding/constants";
@@ -17,7 +17,7 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 // topic+question queue SopInterview renders.
 export default async function ContentIntakePage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const venueId = staff!.venue_id!;
   const supabase = await createClient();
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { CreateStationForm } from "@/components/owner/CreateStationForm";
 import { StationPhotoUpload } from "@/components/owner/StationPhotoUpload";
 import { NameplateCapture } from "@/components/owner/NameplateCapture";
@@ -23,7 +23,7 @@ import { logQueryError } from "@/lib/supabase/logQueryError";
 // site.
 export default async function EquipmentPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [

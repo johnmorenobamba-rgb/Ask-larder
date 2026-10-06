@@ -1,4 +1,5 @@
 import type { SopDocumentContent } from "@/lib/ai/generateSopDocument";
+import { formatDate } from "@/lib/format/date";
 
 // Block R2 -- the professional SOP document format. Structural reference
 // only (Purpose/Scope/Who performs it/Materials/Procedure/Safety-critical
@@ -49,11 +50,11 @@ export function SopDocumentView({
           <MetaRow label="Prepared by" value="Larder (generated from venue-approved content)" />
           <MetaRow
             label="Effective date"
-            value={approvedAt ? new Date(approvedAt).toLocaleDateString() : null}
+            value={approvedAt ? formatDate(approvedAt) : null}
             flagIfMissing
           />
           <MetaRow label="Approved by" value={approvedByName} flagIfMissing />
-          <MetaRow label="Document generated" value={new Date(generatedAt).toLocaleDateString()} />
+          <MetaRow label="Document generated" value={formatDate(generatedAt)} />
         </dl>
       </header>
 

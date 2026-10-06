@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentStaff } from "@/lib/auth/session";
+import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { fetchSopDocumentData } from "@/lib/sop/fetchSopDocumentData";
 import { SopDocumentView } from "@/components/owner/SopDocumentView";
 import { GenerateSopButton } from "@/components/owner/GenerateSopButton";
@@ -19,7 +19,7 @@ export default async function SopDocumentPage({
   params: Promise<{ venueSlug: string; moduleId: string }>;
 }) {
   const { venueSlug, moduleId } = await params;
-  const staff = await getCurrentStaff();
+  const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
 
   const [data, { data: sections }, { data: moduleRow }] = await Promise.all([

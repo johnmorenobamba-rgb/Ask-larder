@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatDateTime, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { ResolveEscalationButton } from "@/components/owner/ResolveEscalationButton";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -13,6 +14,7 @@ export default async function OwnerEscalationsPage({
   const { venueSlug } = await params;
   const { station } = await searchParams;
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase);
 
   let query = supabase
     .from("chat_messages")
@@ -45,7 +47,7 @@ export default async function OwnerEscalationsPage({
               <p className="font-mono text-xs text-clay-brown">
                 {e.app_users?.name ?? "Unknown staff"}
                 {e.stations?.name ? ` · ${e.stations.name}` : ""} ·{" "}
-                {e.created_at ? new Date(e.created_at).toLocaleString() : ""}
+                {e.created_at ? formatDateTime(e.created_at, tz) : ""}
               </p>
               <p className="font-sans text-ink">{e.message}</p>
               {e.escalation_status === "resolved" ? (
