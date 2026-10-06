@@ -199,3 +199,11 @@ export const UNIT_TYPE_HEADINGS: Record<RefrigerationUnitType, string> = {
   frozen: "Frozen storage",
   hot_hold: "Hot hold",
 };
+
+export type B2Progress = "none" | "partial" | "done";
+
+/** The state of today's temperature log: done only when every active unit is logged, not started only when none is. */
+export function b2Progress(doneToday: number, total: number): B2Progress {
+  if (total <= 0 || doneToday <= 0) return "none";
+  return doneToday >= total ? "done" : "partial";
+}

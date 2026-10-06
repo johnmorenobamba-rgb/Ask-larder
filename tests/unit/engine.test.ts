@@ -537,3 +537,25 @@ describe("B4 probe thermometer check is monthly by default", () => {
     expect(formStatus({ ...base, now, recordTimes: ["2025-10-20T01:00:00Z"] }).status).toBe("overdue");
   });
 });
+
+import { b2Progress } from "../../src/lib/compliance/b2";
+describe("temperature log progress on the staff hub card", () => {
+  it("is not started only when no unit is logged", () => {
+    expect(b2Progress(0, 4)).toBe("none");
+    expect(b2Progress(0, 1)).toBe("none");
+  });
+  it("is in progress when some but not all units are logged", () => {
+    expect(b2Progress(1, 4)).toBe("partial");
+    expect(b2Progress(3, 4)).toBe("partial");
+  });
+  it("is done only when every active unit is logged today", () => {
+    expect(b2Progress(4, 4)).toBe("done");
+    expect(b2Progress(1, 1)).toBe("done");
+    expect(b2Progress(5, 4)).toBe("done");
+  });
+  it("has nothing to show when the venue has no units", () => {
+    expect(b2Progress(0, 0)).toBe("none");
+    expect(b2Progress(2, 0)).toBe("none");
+    expect(b2Progress(-1, 4)).toBe("none");
+  });
+});

@@ -8,6 +8,7 @@ import { PassSlide } from "@/components/staff/PassSlide";
 import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { groupHubByCadence, loadHub, type HubForm } from "@/lib/compliance/engine/hubData";
 import { CADENCE_HEADINGS, FORM_TAG_LABELS } from "@/lib/compliance/engine/types";
+import { b2Progress } from "@/lib/compliance/b2";
 import { formatHour } from "@/lib/compliance/engine/due";
 
 export const dynamic = "force-dynamic";
@@ -102,12 +103,14 @@ function renderGroups(groups: ReturnType<typeof groupHubByCadence>, venueSlug: s
             </h2>
             <ul className="grid items-stretch gap-3 md:grid-cols-2">
               {g.cadence === "daily" && b2Card && (
-                <li className={`rounded-2xl border-2 ${b2.openFlags > 0 ? "border-preserve-red" : b2.doneToday >= b2.total ? "border-bay-green" : "border-clay-brown"}`}>
+                <li className={`rounded-2xl border-2 ${b2.openFlags > 0 ? "border-preserve-red" : b2Progress(b2.doneToday, b2.total) === "done" ? "border-bay-green" : "border-clay-brown"}`}>
                   <Link href={`/${venueSlug}/temperature`} className="flex h-full min-h-28 flex-col justify-between gap-2 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <p className="font-sans text-lg font-medium text-ink">Temperature log</p>
-                      {b2.doneToday >= b2.total ? (
+                      {b2Progress(b2.doneToday, b2.total) === "done" ? (
                         <span className="whitespace-nowrap rounded-full bg-bay-green/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-bay-green">Done</span>
+                      ) : b2Progress(b2.doneToday, b2.total) === "partial" ? (
+                        <span className="whitespace-nowrap rounded-full border border-saffron bg-saffron/15 px-3 py-1 font-mono text-xs uppercase tracking-wide text-ink">In progress</span>
                       ) : (
                         <span className="rounded-full border border-clay-brown px-3 py-1 font-mono text-xs uppercase tracking-wide text-clay-brown">Not started</span>
                       )}
