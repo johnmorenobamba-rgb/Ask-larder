@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate, formatTimeOfDay } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
 import { PassSlide } from "./PassSlide";
 import { useHasMounted } from "@/lib/hooks/useHasMounted";
@@ -18,7 +19,7 @@ export function SignatureForm({ venueSlug }: { venueSlug: string }) {
   const hasMounted = useHasMounted();
 
   const signedLabel = hasMounted
-    ? `Signed ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()} on ${
+    ? `Signed ${formatDate(new Date())} at ${formatTimeOfDay(new Date())} on ${
         /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "tablet/desktop"
       }.`
     : null;

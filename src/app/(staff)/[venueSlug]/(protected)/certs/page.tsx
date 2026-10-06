@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { formatCalendarDate } from "@/lib/format/date";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
@@ -63,7 +64,7 @@ export default async function CertsPage({
                     >
                       <span className="font-sans text-ink">{certType.name}</span>
                       <span className="font-mono text-xs text-clay-brown">
-                        {expiry ? `Expires ${expiry}` : "Not uploaded"}
+                        {expiry ? `Expires ${formatCalendarDate(expiry)}` : "Not uploaded"}
                       </span>
                     </PressableLink>
                   </li>

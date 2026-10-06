@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getWeeklyDigest, type DigestQuestion } from "@/lib/reports/weeklyDigest";
 
@@ -6,6 +7,7 @@ export default async function WeeklyReportPage({ params }: { params: Promise<{ v
   const { venueSlug } = await params;
   const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase, staff.venue_id);
 
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -28,6 +30,7 @@ export default async function WeeklyReportPage({ params }: { params: Promise<{ v
         </div>
 
         <Section
+          tz={tz}
           title="Not covered by any SOP"
           empty="No unanswered questions this week. Ask Larder covered everything staff asked."
           questions={digest.outOfScope}
@@ -35,6 +38,7 @@ export default async function WeeklyReportPage({ params }: { params: Promise<{ v
         />
 
         <Section
+          tz={tz}
           title="Needed a supervisor"
           empty="No escalations this week."
           questions={digest.escalations}
@@ -50,7 +54,9 @@ function Section({
   empty,
   questions,
   accent,
+  tz,
 }: {
+  tz: string;
   title: string;
   empty: string;
   questions: DigestQuestion[];
@@ -64,7 +70,7 @@ function Section({
         <div key={q.question} className={`rounded-2xl border-2 ${accent} px-4 py-3`}>
           <p className="font-sans text-ink">{q.question}</p>
           <p className="font-mono text-xs text-clay-brown">
-            Asked {q.count} time{q.count === 1 ? "" : "s"} · last {new Date(q.lastAskedAt).toLocaleDateString()}
+            Asked {q.count} time{q.count === 1 ? "" : "s"} · last {formatDate(q.lastAskedAt, tz)}
           </p>
         </div>
       ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
 
 type EvidenceItem = { text: string; staffName: string; stationName?: string | null; at: string };
@@ -71,7 +72,7 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
     <div className="space-y-3 rounded-2xl border-2 border-clay-brown/40 bg-parchment px-4 py-4">
       <div className="flex items-center justify-between gap-2">
         <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">{SIGNAL_LABEL[suggestion.signal_type] ?? suggestion.signal_type}</p>
-        {suggestion.created_at && <p className="font-mono text-xs text-clay-brown/70">{new Date(suggestion.created_at).toLocaleDateString()}</p>}
+        {suggestion.created_at && <p className="font-mono text-xs text-clay-brown/70">{formatDate(suggestion.created_at)}</p>}
       </div>
 
       <p className="font-display text-lg text-ink">{suggestion.headline}</p>
@@ -87,7 +88,7 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
               <p className="font-mono text-xs text-clay-brown">
                 {it.staffName}
                 {it.stationName ? ` · ${it.stationName}` : ""}
-                {it.at ? ` · ${new Date(it.at).toLocaleDateString()}` : ""}
+                {it.at ? ` · ${formatDate(it.at)}` : ""}
               </p>
               <p className="font-sans text-sm text-ink/80">&ldquo;{it.text}&rdquo;</p>
             </div>

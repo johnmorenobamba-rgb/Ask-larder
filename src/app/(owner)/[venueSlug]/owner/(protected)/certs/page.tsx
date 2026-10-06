@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { formatCalendarDate } from "@/lib/format/date";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
@@ -68,7 +69,7 @@ export default async function OwnerCertsPage({ params }: { params: Promise<{ ven
                       Expires in <AnimatedNumber value={days!} animate /> day(s)
                     </>
                   ) : tier === "valid" ? (
-                    `Expires ${c.expiry_date}`
+                    `Expires ${formatCalendarDate(c.expiry_date ?? "")}`
                   ) : tier === "refresherOverdue" ? (
                     <>
                       Refresher recommended, overdue by <AnimatedNumber value={Math.abs(days!)} animate /> day(s)
@@ -78,7 +79,7 @@ export default async function OwnerCertsPage({ params }: { params: Promise<{ ven
                       Refresher recommended in <AnimatedNumber value={days!} animate /> day(s)
                     </>
                   ) : tier === "refresherUpcoming" ? (
-                    `Refresher recommended by ${c.expiry_date}`
+                    `Refresher recommended by ${formatCalendarDate(c.expiry_date ?? "")}`
                   ) : (
                     "No date on file"
                   )}

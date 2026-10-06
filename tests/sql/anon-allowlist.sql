@@ -40,6 +40,20 @@ begin
   out := out || pg_temp.chk('anon can execute no function in public beyond the allowlist' || case when array_length(bad,1) > 0 then ' (' || array_to_string(bad, ', ') || ')' else '' end, coalesce(array_length(bad,1),0) = 0);
   out := out || pg_temp.chk('the allowed function venue_roster still exists and is callable by anon', has_function_privilege('anon', 'public.venue_roster(text)', 'EXECUTE'));
 
+  -- 3b functions in other schemas that anon can both reach (schema USAGE) and execute. The app's own private and cron schemas must give
+  -- anon nothing. The platform schema storage is expected. The pg_net schema (net.http_get, http_post, http_delete) is reachable by anon
+  -- in the database but is not exposed through the API; that is a NOTE below (parked, see the hardening-3 report), not a failure.
+  bad := '{}';
+  for r in select p.oid::regprocedure::text as sig, n.nspname::text as ns from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname not in ('public','pg_catalog','information_schema','storage','net','extensions','graphql','graphql_public','auth','realtime','vault','pgsodium','supabase_functions') and n.nspname !~ '^pg_'
+             and has_schema_privilege('anon', n.oid, 'USAGE') and has_function_privilege('anon', p.oid, 'EXECUTE') loop
+    bad := bad || r.sig;
+  end loop;
+  out := out || pg_temp.chk('anon can reach and execute no function in any other app schema' || case when array_length(bad,1) > 0 then ' (' || array_to_string(bad, ', ') || ')' else '' end, coalesce(array_length(bad,1),0) = 0);
+  out := out || pg_temp.chk('the private schema (policy helper functions) gives anon no schema access', not has_schema_privilege('anon', 'private', 'USAGE'));
+  select count(*) into n from pg_proc p join pg_namespace s on s.oid = p.pronamespace where s.nspname = 'net' and has_schema_privilege('anon', s.oid, 'USAGE') and has_function_privilege('anon', p.oid, 'EXECUTE');
+  if n > 0 then out := out || array['INFO ' || n || ' pg_net functions in schema net are executable by anon in the database (not exposed through the API); proposed: revoke usage on schema net from anon, authenticated; (parked, not applied)']; end if;
+
   -- 4 default privileges of the migration role (postgres) in public
   select count(*) into n from pg_default_acl d, lateral aclexplode(d.defaclacl) a
     where d.defaclnamespace = 'public'::regnamespace and d.defaclrole = (select oid from pg_roles where rolname = 'postgres') and a.grantee = anon_oid;

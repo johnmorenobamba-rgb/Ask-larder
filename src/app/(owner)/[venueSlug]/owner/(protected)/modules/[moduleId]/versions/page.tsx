@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { PublishVersionForm } from "@/components/owner/PublishVersionForm";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -10,6 +11,7 @@ export default async function OwnerModuleVersionsPage({
 }) {
   const { moduleId } = await params;
   const supabase = await createClient();
+  const tz = await getVenueTimeZone(supabase);
 
   const { data: module } = await supabase.from("modules").select("id, title, status").eq("id", moduleId).maybeSingle();
   if (!module) notFound();
@@ -69,7 +71,7 @@ export default async function OwnerModuleVersionsPage({
               <div key={v.id} className="rounded-2xl border-2 border-clay-brown/40 px-4 py-4 space-y-2">
                 <p className="font-display text-ink">
                   v{v.version}
-                  {v.published_at ? ` · ${new Date(v.published_at).toLocaleDateString()}` : ""}
+                  {v.published_at ? ` · ${formatDate(v.published_at, tz)}` : ""}
                 </p>
                 {v.changelog && <p className="font-sans text-sm text-ink">{v.changelog}</p>}
                 <p className="font-mono text-xs text-bay-green">

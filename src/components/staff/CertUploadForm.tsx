@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatCalendarDate } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Stamp } from "./Stamp";
@@ -133,7 +134,7 @@ export function CertUploadForm({
           <div className="space-y-1">
             <p className="font-mono text-xs text-clay-brown">{dueDateLabel}</p>
             <p className="font-sans text-ink">
-              {dueDate ? `${dueDate} (${validityYears} year(s) from the issued date)` : "Enter the issued date to see this"}
+              {dueDate ? `${formatCalendarDate(dueDate)} (${validityYears} year(s) from the issued date)` : "Enter the issued date to see this"}
             </p>
           </div>
 
