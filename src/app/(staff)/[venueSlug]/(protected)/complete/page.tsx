@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
+import { formatDate, getVenueTimeZone } from "@/lib/format/date";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { CompleteScreen } from "@/components/staff/CompleteScreen";

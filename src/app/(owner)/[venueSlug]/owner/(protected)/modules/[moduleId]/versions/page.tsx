@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
+import { formatDate, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { PublishVersionForm } from "@/components/owner/PublishVersionForm";
 import { logQueryError } from "@/lib/supabase/logQueryError";

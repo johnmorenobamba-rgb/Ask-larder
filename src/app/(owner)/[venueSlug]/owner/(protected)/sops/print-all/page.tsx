@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
+import { formatDate, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { fetchSopDocumentData } from "@/lib/sop/fetchSopDocumentData";

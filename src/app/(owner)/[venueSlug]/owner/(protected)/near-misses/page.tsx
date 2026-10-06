@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate, formatDateTime, getVenueTimeZone } from "@/lib/format/date";
+import { formatDateTime, getVenueTimeZone } from "@/lib/format/date";
 import { createClient } from "@/lib/supabase/server";
 import { getNearMissPhotoUrl } from "@/lib/owner/nearMissPhotoUrl";
 import { ResolveNearMissButton } from "@/components/owner/ResolveNearMissButton";
