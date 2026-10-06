@@ -34,13 +34,13 @@ export default async function OwnerCompletionsPage() {
         {(modules ?? []).length === 0 ? (
           <p className="font-sans text-sm text-clay-brown">No live modules yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse font-sans text-sm">
+          <div role="region" aria-label="Completions by staff member, scrolls sideways" tabIndex={0} className="overflow-x-auto rounded-2xl border-2 border-clay-brown/20">
+            <table className="w-full min-w-max border-collapse font-sans text-sm">
               <thead>
                 <tr>
-                  <th className="border-b-2 border-clay-brown/40 px-3 py-2 text-left text-ink">Staff</th>
+                  <th className="sticky left-0 z-10 border-b-2 border-r border-clay-brown/40 bg-parchment px-3 py-2 text-left text-ink">Staff</th>
                   {(modules ?? []).map((m) => (
-                    <th key={m.id} className="border-b-2 border-clay-brown/40 px-3 py-2 text-left text-ink">
+                    <th key={m.id} className="min-w-32 border-b-2 border-clay-brown/40 px-3 py-2 text-left text-ink">
                       {m.title}
                     </th>
                   ))}
@@ -49,7 +49,7 @@ export default async function OwnerCompletionsPage() {
               <tbody>
                 {(staff ?? []).map((s) => (
                   <tr key={s.id}>
-                    <td className="border-b border-clay-brown/20 px-3 py-2 text-ink">{s.name}</td>
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-clay-brown/20 bg-parchment px-3 py-2 text-ink">{s.name}</td>
                     {(modules ?? []).map((m) => {
                       const p = progressByKey.get(`${s.id}:${m.id}`);
                       const status = p?.status ?? "not_started";
@@ -62,7 +62,7 @@ export default async function OwnerCompletionsPage() {
                             ? "text-saffron"
                             : "text-clay-brown/60";
                       return (
-                        <td key={m.id} className={`border-b border-clay-brown/20 px-3 py-2 ${color}`}>
+                        <td key={m.id} className={`whitespace-nowrap border-b border-clay-brown/20 px-3 py-2 ${color}`}>
                           {label}
                         </td>
                       );

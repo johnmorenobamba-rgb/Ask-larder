@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { stationScanUrl } from "@/lib/site";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
@@ -20,8 +20,6 @@ export default async function OwnerStationsPage({
   const { venueSlug } = await params;
   const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
-  const headerList = await headers();
-  const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
 
   const [{ data: stations, error: stationsError }, { data: modules, error: modulesError }] = await Promise.all([
     supabase
@@ -56,7 +54,7 @@ export default async function OwnerStationsPage({
       const photoPath = photoPathByStation.get(s.id);
       return {
         ...s,
-        qrDataUrl: await QRCode.toDataURL(`${origin}/${venueSlug}/station/${s.qr_code_slug}`),
+        qrDataUrl: await QRCode.toDataURL(stationScanUrl(venueSlug, s.qr_code_slug)),
         photoUrl: photoPath ? await getPhotoLibraryUrl(photoPath) : null,
       };
     }),
