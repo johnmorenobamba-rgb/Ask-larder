@@ -1,3 +1,4 @@
+import { pickerName } from "./helpers/pickerName";
 import { config } from "dotenv";
 import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
@@ -54,7 +55,7 @@ async function nativeClick(page: Page, text: string, tag = "button") {
 
 async function loginStaff(page: Page, name: string) {
   await page.goto(`/${SLUG}/login`);
-  await nativeClick(page, name);
+  await nativeClick(page, pickerName(name));
   await page.locator('input[type="password"]').fill(PIN);
   await nativeClick(page, "Log in");
   await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 20_000 });

@@ -1,3 +1,4 @@
+import { pickerName } from "./helpers/pickerName";
 import { test, expect } from "@playwright/test";
 import { adminClient, createFixture, destroyFixture, loginStaff, nativeClick, PIN, FIXTURE_NAMES, type Fixture } from "./helpers/stage0";
 
@@ -12,7 +13,7 @@ let moduleId = "";
 let versionId = "";
 
 async function pinLogin(page: import("@playwright/test").Page, name: string) {
-  await nativeClick(page, name);
+  await nativeClick(page, pickerName(name));
   await page.locator('input[type="password"]').fill(PIN);
   await nativeClick(page, "Log in");
 }

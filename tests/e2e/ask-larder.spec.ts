@@ -1,3 +1,4 @@
+import { pickerName } from "./helpers/pickerName";
 import { config } from "dotenv";
 import { nativeClick } from "./helpers/stage0";
 import { fixturePin } from "../helpers/secrets";
