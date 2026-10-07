@@ -6,6 +6,7 @@ import { BentoGridTest } from "./compositions/BentoGridTest";
 import { OwnerDashboardTest } from "./compositions/OwnerDashboardTest";
 import { Explainer, EXPLAINER_DURATION_FRAMES, EXPLAINER_FPS } from "./compositions/Explainer";
 import { HeroTileDrop, HERO_TILE_DROP_DURATION } from "./compositions/HeroTileDrop";
+import { ExplainerV2, ExplainerV2Cutdown, EXPLAINER_V2_FRAMES, CUTDOWN_FRAMES } from "./v2/ExplainerV2";
 
 // Block N3 -- imports the REAL app stylesheet (not a copy) so color
 // tokens, fonts-as-CSS-vars, and the bento texture/keyframe classes never
@@ -53,6 +54,9 @@ export const RemotionRoot: React.FC = () => {
         width={720}
         height={540}
       />
+      {/* launch-2: video v2 (the old Explainer above is untouched). Render with --public-dir remotion/public-v2 */}
+      <Composition id="ExplainerV2" component={ExplainerV2} durationInFrames={EXPLAINER_V2_FRAMES} fps={30} width={1920} height={1080} />
+      <Composition id="ExplainerV2Cutdown" component={ExplainerV2Cutdown} durationInFrames={CUTDOWN_FRAMES} fps={30} width={1920} height={1080} />
     </>
   );
 };

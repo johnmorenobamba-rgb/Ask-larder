@@ -26,3 +26,6 @@ client-documents/agreements/*
 # Holds a plaintext account password; a private copy lives outside the repo
 # (C:\Users\johnm\larder-private\scripts\one-off\). Already in public git history from 88b4898, see the 1 Oct report.
 scripts/one-off/reset-real-coachmans-wizard-owner-pw.mjs
+
+# launch-2: media for the v2 video (stock B roll and recorded clips are never committed)
+remotion/public-v2/
