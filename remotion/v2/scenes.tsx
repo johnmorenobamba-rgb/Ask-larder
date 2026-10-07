@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { C, FONT_BODY, FONT_DISPLAY, FONT_MONO, H, SAFE_X, SAFE_Y, W, easeInOut, easeOut } from "./brand";
+import { C, FONT_BODY, FONT_DISPLAY, FONT_MONO, H, SAFE_X, SAFE_Y, W, easeInOut } from "./brand";
 import { A } from "./assets";
 import { Broll, BubbleReveal, Cam, ClipView, Fade, FadeBlock, Grain, Halftone, Plane, Vignette, Words } from "./fx";
 import { LarderMark } from "./mark";

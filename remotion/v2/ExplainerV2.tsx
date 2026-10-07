@@ -20,28 +20,27 @@ export const ExplainerV2: React.FC = () => {
   useBrandFonts();
   const t = A.clips.threeTaps;
   const clipStart = Math.max(0, t.taps[0] - 50); // start about 1.7 s before the first tap
-  let at = 0;
-  const seq = (len: number, node: React.ReactNode) => {
-    const el = (
-      <Sequence key={at} from={at} durationInFrames={len}>
-        {node}
-      </Sequence>
-    );
-    at += len;
-    return el;
-  };
+  // each scene starts where the one before it ends
+  const keys = Object.keys(MAIN) as (keyof typeof MAIN)[];
+  const start = {} as Record<keyof typeof MAIN, number>;
+  keys.reduce((acc, k) => { start[k] = acc; return acc + MAIN[k]; }, 0);
+  const seq = (k: keyof typeof MAIN, node: React.ReactNode) => (
+    <Sequence key={k} from={start[k]} durationInFrames={MAIN[k]}>
+      {node}
+    </Sequence>
+  );
   return (
     <AbsoluteFill style={{ background: C.ink }}>
       <DuotoneDefs />
-      {seq(MAIN.forms, <SceneForms id="s1" dur={MAIN.forms} />)}
-      {seq(MAIN.bubble, <SceneBubble id="s2" dur={MAIN.bubble} wipeFrom={C.ink} />)}
-      {seq(MAIN.want, <SceneWantTap id="s3" dur={MAIN.want} wipeFrom={C.red} />)}
-      {seq(MAIN.taps, <SceneTaps id="s4" dur={MAIN.taps} wipeFrom={C.parchment} clipStart={clipStart} tapFrames={tapRel(clipStart)} />)}
-      {seq(MAIN.failed, <SceneFailed id="s5" dur={MAIN.failed} wipeFrom={C.ink} />)}
-      {seq(MAIN.owner, <SceneOwner id="s6" dur={MAIN.owner} wipeFrom={C.red} />)}
-      {seq(MAIN.ask, <SceneAsk id="s7" dur={MAIN.ask} wipeFrom={C.parchment} clipStart={A.clips.ask.startFrom} />)}
-      {seq(MAIN.stations, <SceneStations id="s8" dur={MAIN.stations} wipeFrom={C.ink} clipStart={A.clips.stations.startFrom} />)}
-      {seq(MAIN.cta, <SceneCta id="s9" dur={MAIN.cta} wipeFrom={C.green} />)}
+      {seq("forms", <SceneForms id="s1" dur={MAIN.forms} />)}
+      {seq("bubble", <SceneBubble id="s2" dur={MAIN.bubble} wipeFrom={C.ink} />)}
+      {seq("want", <SceneWantTap id="s3" dur={MAIN.want} wipeFrom={C.red} />)}
+      {seq("taps", <SceneTaps id="s4" dur={MAIN.taps} wipeFrom={C.parchment} clipStart={clipStart} tapFrames={tapRel(clipStart)} />)}
+      {seq("failed", <SceneFailed id="s5" dur={MAIN.failed} wipeFrom={C.ink} />)}
+      {seq("owner", <SceneOwner id="s6" dur={MAIN.owner} wipeFrom={C.red} />)}
+      {seq("ask", <SceneAsk id="s7" dur={MAIN.ask} wipeFrom={C.parchment} clipStart={A.clips.ask.startFrom} />)}
+      {seq("stations", <SceneStations id="s8" dur={MAIN.stations} wipeFrom={C.ink} clipStart={A.clips.stations.startFrom} />)}
+      {seq("cta", <SceneCta id="s9" dur={MAIN.cta} wipeFrom={C.green} />)}
     </AbsoluteFill>
   );
 };
