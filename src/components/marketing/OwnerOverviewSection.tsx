@@ -22,8 +22,8 @@ export function OwnerOverviewSection() {
         <Reveal className="mt-12">
           <ScreenFigure
             shot="owner-dashboard"
-            alt="The Larder owner dashboard with tiles for what needs attention, staff completion, near miss reports, questions sent to a supervisor, the temperature log and the station gallery"
-            caption="The owner dashboard. Example venue with invented names."
+            alt="The Larder owner dashboard with tiles for what needs attention, staff completion, near miss reports, questions sent to a supervisor, the temperature log and a gallery of five station photos"
+            caption="The owner dashboard. Example venue. Stock images."
             sizes="(min-width: 1152px) 1100px, 100vw"
             priority
           />
