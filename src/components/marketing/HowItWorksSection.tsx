@@ -17,7 +17,7 @@ const STEPS = [
   {
     number: "03",
     title: "Approve",
-    body: "You review every module and approve it before it goes live. Nothing reaches staff without your sign off, because the liability stays with your business.",
+    body: "You review every module and approve it before it goes live. Nothing reaches staff without your sign off.",
   },
   {
     number: "04",

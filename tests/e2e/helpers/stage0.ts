@@ -5,6 +5,7 @@ config({ path: ".env.local" });
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
+import { pickerName } from "./pickerName";
 import type { Page } from "@playwright/test";
 import type { Database } from "../../../src/lib/supabase/types";
 
@@ -168,7 +169,7 @@ export async function nativeClick(page: Page, text: string, tag = "button") {
 export async function loginStaff(page: Page, fx: Fixture, name: string) {
   await page.context().clearCookies();
   await page.goto(`/${fx.slug}/login`);
-  await nativeClick(page, name);
+  await nativeClick(page, pickerName(name));
   await page.locator('input[type="password"]').fill(PIN);
   await nativeClick(page, "Log in");
   await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 60_000 });

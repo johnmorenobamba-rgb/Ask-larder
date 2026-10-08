@@ -1,5 +1,5 @@
 import "server-only";
-import { headers } from "next/headers";
+import { stationScanUrl } from "@/lib/site";
 import QRCode from "qrcode";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
@@ -39,8 +39,6 @@ export async function getStationsWithDisplay(
     .eq("venue_id", venueId)
     .order("created_at");
 
-  const headerList = await headers();
-  const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
 
   const stationIds = (stations ?? []).map((s) => s.id);
   const { data: stationPhotos } =
@@ -56,7 +54,7 @@ export async function getStationsWithDisplay(
         id: s.id,
         name: s.name,
         qrCodeSlug: s.qr_code_slug,
-        qrDataUrl: await QRCode.toDataURL(`${origin}/${venueSlug}/station/${s.qr_code_slug}`),
+        qrDataUrl: await QRCode.toDataURL(stationScanUrl(venueSlug, s.qr_code_slug)),
         photoUrl: taggedPath ? ((await getPhotoLibraryUrl(taggedPath)) ?? STOCK_STATION_PHOTO) : STOCK_STATION_PHOTO,
       };
     }),

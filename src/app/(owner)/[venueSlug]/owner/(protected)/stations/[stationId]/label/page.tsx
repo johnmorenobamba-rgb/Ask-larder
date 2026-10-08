@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
+import { stationScanUrl } from "@/lib/site";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
@@ -28,9 +28,7 @@ export default async function StationLabelPage({
   logQueryError(`[${venueSlug}] station label venue`, venueError);
   if (!station) notFound();
 
-  const headerList = await headers();
-  const origin = `${headerList.get("x-forwarded-proto") ?? "https"}://${headerList.get("host")}`;
-  const scanUrl = `${origin}/${venueSlug}/station/${station.qr_code_slug}`;
+  const scanUrl = stationScanUrl(venueSlug, station.qr_code_slug);
   const qrDataUrl = await QRCode.toDataURL(scanUrl, { margin: 1, width: 480 });
 
   return (

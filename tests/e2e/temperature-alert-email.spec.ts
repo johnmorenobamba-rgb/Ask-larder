@@ -1,3 +1,4 @@
+import { pickerName } from "./helpers/pickerName";
 import { config } from "dotenv";
 import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
@@ -79,7 +80,7 @@ test.afterAll(async () => {
 
 test("one email per out of range EPISODE, to the Resend test address only", async ({ page }) => {
   await page.goto(`/${SLUG}/login`);
-  await nativeClick(page, "Kit Hand");
+  await nativeClick(page, pickerName("Kit Hand"));
   await page.locator('input[type="password"]').fill(PIN);
   await nativeClick(page, "Log in");
   await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 20_000 });

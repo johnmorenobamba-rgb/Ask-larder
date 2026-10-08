@@ -1,0 +1,62 @@
+{
+  "forms-hub": {
+    "src": "/images/marketing/launch/forms-hub.webp",
+    "width": 1000,
+    "height": 892,
+    "kb": 39
+  },
+  "checklist-tablet": {
+    "src": "/images/marketing/launch/checklist-tablet.webp",
+    "width": 1400,
+    "height": 987,
+    "kb": 52
+  },
+  "checklist-fail-note": {
+    "src": "/images/marketing/launch/checklist-fail-note.webp",
+    "width": 1400,
+    "height": 987,
+    "kb": 46
+  },
+  "temperature-failed": {
+    "src": "/images/marketing/launch/temperature-failed.webp",
+    "width": 760,
+    "height": 952,
+    "kb": 39
+  },
+  "owner-overview": {
+    "src": "/images/marketing/launch/owner-overview.webp",
+    "width": 1200,
+    "height": 513,
+    "kb": 26
+  },
+  "owner-records": {
+    "src": "/images/marketing/launch/owner-records.webp",
+    "width": 1600,
+    "height": 700,
+    "kb": 34
+  },
+  "owner-dashboard": {
+    "src": "/images/marketing/launch/owner-dashboard.webp",
+    "width": 1500,
+    "height": 1278,
+    "kb": 81
+  },
+  "stations-gallery": {
+    "src": "/images/marketing/launch/stations-gallery.webp",
+    "width": 1500,
+    "height": 406,
+    "kb": 44
+  },
+  "owner-certificates": {
+    "src": "/images/marketing/launch/owner-certificates.webp",
+    "width": 1400,
+    "height": 700,
+    "kb": 22
+  },
+  "esign": {
+    "src": "/images/marketing/launch/esign.webp",
+    "width": 1200,
+    "height": 558,
+    "kb": 14
+  }
+}

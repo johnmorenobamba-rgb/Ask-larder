@@ -1,3 +1,4 @@
+import { pickerName } from "./helpers/pickerName";
 import { config } from "dotenv";
 import { fixturePin, randomPassword } from "../helpers/secrets";
 config({ path: ".env.local" });
@@ -442,8 +443,8 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
   const suffix = randomUUID().slice(0, 8);
   const SLUG = `back-audit-staff-${suffix}`;
   const QR_SLUG = `back-audit-staff-station-${suffix}`;
-  const FRESH_NAME = "Back Audit Fresh Staff";
-  const SET_NAME = "Back Audit Set Staff";
+  const FRESH_NAME = "Back Audit Fresh";
+  const SET_NAME = "Back Audit Set";
   const PIN = fixturePin();
 
   let venueId: string;
@@ -524,7 +525,7 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
 
   async function loginStaff(page: Page, name: string) {
     await page.goto(`/${SLUG}/login`);
-    await nativeClick(page, name);
+    await nativeClick(page, pickerName(name));
     await page.locator('input[type="password"]').fill(PIN);
     await nativeClick(page, "Log in");
     await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 15000 });
