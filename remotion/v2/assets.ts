@@ -2,9 +2,10 @@
 // Frames are at 30 fps and relative to the start of the clip file. They are filled from the recorded tap logs.
 export const A = {
   clips: {
-    threeTaps: { src: "clips/three-taps.mp4", w: 1024, h: 768, startFrom: 0, taps: [395, 508, 606] as number[] },
-    failed: { src: "clips/failed-reading.mp4", w: 820, h: 1180, startFrom: 360 },
-    ask: { src: "clips/ask-larder.mp4", w: 1024, h: 768, startFrom: 1050 },
+    threeTaps: { src: "clips/three-taps-s1.mp4", w: 1024, h: 768, startFrom: 0, taps: [409, 520, 618] as number[] },
+    failed: { src: "clips/failed-reading-s1.mp4", w: 820, h: 1180, startFrom: 358 },
+    // showcase-1: two useful answers. answer1 and answer2 are the frames in the recorded clip where each answer is on screen; splitAt is where the scene cuts from one to the other.
+    ask: { src: "clips/ask-larder-s1.mp4", w: 1024, h: 768, answer1: 735, answer2: 1395, splitAt: 140 },
     dashboard: { src: "clips/dashboard.mp4", w: 1920, h: 1080, startFrom: 105, rate: 1.5 },
     stations: { src: "clips/stations.mp4", w: 1920, h: 1080, startFrom: 90 },
   },

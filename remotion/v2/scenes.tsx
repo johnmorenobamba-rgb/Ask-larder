@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, FONT_BODY, FONT_DISPLAY, FONT_MONO, H, SAFE_X, SAFE_Y, W, easeInOut } from "./brand";
 import { A } from "./assets";
 import { Broll, BubbleReveal, Cam, ClipView, Fade, FadeBlock, Grain, Halftone, Plane, Vignette, Words } from "./fx";
@@ -188,7 +188,7 @@ export const SceneFailed: React.FC<SceneProps> = ({ dur, ...p }) => {
       <Halftone color={C.ink} opacity={0.22} origin="100% 100%" />
       <Cam dur={dur} from={{ s: 1.0, x: 0 }} to={{ s: 1.05, x: 14 }}>
         <Plane x={SAFE_X + 120} y={(H - 800) / 2} w={760} h={800} rotY={5} z={30}>
-          <ClipView src={c.src} w={760} h={800} zoom={1.81} cx={0.74} cy={0.4725} srcW={c.w} srcH={c.h} startFrom={c.startFrom} />
+          <ClipView src={c.src} w={760} h={800} zoom={1.65} cx={0.3} cy={0.44} srcW={c.w} srcH={c.h} startFrom={c.startFrom} />
         </Plane>
       </Cam>
       <div style={{ position: "absolute", left: 1090, top: 170, width: 740 }}>
@@ -235,25 +235,42 @@ export const SceneOwner: React.FC<SceneProps> = ({ dur, ...p }) => {
   );
 };
 
-// ---------------------------------------------------------------- 7 Ask Larder, with the supervisor fallback
-export const SceneAsk: React.FC<SceneProps & { clipStart: number }> = ({ dur, clipStart, ...p }) => {
+// ---------------------------------------------------------------- 7 Ask Larder, two useful answers mid shift
+// Two real questions in a row from the recorded clip, each answer read for about 5 seconds. The thinking state between them is cut.
+export const SceneAsk: React.FC<SceneProps> = ({ dur, ...p }) => {
   const c = A.clips.ask;
+  const view = (startFrom: number) => (
+    <ClipView src={c.src} w={960} h={820} zoom={1.5} cx={0.5} cy={0.667} srcW={c.w} srcH={c.h} startFrom={startFrom} />
+  );
+  const pill = (text: string) => (
+    <div style={{ position: "absolute", left: 0, top: 440, width: 760, background: C.parchment, borderRadius: 40, padding: "22px 34px", fontFamily: FONT_BODY, fontWeight: 600, fontSize: 40, lineHeight: 1.15, color: C.ink }}>{text}</div>
+  );
   return (
-    <Shell bg={C.ink} dur={dur} {...p}>
-      <Halftone color={C.saffron} opacity={0.14} origin="100% 0%" />
+    <Shell bg={C.green} dur={dur} {...p}>
+      <Halftone color={C.ink} opacity={0.2} origin="100% 0%" />
       <Cam dur={dur} from={{ s: 1.0 }} to={{ s: 1.05, x: 12 }}>
         <Plane x={W - SAFE_X - 960} y={(H - 820) / 2} w={960} h={820} rotY={-5} z={30}>
-          <ClipView src={c.src} w={960} h={820} zoom={1.7} cx={0.5} cy={0.72} srcW={c.w} srcH={c.h} startFrom={clipStart} />
+          <Sequence from={0} durationInFrames={c.splitAt + 12}>{view(c.answer1)}</Sequence>
+          <Sequence from={c.splitAt} durationInFrames={dur - c.splitAt}>
+            <Fade from={0} to={dur - c.splitAt} inF={10} outF={0}>{view(c.answer2)}</Fade>
+          </Sequence>
         </Plane>
       </Cam>
-      <div style={{ position: "absolute", left: SAFE_X, top: 150, width: 740 }}>
-        <Words text="Ask Larder answers from your approved content only." size={80} color={C.parchment} start={4} stagger={5} />
-        <Fade from={100} to={dur} inF={10} outF={0}>
-          <div style={{ position: "absolute", left: 0, top: 400, width: 740 }}>
-            <Words text="Keys, codes and logins go to a supervisor." size={68} color={C.saffron} start={104} stagger={5} />
+      <div style={{ position: "absolute", left: SAFE_X, top: 130, width: 760 }}>
+        <Words text="Ask mid shift, get the answer." size={84} color={C.parchment} start={4} stagger={5} />
+        <Fade from={16} to={c.splitAt} inF={10} outF={6}>{pill("How do I change the fryer oil?")}</Fade>
+        <Fade from={c.splitAt} to={dur} inF={10} outF={0}>{pill("A customer says they are allergic to nuts, what do I do?")}</Fade>
+        <Fade from={50} to={dur} inF={10} outF={0}>
+          <div style={{ position: "absolute", left: 0, top: 215, width: 760, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 46, lineHeight: 1.15, color: C.saffron }}>
+            From your own approved procedures.
           </div>
         </Fade>
       </div>
+      <Fade from={c.splitAt + 40} to={dur} inF={10} outF={0}>
+        <div style={{ position: "absolute", left: SAFE_X, bottom: SAFE_Y + 70, width: 760, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 36, lineHeight: 1.2, color: C.parchment, opacity: 0.9 }}>
+          Anything that needs a key, code or login goes to a supervisor.
+        </div>
+      </Fade>
       <Note text="Example venue." />
     </Shell>
   );
