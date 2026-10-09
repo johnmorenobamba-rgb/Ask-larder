@@ -63,7 +63,7 @@ export function SuggestionAssistantSection() {
         >
           <ElevatedCell depth="hero" glowColor="var(--color-saffron)" className="overflow-hidden rounded-3xl bg-parchment">
             <Image
-              src="/images/marketing/suggestion-assistant-feed.png"
+              src="/images/marketing/suggestion-assistant-feed-v2.png"
               alt="An example Larder suggestion, drafted from staff near miss reports, with Approve and Dismiss buttons"
               width={1000}
               height={900}
