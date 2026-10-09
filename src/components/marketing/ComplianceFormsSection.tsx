@@ -84,8 +84,8 @@ export function ComplianceFormsSection() {
             records or download them as a CSV file.
           </p>
           <p className="mt-4 font-sans text-sm text-parchment/60">
-            Which records your venue needs depends on your state, your council and your licence. Each form is marked as a
-            recommended record unless a rule is confirmed. Larder helps you keep records. It is not legal advice.
+            Which records your venue needs depends on your state, your council and your licence. Each form is a
+            recommended record. Larder helps you keep records. It is not legal advice.
           </p>
         </Reveal>
       </div>

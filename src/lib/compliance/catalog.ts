@@ -55,7 +55,7 @@ export const COMPLIANCE_FORMS = {
     title: "Temperature log",
     category: "BOH",
     statusTag: "M*",
-    statusNote: "Food businesses must be able to show their temperature controls work. A written log is one accepted way to do that.",
+    statusNote: "A recommended record. A written log is one way to show your temperature controls work. Check what your venue must keep with your local council or regulator.",
     visibleToRoles: ["BOH"],
     managerTierAlways: true,
     limits: {

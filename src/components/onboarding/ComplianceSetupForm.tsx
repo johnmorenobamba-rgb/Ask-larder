@@ -131,7 +131,7 @@ export function ComplianceSetupForm({
 
       <div className={cardClass}>
         <h3 className="font-display text-lg font-bold text-ink">Temperature controlled units</h3>
-        <p className="font-sans text-sm text-ink/70">Cold and frozen units must stay at or below their limit. Hot hold units must stay at or above it.</p>
+        <p className="font-sans text-sm text-ink/70">Cold and frozen units are checked against a suggested limit to stay at or below. Hot hold units are checked against a suggested limit to stay at or above.</p>
         {units.length === 0 && (
           <p className="font-sans text-sm text-ink/70">No units yet. Add each fridge, freezer and hot hold unit that staff will log.</p>
         )}

@@ -33,8 +33,8 @@ describe("neutral record labels", () => {
   it("CSV export columns carry no legal status wording", () => {
     for (const h of CSV_HEADER) for (const re of OLD) expect(h).not.toMatch(re);
   });
-  it("no screen, component, landing page or compliance source line says legally required, legal limits or required to show compliance", () => {
-    const banned = [/legally required/i, /legal limits/i, /required to show compliance/i];
+  it("no screen, component, landing page or compliance source line says legally required, legal limits, required to show compliance, the law requires, no law names or required by law", () => {
+    const banned = [/legally required/i, /legal limits/i, /required to show compliance/i, /the law requires/i, /no law names/i, /required by law/i];
     const files = [...walk("src/app"), ...walk("src/components"), ...walkTs("src/lib/compliance")];
     const isComment = (l: string) => /^\s*(\/\/|\*|\/\*)/.test(l);
     for (const f of files) {
