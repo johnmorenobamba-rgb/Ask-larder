@@ -509,7 +509,7 @@ describe("B4 probe thermometer check is monthly by default", () => {
     expect(b4.tag).toBe("recommended");
     expect(b4.tagNote).toContain("no check frequency is stated in law");
     expect(b4.cadenceNote).not.toMatch(/law|legal|required|must|mandatory/i);
-    expect(b4.ruleTag?.text).toBe("A thermometer used to check food temperatures must be accurate to within 1°C."); // the accuracy duty is unchanged
+    expect(b4.ruleTag?.text).toBe("This form records a thermometer check. The suggested accuracy is within 1°C."); // wording is neutral, the 1°C figure is unchanged
   });
   it("the fields and the accuracy comparison are unchanged", () => {
     const b4 = FORM_BY_ID.B4;

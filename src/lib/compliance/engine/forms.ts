@@ -350,7 +350,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote: "A recommended record. The temperature rule itself is a legal limit (see below).",
-    ruleTag: { tag: "legal", text: "Food that can grow bacteria must be kept at 5°C or colder, or at 60°C or hotter." },
+    ruleTag: { tag: "legal", text: "This form records readings against a suggested limit of 5°C or colder, or 60°C or hotter." },
     subjectField: "cabinet",
     fields: [
       { type: "text", key: "cabinet", label: "Which cabinet", maxLength: 60 },
@@ -500,7 +500,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote: "A recommended record. The accuracy of the thermometer is a legal duty (see below), but no check frequency is stated in law.",
-    ruleTag: { tag: "legal", text: "A thermometer used to check food temperatures must be accurate to within 1°C." },
+    ruleTag: { tag: "legal", text: "This form records a thermometer check. The suggested accuracy is within 1°C." },
     subjectField: "thermometer",
     fields: [
       { type: "text", key: "thermometer", label: "Which thermometer", maxLength: 60, hint: "For example Probe 1 or the red probe." },
@@ -532,7 +532,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote: "A recommended record. The temperature limits are a legal duty (see below). A written receiving record is one way to show it.",
-    ruleTag: { tag: "legal", text: "Food that can grow bacteria must be received at 5°C or colder, or at 60°C or hotter." },
+    ruleTag: { tag: "legal", text: "This form records food temperatures at delivery. The suggested limit is 5°C or colder, or 60°C or hotter." },
     fields: [
       { type: "text", key: "supplier", label: "Supplier", maxLength: 80 },
       { type: "text", key: "product", label: "Product", maxLength: 80 },
@@ -613,7 +613,7 @@ export const FORMS: FormDef[] = [
     tagNote: "A recommended record. Reheating to a safe temperature is a legal duty in the case below.",
     ruleTag: {
       tag: "legal",
-      text: "Cooked and cooled food that will be held hot must be reheated quickly to 60°C or hotter. Larder's default check is higher, at 75°C.",
+      text: "This form records reheating. The suggested limit is 60°C or hotter. Larder's default check is higher, at 75°C.",
     },
     defaultList: true,
     fields: [
@@ -677,7 +677,7 @@ export const FORMS: FormDef[] = [
     tagNote: "A recommended record. The cooling times are a legal duty (see below). A written log is one way to show it.",
     ruleTag: {
       tag: "legal",
-      text: "Cooked food must cool from 60°C to 21°C within 2 hours, then from 21°C to 5°C within a further 4 hours.",
+      text: "This form records cooling. The suggested times are 60°C to 21°C within 2 hours, then 21°C to 5°C within a further 4 hours.",
     },
     fields: [],
     fail: [],
@@ -774,7 +774,7 @@ export const FORMS: FormDef[] = [
     tag: "required_if",
     tagVerified: true,
     tagNote:
-      "Required if you have a Trade Waste Agreement with your water authority. Yarra Valley Water asks you to keep pump out receipts. Other water authorities were not checked.",
+      "A recommended record. It records each pump out. Keep it with any receipts your trade waste agreement asks for.",
     fields: [
       { type: "text", key: "contractor", label: "Contractor", maxLength: 80 },
       { type: "number", key: "volume_litres", label: "Volume removed", unit: "litres", min: 0, max: 100000 },

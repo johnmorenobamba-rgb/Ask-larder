@@ -62,22 +62,22 @@ export const COMPLIANCE_FORMS = {
       cold: {
         tag: "M",
         label: "Recommended limit",
-        basis: "Potentially hazardous food must be kept at 5°C or colder.",
+        basis: "Suggested limit: keep potentially hazardous food at 5°C or colder.",
       },
       frozen: {
         tag: "BP",
         label: "Recommended limit",
-        basis: "Keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
+        basis: "Suggested limit: keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
       },
       hot_hold: {
         tag: "M",
         label: "Recommended limit",
-        basis: "Potentially hazardous food must be kept at 60°C or hotter.",
+        basis: "Suggested limit: keep potentially hazardous food at 60°C or hotter.",
       },
     },
     frequency: {
       tag: "BP",
-      note: "A reading for every unit once a day is best practice, and required if this venue's Food Safety Program follows FoodSmart.",
+      note: "A reading for every unit once a day is suggested. Check what your venue's Food Safety Program asks for.",
     },
     retentionNote: "Larder keeps these records for at least 2 years by default.",
   },
