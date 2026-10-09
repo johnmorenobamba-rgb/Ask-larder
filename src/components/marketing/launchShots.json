@@ -1,4 +1,10 @@
 {
+  "ask-answer": {
+    "src": "/images/marketing/launch/ask-answer.webp",
+    "width": 750,
+    "height": 934,
+    "kb": 59
+  },
   "forms-hub": {
     "src": "/images/marketing/launch/forms-hub.webp",
     "width": 1000,
@@ -9,7 +15,7 @@
     "src": "/images/marketing/launch/checklist-tablet.webp",
     "width": 1400,
     "height": 987,
-    "kb": 52
+    "kb": 56
   },
   "checklist-fail-note": {
     "src": "/images/marketing/launch/checklist-fail-note.webp",

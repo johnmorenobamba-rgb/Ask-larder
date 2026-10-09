@@ -24,8 +24,8 @@ export const CADENCE_HEADINGS: Record<Cadence, string> = {
 export type FormTag = "legal" | "required_if" | "recommended";
 
 export const FORM_TAG_LABELS: Record<FormTag, string> = {
-  legal: "Legally required",
-  required_if: "Required if",
+  legal: "Recommended record",
+  required_if: "Recommended record",
   recommended: "Recommended record",
 };
 

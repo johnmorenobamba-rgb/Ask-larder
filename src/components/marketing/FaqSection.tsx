@@ -15,8 +15,8 @@ export const FAQS: { q: string; a: string }[] = [
     a: "Only what is in your own approved content. If a question needs a key, a code or a login, Ask Larder tells the person to ask their supervisor. If the answer is not in your content, it says so and points to a supervisor.",
   },
   {
-    q: "Are the compliance forms legally required?",
-    a: "Which records your venue needs depends on your state, your council and your licence. Each form says whether it is a recommended record. Larder helps you keep records and it is not legal advice.",
+    q: "Do the compliance forms replace my own legal checks?",
+    a: "No. Larder keeps your records and does not give legal advice. Check what your venue must keep with your local council or regulator.",
   },
   {
     q: "Does Larder send reminders about overdue forms?",

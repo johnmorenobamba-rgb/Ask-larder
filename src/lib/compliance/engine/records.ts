@@ -187,7 +187,7 @@ export function recordsToCsv(records: OwnerRecord[], truncated = false): string 
 }
 
 export function tagLabel(formId: string): string {
-  if (formId === "B2") return "Required to show compliance";
+  if (formId === "B2") return "Recommended record";
   const def = FORM_BY_ID[formId];
   return def ? FORM_TAG_LABELS[def.tag] : "";
 }

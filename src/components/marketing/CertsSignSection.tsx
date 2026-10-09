@@ -22,7 +22,7 @@ export function CertsSignSection() {
             <ScreenFigure
               shot="esign"
               alt="A Sign to confirm screen where a new hire has typed their full name above a Confirm and sign button"
-              caption="Staff confirm they understand a module by typing their name. Larder records when, and from which device. It is a record that training was understood, not a legal signature."
+              caption="Staff confirm they understand a module by typing their name. Larder records when, and from which device. It is a comprehension check, not a contract."
             />
           </Reveal>
         </div>

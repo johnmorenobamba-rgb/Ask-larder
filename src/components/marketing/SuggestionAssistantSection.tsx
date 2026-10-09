@@ -50,7 +50,7 @@ export function SuggestionAssistantSection() {
         </h2>
         <p className="mx-auto mb-12 max-w-2xl text-center font-sans text-ink/70">
           When staff keep asking Ask Larder the same uncovered question, or the same hazard keeps turning up in
-          near-miss reports, Larder drafts a real addition to the right module, quoting exactly who said what.
+          near miss reports, Larder drafts an addition to the right module.
           You approve it or dismiss it, the same review every other module already goes through. Nothing reaches
           staff on its own.
         </p>
@@ -63,7 +63,7 @@ export function SuggestionAssistantSection() {
         >
           <ElevatedCell depth="hero" glowColor="var(--color-saffron)" className="overflow-hidden rounded-3xl bg-parchment">
             <Image
-              src="/images/marketing/suggestion-assistant-feed.png"
+              src="/images/marketing/suggestion-assistant-feed-v2.png"
               alt="An example Larder suggestion, drafted from staff near miss reports, with Approve and Dismiss buttons"
               width={1000}
               height={900}

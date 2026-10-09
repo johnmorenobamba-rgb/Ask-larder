@@ -44,7 +44,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 4,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names an opening checklist, but it helps you show your cleaning and temperature controls work.",
+    tagNote: "A recommended record. It records the kitchen opening checks and helps you show your cleaning and temperature controls work. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Opening checks", [
@@ -78,7 +78,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 5,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names a closing checklist.",
+    tagNote: "A recommended record. It records the kitchen closing checks. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Closing checks", [
@@ -111,7 +111,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 3,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names a front of house checklist.",
+    tagNote: "A recommended record. It records the front of house checks. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Opening checks", [
@@ -144,7 +144,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 3,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names a front of house checklist.",
+    tagNote: "A recommended record. It records the front of house checks. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Closing checks", [
@@ -181,7 +181,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote:
-      "A recommended record. The law requires food premises to be clean and, where needed, sanitised. A written schedule is one way to show it.",
+      "A recommended record. It records kitchen cleaning and sanitising. A written schedule is one way to show it. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist(
@@ -218,7 +218,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 4,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names a front of house cleaning schedule.",
+    tagNote: "A recommended record. It records the front of house cleaning schedule. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Cleaning done today", [
@@ -251,7 +251,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote:
-      "A recommended record. Businesses must keep records of cash sales, but no law names a daily till check or a two person sign off.",
+      "A recommended record. It records the till count and, where used, a two person sign off. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     cosign: true,
     fields: [
@@ -318,7 +318,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 3,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. General workplace safety duties apply to gas cylinders, but no rule for a cellar log was confirmed.",
+    tagNote: "A recommended record. It records the cellar, keg and gas cylinder checks. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Cellar checks", [
@@ -349,8 +349,8 @@ export const FORMS: FormDef[] = [
     estMinutes: 1,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The temperature rule itself is a legal limit (see below).",
-    ruleTag: { tag: "legal", text: "Food that can grow bacteria must be kept at 5°C or colder, or at 60°C or hotter." },
+    tagNote: "A recommended record. The suggested limit is shown below.",
+    ruleTag: { tag: "legal", text: "This form records readings against a suggested limit of 5°C or colder, or 60°C or hotter." },
     subjectField: "cabinet",
     fields: [
       { type: "text", key: "cabinet", label: "Which cabinet", maxLength: 60 },
@@ -387,7 +387,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 3,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Only the general duty to keep equipment clean applies.",
+    tagNote: "A recommended record. It records coffee machine cleaning. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Daily clean", [
@@ -418,7 +418,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 3,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No rule fixing how often beer lines must be cleaned was found.",
+    tagNote: "A recommended record. It records beer line cleaning. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       { type: "text", key: "lines", label: "Which lines were cleaned", maxLength: 120 },
@@ -467,7 +467,7 @@ export const FORMS: FormDef[] = [
     estMinutes: 4,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Workplaces must provide first aid facilities, but no check frequency was confirmed.",
+    tagNote: "A recommended record. It records first aid kit checks. Check what your venue must keep with your local council or regulator.",
     defaultList: true,
     fields: [
       checklist("items", "Kit checks", [
@@ -499,8 +499,8 @@ export const FORMS: FormDef[] = [
     estMinutes: 5,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The accuracy of the thermometer is a legal duty (see below), but no check frequency is stated in law.",
-    ruleTag: { tag: "legal", text: "A thermometer used to check food temperatures must be accurate to within 1°C." },
+    tagNote: "A recommended record. The suggested accuracy is shown below. Check what your venue must keep with your local council or regulator.",
+    ruleTag: { tag: "legal", text: "This form records a thermometer check. The suggested accuracy is within 1°C." },
     subjectField: "thermometer",
     fields: [
       { type: "text", key: "thermometer", label: "Which thermometer", maxLength: 60, hint: "For example Probe 1 or the red probe." },
@@ -531,8 +531,8 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The temperature limits are a legal duty (see below). A written receiving record is one way to show it.",
-    ruleTag: { tag: "legal", text: "Food that can grow bacteria must be received at 5°C or colder, or at 60°C or hotter." },
+    tagNote: "A recommended record. The suggested limits are shown below. A written receiving record is one way to show your checks.",
+    ruleTag: { tag: "legal", text: "This form records food temperatures at delivery. The suggested limit is 5°C or colder, or 60°C or hotter." },
     fields: [
       { type: "text", key: "supplier", label: "Supplier", maxLength: 80 },
       { type: "text", key: "product", label: "Product", maxLength: 80 },
@@ -585,7 +585,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. 75°C is common guidance, not a figure in the Food Standards Code.",
+    tagNote: "A recommended record. 75°C is a common guidance figure, shown here as a suggestion.",
     defaultList: true,
     fields: [
       { type: "text", key: "item", label: "What you cooked", maxLength: 80 },
@@ -610,10 +610,10 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Reheating to a safe temperature is a legal duty in the case below.",
+    tagNote: "A recommended record. The suggested reheating limit is shown below.",
     ruleTag: {
       tag: "legal",
-      text: "Cooked and cooled food that will be held hot must be reheated quickly to 60°C or hotter. Larder's default check is higher, at 75°C.",
+      text: "This form records reheating. The suggested limit is 60°C or hotter. Larder's default check is higher, at 75°C.",
     },
     defaultList: true,
     fields: [
@@ -639,7 +639,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The 2 hour and 4 hour rule is published food safety guidance, not a rule in the Food Standards Code.",
+    tagNote: "A recommended record. The 2 hour and 4 hour times are published food safety guidance, shown here as suggestions.",
     fields: [
       { type: "text", key: "item", label: "What was out", maxLength: 80 },
       { type: "time", key: "time_out", label: "Time it came out" },
@@ -674,10 +674,10 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The cooling times are a legal duty (see below). A written log is one way to show it.",
+    tagNote: "A recommended record. The suggested cooling times are shown below. A written log is one way to show your checks.",
     ruleTag: {
       tag: "legal",
-      text: "Cooked food must cool from 60°C to 21°C within 2 hours, then from 21°C to 5°C within a further 4 hours.",
+      text: "This form records cooling. The suggested times are 60°C to 21°C within 2 hours, then 21°C to 5°C within a further 4 hours.",
     },
     fields: [],
     fail: [],
@@ -702,7 +702,7 @@ export const FORMS: FormDef[] = [
         elapsedMaxMin: 120,
         elapsedLabel: "Checked after the 2 hour limit",
         departments: ["BOH"],
-        blurb: "Within 2 hours of the start the food must be at 21°C or colder.",
+        blurb: "Suggested: within 2 hours of the start the food is at 21°C or colder.",
         fields: [{ type: "number", key: "temp_c", label: "Temperature now", unit: "°C", min: -30, max: 150, allowNegative: true }],
         fail: [{ field: "temp_c", op: "gt", value: 21, label: "Warmer than 21°C" }],
       },
@@ -716,7 +716,7 @@ export const FORMS: FormDef[] = [
         elapsedMaxMin: 360,
         elapsedLabel: "Checked after the 6 hour limit",
         departments: ["BOH"],
-        blurb: "Within 6 hours of the start the food must be at 5°C or colder.",
+        blurb: "Suggested: within 6 hours of the start the food is at 5°C or colder.",
         fields: [{ type: "number", key: "temp_c", label: "Temperature now", unit: "°C", min: -30, max: 150, allowNegative: true }],
         fail: [{ field: "temp_c", op: "gt", value: 5, label: "Warmer than 5°C" }],
       },
@@ -739,7 +739,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. The law requires you to keep pests out, but names no pest log. Keep contractor reports as well.",
+    tagNote: "A recommended record. It records pest control checks. Keep contractor reports as well. Check what your venue must keep with your local council or regulator.",
     fields: [
       {
         type: "choice",
@@ -774,7 +774,7 @@ export const FORMS: FormDef[] = [
     tag: "required_if",
     tagVerified: true,
     tagNote:
-      "Required if you have a Trade Waste Agreement with your water authority. Yarra Valley Water asks you to keep pump out receipts. Other water authorities were not checked.",
+      "A recommended record. It records each pump out. Keep it with any receipts your trade waste agreement asks for.",
     fields: [
       { type: "text", key: "contractor", label: "Contractor", maxLength: 80 },
       { type: "number", key: "volume_litres", label: "Volume removed", unit: "litres", min: 0, max: 100000 },
@@ -799,7 +799,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Your Food Safety Program may require records of the action you take.",
+    tagNote: "A recommended record. Check your venue's Food Safety Program for the records it asks for.",
     fields: [
       { type: "text", key: "issue", label: "What went wrong", maxLength: 300, multiline: true },
       { type: "text", key: "food_affected", label: "Food affected", maxLength: 200, required: false },
@@ -825,7 +825,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names an equipment repair log.",
+    tagNote: "A recommended record. It records equipment repairs. Check what your venue must keep with your local council or regulator.",
     fields: [
       { type: "text", key: "equipment", label: "Equipment", maxLength: 80 },
       { type: "text", key: "fault", label: "Fault", maxLength: 200 },
@@ -861,7 +861,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Businesses must give allergen information on request, but no ticket record is named in law.",
+    tagNote: "A recommended record. It records allergen requests from customers. Check what your venue must keep with your local council or regulator.",
     fields: [],
     fail: [],
     stages: [
@@ -918,7 +918,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No Victorian rule for a refusal register was found. It is good practice to show responsible service.",
+    tagNote: "A recommended record. It records refusals of service and can help show responsible service. Check what your venue must keep with your local council or regulator.",
     fields: [
       {
         type: "choice",
@@ -952,7 +952,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. No law names a lost property log.",
+    tagNote: "A recommended record. It records lost property. Check what your venue must keep with your local council or regulator.",
     fields: [
       { type: "text", key: "item", label: "Item", maxLength: 80 },
       { type: "text", key: "found_where", label: "Found where", maxLength: 80 },
@@ -990,7 +990,7 @@ export const FORMS: FormDef[] = [
     event: true,
     tag: "recommended",
     tagVerified: false,
-    tagNote: "A recommended record. Food must be traceable to its source. A supplier list helps you show that.",
+    tagNote: "A recommended record. It lists your suppliers and helps you show where food comes from.",
     subjectField: "name",
     fields: [
       { type: "text", key: "name", label: "Supplier name", maxLength: 80 },
@@ -1027,7 +1027,7 @@ export const FORMS: FormDef[] = [
     tag: "recommended",
     tagVerified: false,
     tagNote:
-      "A recommended record. Whether a register and safety data sheets are mandatory depends on the products and your workplace safety rules. Check with WorkSafe.",
+      "A recommended record. It lists the chemicals your venue uses. Check what your venue must keep with your local council or regulator.",
     subjectField: "product",
     fields: [
       { type: "text", key: "product", label: "Product", maxLength: 80 },

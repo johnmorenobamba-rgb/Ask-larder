@@ -7,7 +7,7 @@ import { SceneAsk, SceneBubble, SceneCta, SceneFailed, SceneForms, SceneOwner, S
 
 // Main film: 60 s. Scene lengths in seconds, in the order of video-v2-plan/PLAN.md (pain, tap tap tap, proof, call to action).
 const MAIN = {
-  forms: sec(5), bubble: sec(6), want: sec(4), taps: sec(12), failed: sec(6.5), owner: sec(10.5), ask: sec(7), stations: sec(5), cta: sec(4),
+  forms: sec(5), bubble: sec(6), want: sec(4), taps: sec(11), failed: sec(6), owner: sec(9.5), ask: sec(9.5), stations: sec(5), cta: sec(4),
 };
 export const EXPLAINER_V2_FRAMES = Object.values(MAIN).reduce((a, b) => a + b, 0); // 1800 frames = 60 s
 export const CUTDOWN_FRAMES = sec(15);
@@ -38,7 +38,7 @@ export const ExplainerV2: React.FC = () => {
       {seq("taps", <SceneTaps id="s4" dur={MAIN.taps} wipeFrom={C.parchment} clipStart={clipStart} tapFrames={tapRel(clipStart)} />)}
       {seq("failed", <SceneFailed id="s5" dur={MAIN.failed} wipeFrom={C.ink} />)}
       {seq("owner", <SceneOwner id="s6" dur={MAIN.owner} wipeFrom={C.red} />)}
-      {seq("ask", <SceneAsk id="s7" dur={MAIN.ask} wipeFrom={C.parchment} clipStart={A.clips.ask.startFrom} />)}
+      {seq("ask", <SceneAsk id="s7" dur={MAIN.ask} wipeFrom={C.parchment} />)}
       {seq("stations", <SceneStations id="s8" dur={MAIN.stations} wipeFrom={C.ink} clipStart={A.clips.stations.startFrom} />)}
       {seq("cta", <SceneCta id="s9" dur={MAIN.cta} wipeFrom={C.green} />)}
     </AbsoluteFill>

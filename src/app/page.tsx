@@ -5,6 +5,7 @@ import { ExplainerVideoSection } from "@/components/marketing/ExplainerVideoSect
 import { ProblemSolutionSection } from "@/components/marketing/ProblemSolutionSection";
 import { ComplianceFormsSection } from "@/components/marketing/ComplianceFormsSection";
 import { OwnerOverviewSection } from "@/components/marketing/OwnerOverviewSection";
+import { AskLarderSection } from "@/components/marketing/AskLarderSection";
 import { StationGallerySection } from "@/components/marketing/StationGallerySection";
 import { CertsSignSection } from "@/components/marketing/CertsSignSection";
 import { TrustStrip } from "@/components/marketing/TrustStrip";
@@ -48,6 +49,7 @@ export default function Home() {
       <MarketingHero />
       <ProblemSolutionSection />
       <FeatureGuideStrip />
+      <AskLarderSection />
       <ComplianceFormsSection />
       <OwnerOverviewSection />
       <StationGallerySection />

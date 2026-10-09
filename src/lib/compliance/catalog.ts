@@ -17,13 +17,13 @@ import type { ComplianceStatusTag, RefrigerationUnitType } from "./types";
 
 export type Department = "BOH" | "FOH" | "BAR";
 
-// Owner facing wording per tag. Build Reference legend: every template carries
-// one of four tags, shown as "Legally required" / "Required if..." / "Best practice".
+// Owner facing wording per tag. The tag values (M, M*, C, BP) stay as stored data. Until a person has read the standards
+// and the FoodSmart record sheets, every tag is shown with the one neutral label below (display layer only).
 export const STATUS_TAG_LABELS: Record<ComplianceStatusTag, string> = {
-  M: "Legally required",
-  "M*": "Required to show compliance",
-  C: "Required if…",
-  BP: "Best practice",
+  M: "Recommended record",
+  "M*": "Recommended record",
+  C: "Recommended record",
+  BP: "Recommended record",
 };
 
 export type LimitInfo = {
@@ -55,29 +55,29 @@ export const COMPLIANCE_FORMS = {
     title: "Temperature log",
     category: "BOH",
     statusTag: "M*",
-    statusNote: "Food businesses must be able to show their temperature controls work. A written log is one accepted way to do that.",
+    statusNote: "A recommended record. A written log is one way to show your temperature controls work. Check what your venue must keep with your local council or regulator.",
     visibleToRoles: ["BOH"],
     managerTierAlways: true,
     limits: {
       cold: {
         tag: "M",
-        label: "Legal limit",
-        basis: "Potentially hazardous food must be kept at 5°C or colder.",
+        label: "Recommended limit",
+        basis: "Suggested limit: keep potentially hazardous food at 5°C or colder.",
       },
       frozen: {
         tag: "BP",
-        label: "Best practice limit",
-        basis: "Keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
+        label: "Recommended limit",
+        basis: "Suggested limit: keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
       },
       hot_hold: {
         tag: "M",
-        label: "Legal limit",
-        basis: "Potentially hazardous food must be kept at 60°C or hotter.",
+        label: "Recommended limit",
+        basis: "Suggested limit: keep potentially hazardous food at 60°C or hotter.",
       },
     },
     frequency: {
       tag: "BP",
-      note: "A reading for every unit once a day is best practice, and required if this venue's Food Safety Program follows FoodSmart.",
+      note: "A reading for every unit once a day is suggested. Check what your venue's Food Safety Program asks for.",
     },
     retentionNote: "Larder keeps these records for at least 2 years by default.",
   },
