@@ -50,7 +50,7 @@ export function SuggestionAssistantSection() {
         </h2>
         <p className="mx-auto mb-12 max-w-2xl text-center font-sans text-ink/70">
           When staff keep asking Ask Larder the same uncovered question, or the same hazard keeps turning up in
-          near-miss reports, Larder drafts a real addition to the right module, quoting exactly who said what.
+          near miss reports, Larder drafts a real addition to the right module, quoting exactly who said what.
           You approve it or dismiss it, the same review every other module already goes through. Nothing reaches
           staff on its own.
         </p>
