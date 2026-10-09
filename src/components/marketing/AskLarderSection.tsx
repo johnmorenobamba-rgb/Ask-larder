@@ -19,7 +19,7 @@ export function AskLarderSection() {
           <p className="mt-4 font-sans text-base text-parchment/80">
             Your owner approves every procedure before it goes live, so Ask Larder only works from content you have signed off.
           </p>
-          <p className="mt-6 border-l-4 border-saffron pl-4 font-sans text-base text-parchment/90">
+          <p className="mt-6 font-sans text-base text-saffron">
             Anything that needs a key, code or login goes to a supervisor.
           </p>
         </Reveal>
