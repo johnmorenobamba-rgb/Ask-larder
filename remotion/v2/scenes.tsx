@@ -188,7 +188,7 @@ export const SceneFailed: React.FC<SceneProps> = ({ dur, ...p }) => {
       <Halftone color={C.ink} opacity={0.22} origin="100% 100%" />
       <Cam dur={dur} from={{ s: 1.0, x: 0 }} to={{ s: 1.05, x: 14 }}>
         <Plane x={SAFE_X + 120} y={(H - 800) / 2} w={760} h={800} rotY={5} z={30}>
-          <ClipView src={c.src} w={760} h={800} zoom={1.65} cx={0.3} cy={0.44} srcW={c.w} srcH={c.h} startFrom={c.startFrom} />
+          <ClipView src={c.src} w={760} h={800} zoom={1.65} cx={0.3} cy={0.415} srcW={c.w} srcH={c.h} startFrom={c.startFrom} />
         </Plane>
       </Cam>
       <div style={{ position: "absolute", left: 1090, top: 170, width: 740 }}>
@@ -267,7 +267,7 @@ export const SceneAsk: React.FC<SceneProps> = ({ dur, ...p }) => {
         </Fade>
       </div>
       <Fade from={c.splitAt + 40} to={dur} inF={10} outF={0}>
-        <div style={{ position: "absolute", left: SAFE_X, bottom: SAFE_Y + 70, width: 760, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 36, lineHeight: 1.2, color: C.parchment, opacity: 0.9 }}>
+        <div style={{ position: "absolute", left: SAFE_X, bottom: SAFE_Y + 120, width: 760, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 36, lineHeight: 1.2, color: C.parchment }}>
           Anything that needs a key, code or login goes to a supervisor.
         </div>
       </Fade>
