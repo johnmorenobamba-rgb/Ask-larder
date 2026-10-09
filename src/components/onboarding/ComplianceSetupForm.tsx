@@ -106,8 +106,8 @@ export function ComplianceSetupForm({
         <h2 className="font-display text-2xl font-bold text-ink">Fridges and compliance</h2>
         <p className="font-sans text-sm text-ink/70">
           List every fridge, freezer and hot hold unit staff will log temperatures for. Each gets a suggested limit, prefilled.
-          The cold and hot hold limits are suggested limits. The frozen limit follows Victorian FoodSmart guidance.
-          Change a limit only if the venue&apos;s Food Safety Program says otherwise.
+          The cold, hot hold and frozen limits are suggested limits.
+          Check them against the venue&apos;s Food Safety Program.
         </p>
       </div>
 
