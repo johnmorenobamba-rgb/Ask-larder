@@ -206,8 +206,8 @@ describe("catalog", () => {
     expect(b2.limits.hot_hold.tag).toBe("M");
     expect(b2.limits.frozen.tag).toBe("BP");
     expect(b2.frequency.tag).toBe("BP");
-    expect(STATUS_TAG_LABELS.BP).toBe("Best practice");
-    expect(STATUS_TAG_LABELS.M).toBe("Legally required");
+    expect(STATUS_TAG_LABELS.BP).toBe("Recommended record");
+    expect(STATUS_TAG_LABELS.M).toBe("Recommended record");
   });
   it("never calls retention or frequency a legal minimum, and frozen is not called legally required", () => {
     const text = [b2.retentionNote, b2.frequency.note, b2.limits.frozen.basis, b2.limits.frozen.label].join(" ");

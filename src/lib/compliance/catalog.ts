@@ -17,13 +17,13 @@ import type { ComplianceStatusTag, RefrigerationUnitType } from "./types";
 
 export type Department = "BOH" | "FOH" | "BAR";
 
-// Owner facing wording per tag. Build Reference legend: every template carries
-// one of four tags, shown as "Legally required" / "Required if..." / "Best practice".
+// Owner facing wording per tag. The tag values (M, M*, C, BP) stay as stored data. Until a person has read the standards
+// and the FoodSmart record sheets, every tag is shown with the one neutral label below (display layer only).
 export const STATUS_TAG_LABELS: Record<ComplianceStatusTag, string> = {
-  M: "Legally required",
-  "M*": "Required to show compliance",
-  C: "Required if…",
-  BP: "Best practice",
+  M: "Recommended record",
+  "M*": "Recommended record",
+  C: "Recommended record",
+  BP: "Recommended record",
 };
 
 export type LimitInfo = {
@@ -61,17 +61,17 @@ export const COMPLIANCE_FORMS = {
     limits: {
       cold: {
         tag: "M",
-        label: "Legal limit",
+        label: "Recommended limit",
         basis: "Potentially hazardous food must be kept at 5°C or colder.",
       },
       frozen: {
         tag: "BP",
-        label: "Best practice limit",
+        label: "Recommended limit",
         basis: "Keep frozen food frozen hard. The limit of −15°C follows Victorian FoodSmart guidance.",
       },
       hot_hold: {
         tag: "M",
-        label: "Legal limit",
+        label: "Recommended limit",
         basis: "Potentially hazardous food must be kept at 60°C or hotter.",
       },
     },
