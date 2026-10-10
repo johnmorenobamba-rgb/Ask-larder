@@ -99,9 +99,10 @@ export function FeaturePage({ feature }: { feature: Feature }) {
             <h2 id="does-heading" className="mb-6 font-display text-3xl font-bold text-ink">
               What it does
             </h2>
-            <ul className="grid gap-3 font-sans text-base text-ink md:grid-cols-3">
+            <ul className="grid gap-6 font-sans text-base text-ink md:grid-cols-3">
               {feature.does.map((d) => (
-                <li key={d} className="border-l-4 border-saffron py-1 pl-4">
+                <li key={d}>
+                  <span aria-hidden="true" className="mb-3 block h-1 w-10 rounded-full bg-saffron" />
                   {d}
                 </li>
               ))}
