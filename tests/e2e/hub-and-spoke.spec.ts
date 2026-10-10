@@ -135,7 +135,8 @@ test("metadata, structured data, sitemap and the 404", async ({ page, request })
     expect(ld["@type"]).toBe("BreadcrumbList");
     expect(ld.itemListElement).toHaveLength(3);
     const og = await page.locator('meta[property="og:image"]').getAttribute("content");
-    expect((await request.get(og!)).status()).toBe(200);
+    expect(og).toContain(`/features/${f.slug}/opengraph-image`); // absolute on the live domain, so fetch the same path locally
+    expect((await request.get(new URL(og!).pathname)).status()).toBe(200);
   }
   const sitemap = await (await request.get("/sitemap.xml")).text();
   for (const f of FEATURES) expect(sitemap).toContain(`/features/${f.slug}`);
@@ -166,4 +167,15 @@ test("an FAQ answer opens on a feature page and the contact route still loads", 
   await expect(first).toHaveAttribute("open", "");
   await expect(first.locator("p")).toContainText("only from content you have approved");
   expect((await request.get("/contact")).status()).toBe(200);
+});
+
+test("keyboard: the skip link comes first and a focused card shows a visible outline", async ({ page }) => {
+  await page.goto("/features/stations");
+  await page.keyboard.press("Tab");
+  await expect(page.locator(":focus")).toHaveText("Skip to content");
+  await page.goto("/");
+  const link = page.locator('#features a[href="/features/ask-larder"]');
+  await link.focus();
+  const outline = await link.evaluate((el) => getComputedStyle(el.closest("li")!).outlineStyle);
+  expect(outline).not.toBe("none");
 });
