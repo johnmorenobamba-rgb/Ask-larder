@@ -1,0 +1,102 @@
+{
+  "ask-larder/staff-home": {
+    "src": "/features/ask-larder/staff-home.webp",
+    "width": 1200,
+    "height": 1007
+  },
+  "compliance-forms/forms-hub": {
+    "src": "/features/compliance-forms/forms-hub.webp",
+    "width": 1200,
+    "height": 1012
+  },
+  "compliance-forms/checklist": {
+    "src": "/features/compliance-forms/checklist.webp",
+    "width": 1200,
+    "height": 1012
+  },
+  "compliance-forms/fail-note": {
+    "src": "/features/compliance-forms/fail-note.webp",
+    "width": 1200,
+    "height": 1046
+  },
+  "compliance-forms/owner-records": {
+    "src": "/features/compliance-forms/owner-records.webp",
+    "width": 750,
+    "height": 926
+  },
+  "training-modules/module-section": {
+    "src": "/features/training-modules/module-section.webp",
+    "width": 1024,
+    "height": 691
+  },
+  "training-modules/owner-approval": {
+    "src": "/features/training-modules/owner-approval.webp",
+    "width": 750,
+    "height": 1039
+  },
+  "training-modules/check-question": {
+    "src": "/features/training-modules/check-question.webp",
+    "width": 1024,
+    "height": 891
+  },
+  "certificates-signoff/staff-certificates": {
+    "src": "/features/certificates-signoff/staff-certificates.webp",
+    "width": 1200,
+    "height": 974
+  },
+  "certificates-signoff/owner-expiry": {
+    "src": "/features/certificates-signoff/owner-expiry.webp",
+    "width": 750,
+    "height": 1202
+  },
+  "certificates-signoff/esign": {
+    "src": "/features/certificates-signoff/esign.webp",
+    "width": 1200,
+    "height": 974
+  },
+  "certificates-signoff/module-completed": {
+    "src": "/features/certificates-signoff/module-completed.webp",
+    "width": 1024,
+    "height": 845
+  },
+  "owner-dashboard/dashboard": {
+    "src": "/features/owner-dashboard/dashboard.webp",
+    "width": 750,
+    "height": 1470
+  },
+  "owner-dashboard/completions": {
+    "src": "/features/owner-dashboard/completions.webp",
+    "width": 1200,
+    "height": 618
+  },
+  "owner-dashboard/near-misses": {
+    "src": "/features/owner-dashboard/near-misses.webp",
+    "width": 750,
+    "height": 771
+  },
+  "owner-dashboard/overview": {
+    "src": "/features/owner-dashboard/overview.webp",
+    "width": 750,
+    "height": 1470
+  },
+  "stations/qr-label": {
+    "src": "/features/stations/qr-label.webp",
+    "width": 750,
+    "height": 1023
+  },
+  "stations/station-page": {
+    "src": "/features/stations/station-page.webp",
+    "width": 1024,
+    "height": 1029
+  },
+  "stations/near-miss": {
+    "src": "/features/stations/near-miss.webp",
+    "width": 750,
+    "height": 763
+  },
+  "ask-larder/owner-questions": {
+    "src": "/features/ask-larder/owner-questions.webp",
+    "width": 750,
+    "height": 438
+  }
+}

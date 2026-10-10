@@ -1,0 +1,231 @@
+[
+ {
+  "slug": "ask-larder",
+  "name": "staff-home",
+  "source": "staff-home-tablet-landscape.png",
+  "rect": [
+   0.12,
+   0.1,
+   0.88,
+   0.95
+  ]
+ },
+ {
+  "slug": "compliance-forms",
+  "name": "forms-hub",
+  "source": "forms-hub-by-cadence-tablet-landscape.png",
+  "rect": [
+   0.1,
+   0.08,
+   0.9,
+   0.98
+  ]
+ },
+ {
+  "slug": "compliance-forms",
+  "name": "checklist",
+  "source": "form-checklist-empty-tablet-landscape.png",
+  "rect": [
+   0.1,
+   0.08,
+   0.9,
+   0.98
+  ]
+ },
+ {
+  "slug": "compliance-forms",
+  "name": "fail-note",
+  "source": "form-checklist-fail-note-tablet-landscape.png",
+  "rect": [
+   0.1,
+   0.05,
+   0.9,
+   0.98
+  ]
+ },
+ {
+  "slug": "compliance-forms",
+  "name": "owner-records",
+  "source": "owner-records-list-mobile.png",
+  "rect": [
+   0,
+   0.36,
+   1,
+   0.93
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "training-modules",
+  "name": "module-section",
+  "source": "module-section-tablet-landscape.png",
+  "rect": [
+   0.25,
+   0.15,
+   0.75,
+   0.6
+  ]
+ },
+ {
+  "slug": "training-modules",
+  "name": "owner-approval",
+  "source": "owner-module-approval-mobile.png",
+  "rect": [
+   0,
+   0.06,
+   1,
+   0.7
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "training-modules",
+  "name": "check-question",
+  "source": "module-check-question-tablet-landscape.png",
+  "rect": [
+   0.25,
+   0.12,
+   0.75,
+   0.7
+  ]
+ },
+ {
+  "slug": "certificates-signoff",
+  "name": "staff-certificates",
+  "source": "staff-certificates-tablet-landscape.png",
+  "rect": [
+   0.2,
+   0.2,
+   0.8,
+   0.85
+  ]
+ },
+ {
+  "slug": "certificates-signoff",
+  "name": "owner-expiry",
+  "source": "owner-certificate-expiry-mobile.png",
+  "rect": [
+   0,
+   0.06,
+   1,
+   0.8
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "certificates-signoff",
+  "name": "esign",
+  "source": "staff-esign-tablet-landscape.png",
+  "rect": [
+   0.2,
+   0.2,
+   0.8,
+   0.85
+  ]
+ },
+ {
+  "slug": "certificates-signoff",
+  "name": "module-completed",
+  "source": "module-completed-tablet-landscape.png",
+  "rect": [
+   0.25,
+   0.2,
+   0.75,
+   0.75
+  ]
+ },
+ {
+  "slug": "owner-dashboard",
+  "name": "dashboard",
+  "source": "owner-dashboard-mobile.png",
+  "rect": [
+   0,
+   0.075,
+   1,
+   0.98
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "owner-dashboard",
+  "name": "completions",
+  "source": "owner-completions-desktop.png",
+  "rect": [
+   0.21,
+   0.15,
+   0.78,
+   0.62
+  ]
+ },
+ {
+  "slug": "owner-dashboard",
+  "name": "near-misses",
+  "source": "owner-near-misses-mobile.png",
+  "rect": [
+   0,
+   0.075,
+   1,
+   0.55
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "owner-dashboard",
+  "name": "overview",
+  "source": "owner-compliance-overview-mobile.png",
+  "rect": [
+   0,
+   0.075,
+   1,
+   0.98
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "stations",
+  "name": "qr-label",
+  "source": "owner-station-qr-label-mobile.png",
+  "rect": [
+   0,
+   0.15,
+   1,
+   0.78
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "stations",
+  "name": "station-page",
+  "source": "staff-station-page-tablet-landscape.png",
+  "rect": [
+   0.25,
+   0.18,
+   0.75,
+   0.85
+  ]
+ },
+ {
+  "slug": "stations",
+  "name": "near-miss",
+  "source": "staff-near-miss-form-mobile.png",
+  "rect": [
+   0,
+   0.53,
+   1,
+   1
+  ],
+  "maxWidth": 750
+ },
+ {
+  "slug": "ask-larder",
+  "name": "owner-questions",
+  "source": "owner-dashboard-mobile.png",
+  "rect": [
+   0,
+   0.66,
+   1,
+   0.93
+  ],
+  "maxWidth": 750
+ }
+]
