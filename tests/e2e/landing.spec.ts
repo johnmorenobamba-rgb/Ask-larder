@@ -21,12 +21,12 @@ for (const w of [375, 820, 1024, 1440]) {
   });
 }
 
-test("the page tells the story in order and keeps the claims honest", async ({ page }) => {
+test("the hub points at the feature pages and the feature pages keep the claims honest", async ({ page }) => {
   await page.goto("/");
-  const ids = ["forms", "owner", "stations", "certificates", "faq"];
-  for (const id of ids) await expect(page.locator(`#${id}`)).toBeAttached();
-  const order = await page.evaluate((ids) => ids.map((id) => document.getElementById(id)!.getBoundingClientRect().top + window.scrollY), ids);
+  for (const id of ["explainer-video", "features", "cta"]) await expect(page.locator(`#${id}`)).toBeAttached();
+  const order = await page.evaluate(() => ["explainer-video", "features", "cta"].map((id) => document.getElementById(id)!.getBoundingClientRect().top + window.scrollY));
   expect([...order].sort((a, b) => a - b)).toEqual(order);
+  await page.goto("/features/owner-dashboard");
   const text = (await page.locator("main").textContent()) ?? ""; // textContent includes closed FAQ answers
   for (const banned of [/legally compliant/i, /compliant with the rules/i, /audit proof/i, /guarantee/i, /offline/i, /\bwelcome offer\b/i, /nudged/i, /lawsuit/i, /export all your records/i]) {
     expect(text, String(banned)).not.toMatch(banned);
@@ -36,9 +36,9 @@ test("the page tells the story in order and keeps the claims honest", async ({ p
   expect(text).toMatch(/we export your records for you on request/i);
 });
 
-test("an FAQ answer opens, and the contact route still loads", async ({ page, request }) => {
-  await page.goto("/");
-  const first = page.locator("#faq details").first();
+test("an FAQ answer opens on a feature page, and the contact route still loads", async ({ page, request }) => {
+  await page.goto("/features/compliance-forms");
+  const first = page.locator("#faq-heading ~ div details").first();
   await first.locator("summary").click();
   await expect(first).toHaveAttribute("open", "");
   await expect(first.locator("p")).toBeVisible();

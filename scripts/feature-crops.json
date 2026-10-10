@@ -60,10 +60,10 @@
   "name": "module-section",
   "source": "module-section-tablet-landscape.png",
   "rect": [
-   0.25,
-   0.15,
-   0.75,
-   0.6
+   0.22,
+   0.14,
+   0.78,
+   0.55
   ]
  },
  {
@@ -83,10 +83,10 @@
   "name": "check-question",
   "source": "module-check-question-tablet-landscape.png",
   "rect": [
-   0.25,
+   0.22,
    0.12,
-   0.75,
-   0.7
+   0.78,
+   0.58
   ]
  },
  {
@@ -97,7 +97,7 @@
    0.2,
    0.2,
    0.8,
-   0.85
+   0.58
   ]
  },
  {
@@ -128,10 +128,10 @@
   "name": "module-completed",
   "source": "module-completed-tablet-landscape.png",
   "rect": [
+   0.3,
    0.25,
-   0.2,
-   0.75,
-   0.75
+   0.7,
+   0.65
   ]
  },
  {
@@ -198,10 +198,10 @@
   "name": "station-page",
   "source": "staff-station-page-tablet-landscape.png",
   "rect": [
-   0.25,
+   0.22,
    0.18,
-   0.75,
-   0.85
+   0.78,
+   0.6
   ]
  },
  {

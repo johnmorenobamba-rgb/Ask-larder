@@ -2,101 +2,139 @@
   "ask-larder/staff-home": {
     "src": "/features/ask-larder/staff-home.webp",
     "width": 1200,
-    "height": 1007
+    "height": 1007,
+    "blur": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAA0AA4BaJYwCdAEPAXX9JS8AAN5nlQwCVcd/jM/j0MQCikUu8x1rGFVGWwSofv9tbqstvn2c2Ef45YTbt5l4dmEmFr9XgAA="
   },
   "compliance-forms/forms-hub": {
     "src": "/features/compliance-forms/forms-hub.webp",
     "width": 1200,
-    "height": 1012
+    "height": 1012,
+    "blur": "data:image/webp;base64,UklGRjYAAABXRUJQVlA4ICoAAACQAQCdASoQAA0AA4BaJY2M+RgAiwAA/vEIFAN+EtwwiDnaG8jDP1eAAAA="
   },
   "compliance-forms/checklist": {
     "src": "/features/compliance-forms/checklist.webp",
     "width": 1200,
-    "height": 1012
+    "height": 1012,
+    "blur": "data:image/webp;base64,UklGRjgAAABXRUJQVlA4ICwAAABwAQCdASoQAA0AA4BaJYwCdAFAAAD+8OVoHdLXC6pSTtX/UBWoIPizVtAAAA=="
   },
   "compliance-forms/fail-note": {
     "src": "/features/compliance-forms/fail-note.webp",
     "width": 1200,
-    "height": 1046
+    "height": 1046,
+    "blur": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAABQAgCdASoQAA4AA4BaJQBOgMW+7YUintBXIAAA/slYrDHn1mBWsSXl8DKle1QT8/V/vpkFqfcH3wErK5NhdAn4+0PJidP5wpXqBObONuT9HPWAAAA="
   },
   "compliance-forms/owner-records": {
     "src": "/features/compliance-forms/owner-records.webp",
     "width": 750,
-    "height": 926
+    "height": 926,
+    "blur": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAABwAwCdASoQABQAPu1kqU2ppaOiMAgBMB2JZQCdACHhw4rE41AA/ucg5pDzePcb30qypeXegOuUUscU5oVoOH2tT+0L5ez9LrAsrn4XjnnwiZZnoeLb+aAA"
   },
   "training-modules/module-section": {
     "src": "/features/training-modules/module-section.webp",
-    "width": 1024,
-    "height": 691
+    "width": 1147,
+    "height": 630,
+    "blur": "data:image/webp;base64,UklGRkAAAABXRUJQVlA4IDQAAACQAQCdASoQAAkAA4BaJQBOgCHEfUAA/vHi9JkNYsvKLXVGkEm+ea55M7OsHxcoazIm1qAA"
   },
   "training-modules/owner-approval": {
     "src": "/features/training-modules/owner-approval.webp",
     "width": 750,
-    "height": 1039
+    "height": 1039,
+    "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADQAwCdASoQABYAPu1iqU2ppaOiMAgBMB2JZQCdACHDKjZXhvGPHQAA/uesRVM1Pwhl6PR1wVk9qEa/JayeZ397Go32cwefHqfFfK6oxjNU+QMfjIfoAA=="
   },
   "training-modules/check-question": {
     "src": "/features/training-modules/check-question.webp",
-    "width": 1024,
-    "height": 891
+    "width": 1147,
+    "height": 707,
+    "blur": "data:image/webp;base64,UklGRjYAAABXRUJQVlA4ICoAAABwAQCdASoQAAoAA4BaJYwCdAFAAAD+8QdwypP9St2p7ILLJIwz9XgAAAA="
   },
   "certificates-signoff/staff-certificates": {
     "src": "/features/certificates-signoff/staff-certificates.webp",
     "width": 1200,
-    "height": 974
+    "height": 570,
+    "blur": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABwAQCdASoQAAgAA4BaJYwCdAFAAAD+8YepmjmQJB8WatoAAAA="
   },
   "certificates-signoff/owner-expiry": {
     "src": "/features/certificates-signoff/owner-expiry.webp",
     "width": 750,
-    "height": 1202
+    "height": 1202,
+    "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAQBACdASoQABoAPu1iqU2ppaOiMAgBMB2JZQCdMoADTfgSYhgU0TZXIAD+56xFUzU/BOEth4BialetpB1J/e6TiIU2E4PAiuPBfBYiWkRqyHOp9XVAAA=="
   },
   "certificates-signoff/esign": {
     "src": "/features/certificates-signoff/esign.webp",
     "width": 1200,
-    "height": 974
+    "height": 974,
+    "blur": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADQAQCdASoQAA0AA4BaJQBOgCFrnxwVAAD+88leZaaHC0TXpMKXjViRCFE55rlzVJ9yueHzyj9EmIwz99HlMgACeEwAAA=="
   },
   "certificates-signoff/module-completed": {
     "src": "/features/certificates-signoff/module-completed.webp",
-    "width": 1024,
-    "height": 845
+    "width": 819,
+    "height": 614,
+    "blur": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAwAA4BaJYgCdAEO+omrlAgA/vTLdRmmf+AWWJyEKRR62KL3ygPwEeEg6RAAAAA="
   },
   "owner-dashboard/dashboard": {
     "src": "/features/owner-dashboard/dashboard.webp",
     "width": 750,
-    "height": 1470
+    "height": 1470,
+    "blur": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAAAwBACdASoQAB8APu1iqU2ppaOiMAgBMB2JZQC7ACHXgK5ZeU7oexxjH4AA/urH1uZShL3fa17g4V1WHLaewlu0OmaemlQ/67XAhix721WEx3mVYGse1QecG+KXxuQJZfXZokMwMPQvY6ZJk8H0AAAA"
   },
   "owner-dashboard/completions": {
     "src": "/features/owner-dashboard/completions.webp",
     "width": 1200,
-    "height": 618
+    "height": 618,
+    "blur": "data:image/webp;base64,UklGRjQAAABXRUJQVlA4ICgAAABwAQCdASoQAAgAA4BaJYwCdAFAAAD+8T/5UcKjg0TH9VmseT9HPWAA"
   },
   "owner-dashboard/near-misses": {
     "src": "/features/owner-dashboard/near-misses.webp",
     "width": 750,
-    "height": 771
+    "height": 771,
+    "blur": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQABAAA4BaJQBOgCGR4vjBH5AA/vOsadhZaUvu99jytGFEQJUQLwUIRtzIMfo32EUHxZuv4xzIAA=="
   },
   "owner-dashboard/overview": {
     "src": "/features/owner-dashboard/overview.webp",
     "width": 750,
-    "height": 1470
+    "height": 1470,
+    "blur": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAwCdASoQAB8APu1iqk2ppaQiMAgBMB2JZQAAW+udoGSqKC5bEgAA/urHqMDEwXpX/PAfABS/6oJpNYGQiHkI+Dq+FeE8D/iKy3kfnZYlqAWSY12YL8QA"
   },
   "stations/qr-label": {
     "src": "/features/stations/qr-label.webp",
     "width": 750,
-    "height": 1023
+    "height": 1023,
+    "blur": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAACQBACdASoQABYAPu1iqU2ppaOiMAgBMB2JZwAFgBFxC/2Vs+ymRrICW3j674AA/u1GKXexorhxbb0pUEr8OrEQAryv2j7BmwkbsMbpKumnETqHQ3uBt5zx4nqth96S07fktKUHkF2DPwdv5cd5SHEA9mGOtO8XAAA="
   },
   "stations/station-page": {
     "src": "/features/stations/station-page.webp",
-    "width": 1024,
-    "height": 1029
+    "width": 1147,
+    "height": 645,
+    "blur": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABwAQCdASoQAAkAA4BaJYwCdAGgAAD+8UGXoN1BjLIwz9XgAAA="
   },
   "stations/near-miss": {
     "src": "/features/stations/near-miss.webp",
     "width": 750,
-    "height": 763
+    "height": 763,
+    "blur": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAQCdASoQABAAA4BaJQBOgCHw0UBwve4A/u4TWDCEj7AYiKKK1CMPN9C6X05RqC4Pe9YsuJzjBNPs+2JK0IiOKlhx2QLLwfFmwMP0oms/0QAA"
   },
   "ask-larder/owner-questions": {
     "src": "/features/ask-larder/owner-questions.webp",
     "width": 750,
-    "height": 438
+    "height": 438,
+    "blur": "data:image/webp;base64,UklGRjgAAABXRUJQVlA4ICwAAADwAQCdASoQAAkAA4BaJYwCdAEQUOsaCwAA/vALbNPpi3yZftVzCwfFmraAAA=="
+  },
+  "launch/ask-answer": {
+    "src": "/images/marketing/launch/ask-answer.webp",
+    "width": 750,
+    "height": 934,
+    "blur": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADQAwCdASoQABQAPu1iqk2ppaQiMAgBMB2JZwCdACHfhoccZjgpfOAA/ucoL3agSTyueWd0vdn94hvwAAA="
+  },
+  "launch/stations-gallery": {
+    "src": "/images/marketing/launch/stations-gallery.webp",
+    "width": 1500,
+    "height": 406,
+    "blur": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADQAQCdASoQAAQAA4BaJQBOgCHgICdsAAD6n1KhaMVn2BqszOYDKC+UC5rArliVPGMulCRGsogY5vS0AAA="
+  },
+  "launch/suggestion-feed": {
+    "src": "/images/marketing/suggestion-assistant-feed-v2.png",
+    "width": 1000,
+    "height": 900,
+    "blur": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAA4AA4BaJYwCdAEO/Hp7hgAA/ugA72HfyRJAqkheQFu3iWSLDMsKL2kQWgGAAAA="
   }
 }

@@ -258,7 +258,7 @@ export function MarketingHero() {
                 href="#explainer-video"
                 className="rounded-full border border-ink/20 px-5 py-2 font-sans text-xs font-medium text-ink transition-colors hover:bg-ink/5 sm:px-7 sm:py-3 sm:text-sm"
               >
-                Learn more
+                Watch the film
               </a>
             </div>
           </div>
