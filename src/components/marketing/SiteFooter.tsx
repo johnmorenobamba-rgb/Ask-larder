@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { LarderMark } from "@/components/shared/LarderMark";
 import { ChitMark } from "@/components/shared/ChitMark";
 
 const SITE_LINKS = [
-  { label: "Features", href: "/#feature-guide" },
+  { label: "Features", href: "/#features" },
   { label: "See it in motion", href: "/#explainer-video" },
   { label: "Book a walkthrough", href: "/contact" },
   { label: "See a live demo", href: "/two-fires" },
@@ -37,16 +38,16 @@ export function SiteFooter() {
         </div>
         <nav className="flex flex-col gap-2 font-sans text-sm text-parchment/80">
           {SITE_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-parchment">
+            <Link key={link.href} href={link.href} className="hover:text-parchment">
               {link.label}
-            </a>
+            </Link>
           ))}
-          <a href="/legal" className="hover:text-parchment">
+          <Link href="/legal" className="hover:text-parchment">
             Legal
-          </a>
-          <a href="/privacy" className="hover:text-parchment">
+          </Link>
+          <Link href="/privacy" className="hover:text-parchment">
             Privacy Policy
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>

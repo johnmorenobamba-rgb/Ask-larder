@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { track } from "@/lib/analytics/track";
 
 /**
- * Video v2b (showcase fix, built on launch-2): a silent 60 second film with the words burned into the picture. Same pattern as before: it plays
- * on mute when scrolled into view and pauses when it leaves, but it never autoplays for a visitor who asked for reduced
- * motion, controls are always visible, the file loads only when needed (preload none, the poster shows first), and a text
- * transcript sits under it as the accessible alternative. The old film (/videos/larder-explainer.mp4) stays in the repo, unused.
+ * Video v2b (showcase fix, built on launch-2): a silent 60 second film with the words burned into the picture. It is a rendered MP4,
+ * so no Remotion runtime reaches the browser. It plays on mute when scrolled into view and pauses when it leaves, but it never
+ * autoplays for a visitor who asked for reduced motion, it stops autoplaying once the viewer pauses it themselves (WCAG 2.2.2),
+ * controls are always visible, the file loads only when needed (preload none, the poster shows first), and a text transcript sits
+ * under it as the accessible alternative. There is no narration, so there is nothing to caption beyond the burned in words.
  */
 const TRANSCRIPT: string[] = [
   "Every shift. Every day. Every week. Every month. And all of it needs filing.",
@@ -24,6 +26,9 @@ const TRANSCRIPT: string[] = [
 export function ExplainerVideoSection() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  // true while this component, not the viewer, is the one pausing or playing
+  const scriptedRef = useRef(false);
+  const viewerPausedRef = useRef(false);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -34,10 +39,13 @@ export function ExplainerVideoSection() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          if (viewerPausedRef.current) return;
+          scriptedRef.current = true;
           video.play().catch(() => {
             // autoplay refused: the poster and the controls are still there
           });
-        } else {
+        } else if (!video.paused) {
+          scriptedRef.current = true;
           video.pause();
         }
       },
@@ -48,10 +56,10 @@ export function ExplainerVideoSection() {
   }, []);
 
   return (
-    <section id="explainer-video" className="bg-ink px-6 py-24 sm:px-10 md:px-16">
+    <section id="explainer-video" aria-labelledby="film-heading" className="bg-ink px-6 py-16 sm:px-10 md:py-24 md:px-16">
       <div className="mx-auto max-w-4xl">
         <p className="mb-3 text-center font-mono text-xs tracking-[0.2em] text-saffron uppercase">See it in motion</p>
-        <h2 className="mb-10 text-center font-display text-3xl font-bold text-parchment sm:text-4xl">
+        <h2 id="film-heading" className="mb-10 text-center font-display text-3xl font-bold text-parchment sm:text-4xl">
           From a pile of forms to a few taps.
         </h2>
         <div ref={wrapperRef} className="relative overflow-hidden rounded-3xl shadow-2xl">
@@ -63,6 +71,16 @@ export function ExplainerVideoSection() {
             controls
             playsInline
             preload="none"
+            onPlay={() => {
+              track("video_play", { trigger: scriptedRef.current ? "scroll" : "viewer" });
+              scriptedRef.current = false;
+            }}
+            onPause={() => {
+              const byScript = scriptedRef.current;
+              scriptedRef.current = false;
+              if (!byScript) viewerPausedRef.current = true;
+              track("video_pause", { trigger: byScript ? "scroll" : "viewer" });
+            }}
             aria-label="A 60 second film: the forms your venue fills in, three taps to complete a checklist, one screen for the owner, Ask Larder answering two practical questions, and how to book a walk through. It has no sound. A transcript follows."
             className="aspect-video w-full bg-ink"
           />

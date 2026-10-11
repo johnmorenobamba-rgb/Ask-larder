@@ -6,7 +6,12 @@ type EventName =
   | "ask_larder_answer_shown"
   | "ask_larder_fallback_shown"
   | "ask_larder_error_shown"
-  | "ask_larder_ask_another";
+  | "ask_larder_ask_another"
+  | "hub_feature_card_click"
+  | "feature_page_view"
+  | "feature_cta_click"
+  | "video_play"
+  | "video_pause";
 
 let posthogPromise: Promise<typeof import("posthog-js").default> | null = null;
 
