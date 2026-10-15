@@ -87,9 +87,8 @@ export const CUE = {
   musicStop: b(30, 3, 2), // one 8th of air before the close
   // close
   close: b(31),
-  phone: b(31, 2),
-  url: b(32),
-  email: b(32, 2),
+  url: b(31, 2), // the phone number was taken out of the promo (15 Oct 2026)
+  email: b(32),
   morph: b(33),
   wordmark: b(33, 2), // the resolve lands when the wordmark is readable (after the morph lands)
 };
@@ -156,7 +155,6 @@ export const COPY: Copy[] = [
   line("urgLine1", "Tonight, someone closes without you.", CUE.urgLine1 - 1, CUE.close),
   line("urgLine2", "Who do they call?", CUE.urgLine2 - 1, CUE.close),
   line("cta", CONTACT.cta, CUE.close - 1, TOTAL),
-  line("phone", CONTACT.phone, CUE.phone - 1, TOTAL),
   line("url", CONTACT.url, CUE.url - 1, TOTAL),
   line("email", CONTACT.email, CUE.email - 1, TOTAL),
 ];
@@ -183,7 +181,7 @@ export const VO: VoLine[] = [
   { id: "vo10", text: "They scan the station. Its training, answers and troubleshooting.", from: b(24, 1), to: b(24, 1) + 130 },
   { id: "vo11", text: "Tonight, someone closes without you.", from: b(28, 2), to: b(28, 2) + 63 },
   { id: "vo12", text: "Who do they call?", from: b(29, 2), to: b(29, 2) + 51 },
-  { id: "vo13", text: "Book a walk through. Call oh four seven seven, one two oh, six two four.", from: b(31), to: b(31) + 192 },
+  { id: "vo13", text: "Book a walk through at ask larder dot com dot au.", from: b(31), to: b(31) + 120 },
 ];
 
 // ---- sound effect cues (absolute frames; the audio build places each on its exact sample) ------------
@@ -261,3 +259,28 @@ export const CUT = CUT_SRC.reduce<{ id: string; from: number; to: number; at: nu
 export const CUT_TOTAL = CUT.reduce((n, s) => n + s.to - s.from, 0); // 878 f = 29.3 s
 for (const s of CUT) if ((s.from - s.at) % BEAT !== 0) throw new Error(`cut ${s.id} breaks the beat phase`);
 if (CUT_TOTAL > 30 * FPS) throw new Error(`cutdown runs ${CUT_TOTAL} f, over 30 s`);
+
+// ---- energy (15 Oct 2026: "upbeat, more dynamic, explosive") -------------------------------------------
+// The four drops are the pain to solution turns and the close: each gets the music's impact, a camera
+// punch and a shockwave. Smaller punches ride the taps, the word rolls, the kinetic lines and the groove's
+// downbeats inside the solutions. The designed still hold on the supervisor line stays still.
+export const DROPS = [CUE.lift1, CUE.lift2, CUE.lift3, CUE.close];
+export const IGNITE = CUE.wordmark; // the logo's trace glow ignites with the resolve
+export type Punch = { at: number; amp: number; tau: number; roll?: number };
+export const PUNCH: Punch[] = (() => {
+  const p: Punch[] = [];
+  DROPS.forEach((at, i) => p.push({ at, amp: 0.085, tau: 10, roll: i % 2 ? -0.7 : 0.7 }));
+  [CUE.bubble1, CUE.bubble2, CUE.bubble3, CUE.notify].forEach((at) => p.push({ at, amp: 0.025, tau: 6 }));
+  [CUE.roll1, CUE.roll2, CUE.roll3].forEach((at) => p.push({ at, amp: 0.045, tau: 7 }));
+  [CUE.pain1Line, CUE.pain3Line, CUE.scanLine, CUE.urgLine1, CUE.urgLine2, CUE.emptyBubble].forEach((at) => p.push({ at, amp: 0.03, tau: 7 }));
+  [CUE.tapAsk1, CUE.tapAnother, CUE.tapAsk2, CUE.tapForm, CUE.tapMarkRest, CUE.tapSave, CUE.tapField, CUE.tapNote, CUE.tapSaveReading, CUE.tapTrouble].forEach((at) => p.push({ at, amp: 0.016, tau: 5 }));
+  p.push({ at: IGNITE, amp: 0.04, tau: 9 });
+  const inHold = (f: number) => f >= HOLD.from - 4 && f < HOLD.to;
+  for (const bar of [8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 21, 25, 26, 27, 32]) {
+    const at = b(bar);
+    if (inHold(at) || p.some((q) => Math.abs(q.at - at) < 8)) continue;
+    p.push({ at, amp: 0.014, tau: 6 });
+  }
+  return p.sort((x, y) => x.at - y.at);
+})();
+for (const q of PUNCH) if (q.at >= HOLD.from && q.at < HOLD.to) throw new Error("a punch inside the still hold");

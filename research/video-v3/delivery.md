@@ -3,14 +3,46 @@
 Branch `video-v3`. Compositions `LarderPromo4` (full) and `LarderPromo4Cut` (30 s), registered in `remotion/Root.tsx`
 beside v2 and v3. Nothing on main, nothing pushed, nothing deployed, landing page untouched.
 
+## Revision 2 (16 Oct 2026): no phone, upbeat, explosive, trace glow
+
+John asked for four changes after the first cut.
+
+- **Phone number removed** from both videos: the end card now stages the URL then the email. The voiceover script's
+  CTA line is now "Book a walk through at ask larder dot com dot au." (window vo13 retimed). `data.ts` and the copy
+  audit both fail if a phone number reappears.
+- **Upbeat music.** Same 112.5 BPM grid (every picture cue is locked to it), new arrangement: four on the floor,
+  claps on 2 and 4, offbeat open hats, a plucked syncopated bass, supersaw chord stabs, the Rhodes kept underneath.
+  The pains are filtered builds with a clap roll and a riser; each solution is a drop with an impact; the urgency
+  drives into the dead stop; the close drops again and the resolve hits with the logo. The groove rests for 3 frames
+  around every sound effect (and a stab rests if its delay echo would land on one), and the music dips 5 dB under
+  each effect, so taps, keys and confirms stay crisp. Drops sit about 2 LU over the builds (LRA 4.4).
+  If you want it faster, 120 BPM is the next tempo that lands on whole frames; it would shorten the film to about
+  69 s and means retiming everything.
+- **More dynamic, explosive motion**, from one energy layer (`fx/Energy.tsx`, timed only by `timeline.ts` PUNCH and
+  DROPS, the same list the audio reads):
+  - a camera punch on all four drops (8.5 % with a small roll), on every tap, word roll and kinetic line, and on the groove's
+    downbeats inside the solutions; the still hold on the supervisor line stays still;
+  - a Saffron shockwave ring with a Parchment echo and a warm flash at each drop, from the point the next scene opens out of;
+  - every caption slams in (1.55x, motion blur, a small overshoot, words 2 frames apart) instead of rising;
+  - snappier camera curves and springs film wide, and the irises open in 12 frames instead of 18.
+- **Trace glow on the logo.** The end card's mark now runs the product's own `ChitMark` idle trace: a glowing Saffron
+  segment, 22 % of the outline, lapping every 2.6 s, with the 3.5 % breathing scale. It ignites on the resolve: the whole
+  outline draws in and flashes (ChitMark's hero beat), then shrinks into the travelling segment over the splash's ambient
+  Saffron glow. Choice made: the mark keeps its solid Parchment fill under the trace, so the lockup stays legible. The
+  product's splash shows the outline only; say if you want that ghosted version instead.
+- **Audit change, disclosed.** The denser bed exposed a flaw in the sound audit's onset detector (the largest dB step,
+  which tiny hat transients out of near silence could outvote). It now finds where the event's own rise crosses
+  halfway from the bed to its peak. The pass rule is unchanged (within one frame); measured result: every cue within
+  8.7 ms in the mix and 1.7 ms in the effects stem.
+
 ## Files
 
 | File | Runtime | Notes |
 | --- | --- | --- |
 | `out/larder-promo-v4.mp4` | 73.5 s (2206 f) | 1920x1080, 30 fps, H.264 CRF 16, AAC 48 kHz stereo |
 | `out/larder-promo-v4-30s.mp4` | 29.3 s (878 f) | same picture, three ranges cut on the beat, its own master |
-| `remotion/public-promo4/audio/promo4-mix.wav` | 73.5 s | master, -14.0 LUFS, -2.5 dBTP |
-| `remotion/public-promo4/audio/promo4-cut-mix.wav` | 29.3 s | master, -14.0 LUFS, -2.5 dBTP |
+| `remotion/public-promo4/audio/promo4-mix.wav` | 73.5 s | master, -14.0 LUFS, -2.3 dBTP |
+| `remotion/public-promo4/audio/promo4-cut-mix.wav` | 29.3 s | master, -14.0 LUFS, -2.3 dBTP |
 | `out/v4/stems/` | | music, sfx, an empty vo stem, music ducked under a guide voice, the guide voice, a guide mix |
 | `out/v4/qa/` | | sound cue manifests, sound audits (full and cut), build log |
 | `out/v4/final/` | | contact sheets and key frames used for the visual check |
@@ -52,7 +84,7 @@ Rebuild everything: `node scripts/make-promo4-audio.mjs`, then `node scripts/aud
 | 0:59.7 | 29 | An empty question bubble with typing dots. "Who do they call?" |
 | 1:03.7 | 30 | Music stops for one 8th |
 | 1:04.0 | 31 | The bubble answers: "Book a walk through" |
-| 1:05.1 | 31 to 32 | 0477 120 624, asklarder.com.au, hello@asklarder.com.au, one per beat |
+| 1:05.1 | 31 to 32 | asklarder.com.au, then hello@asklarder.com.au (no phone number since revision 2) |
 | 1:08.3 | 33 | The bubble morphs into the Larder mark; the wordmark slides out |
 | 1:09.3 to 1:13.5 | 33 to 34 + tail | Lockup hold, slow dolly, logo resolve chord, 1.3 s fade |
 
@@ -96,12 +128,12 @@ The cellar photo is a stock photo, labelled "Stock photo".
 ## Checks run
 
 - Sound cue timing: 34 of 34 cues (full) and 18 of 18 (cut) land within 1 frame in both the effects stem and the mix. Most land within 2 ms. Some key clicks sit under +6 dB over the bed, by design. These are warnings, not failures.
-- Loudness: full -14.01 LUFS, true peak -2.54 dBTP, LRA 5.6 LU, limiter at most 3.0 dB. Cut -14.01 LUFS, -2.54 dBTP. Measured with our own BS.1770 meter, because the bundled ffmpeg has no filters. The meter self test reads -23.03 for a -23 dBFS tone.
-- Copy: 124 on screen strings. No dashes, no exclamation marks, no countdown, discount or scarcity words. Phone, email, URL and CTA match the brief exactly. Text inside the real app captures can't be checked by script.
+- Loudness (revision 2): full -14.03 LUFS, true peak -2.31 dBTP, LRA 4.4 LU, limiter at most 2.8 dB. Cut -14.02 LUFS, -2.33 dBTP, limiter 2.3 dB. Measured with our own BS.1770 meter, because the bundled ffmpeg has no filters. The meter self test reads -23.03 for a -23 dBFS tone.
+- Copy: 124 on screen strings. No dashes, no exclamation marks, no countdown, discount or scarcity words. Email, URL and CTA match the brief exactly, and no phone number appears anywhere (the audit fails if one does). Text inside the real app captures can't be checked by script.
 - Visual: stills every second, plus each beat moment, typing mid sentence, QR scan, form fill, the whip and the lockup.
 
 ## Not verified
 
-- Motion feel: easing, spring weight, whether the pace reads as calm. Contact sheets show positions, not motion.
+- Motion feel: whether the punches and slams read as energetic rather than busy. Contact sheets show positions, not motion.
 - How the music and effects actually sound. They are measured, not listened to.
 - Any real voiceover. When one arrives, the beat timing needs re-checking against it.

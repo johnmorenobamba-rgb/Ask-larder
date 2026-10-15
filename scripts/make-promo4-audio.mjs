@@ -5,7 +5,7 @@
 // and out/v4/qa/sound-cues.json (the manifest the audit reads).
 import { writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { b, BEAT, FPS, TOTAL, CUE, VO, sfxCues, WHOOSH_APEX, ACT, HOLD, CUT, CUT_TOTAL } from "../remotion/promo4/timeline.ts";
+import { b, BEAT, FPS, TOTAL, CUE, VO, sfxCues, WHOOSH_APEX, ACT, HOLD, CUT, CUT_TOTAL, DROPS } from "../remotion/promo4/timeline.ts";
 
 const SR = 48000;
 const SPF = SR / FPS; // 1600 samples per frame
@@ -249,7 +249,7 @@ function confirm() {
   const x = voice(0.5);
   void t1; // the tap tick is its own cue on the press; the confirm is only the two tones
   const a = tone(698.5), c = tone(880), o = Math.round(0.06 * SR);
-  for (let i = 0; i < a.length; i++) { x[i] += db(-4) * a[i]; if (i + o < x.length) x[i + o] += db(-4) * c[i]; }
+  for (let i = 0; i < a.length; i++) { x[i] += db(-4) * a[i]; if (i + o < x.length) x[i + o] += db(-7.5) * c[i]; } // the answer tone sits under the first, so the event has one onset
   return { x, anchor: 0, lead: 0 };
 }
 function scanBeep() {
@@ -323,133 +323,227 @@ function pingPong(input, delay = 19200, fb = 0.32) {
   return out;
 }
 
-// ---------------------------------------------------------------- score
-const rh = stereo(), pad = stereo(), subB = stereo(), drums = stereo(), sfx = stereo();
-const TAPS = sfxCues().filter((c) => c.kind === "tick" || c.kind === "confirm").map((c) => c.frame);
-const nearTap = (start) => TAPS.some((f) => Math.abs(start / SPF - f) <= 3.2);
-const addDrum = (bus, start, x, g, pan) => { if (!nearTap(start)) add(bus, start, x, g, pan); };
-const rhDelaySend = stereo();
-const GAIN = { hook: 0.46, pain: 0.44, sol: 0.85, payoff: 0.95, sol3: 0.84, urgency: 0.84, cta: 0.6 };
-const PADCUT = { hook: [500, 800], pain: [650, 650], sol: [1400, 1400], payoff: [1400, 2400], sol3: [2000, 2000], urgency: [1800, 3200], cta: [900, 900] };
+// ---------------------------------------------------------------- score (15 Oct 2026: upbeat)
+// Same grid, same chords, same stop. A house and nu disco arrangement: the pains are a filtered build with a
+// clap roll and a riser, each solution is a drop (an impact, four on the floor, claps on 2 and 4, offbeat
+// open hats, a syncopated plucked bass, supersaw chord stabs), the urgency drives to a dead stop and the
+// close drops once more before the logo resolve, which ignites the trace glow.
+const rh = stereo(), pad = stereo(), subB = stereo(), drums = stereo(), sfx = stereo(), stabs = stereo(), bass = stereo(), fxm = stereo();
+// The effects must read over the groove: no hat, clap or stab within 3 frames of any effect cue, and no hats
+// or claps under a run of typed keys.
+const CUEF = sfxCues().filter((c) => c.kind !== "resolve").map((c) => c.frame);
+const KEY_RUNS = [];
+for (const c of sfxCues().filter((c) => c.kind === "key")) { const r = KEY_RUNS[KEY_RUNS.length - 1]; if (r && c.frame - r[1] <= 8) r[1] = c.frame; else KEY_RUNS.push([c.frame, c.frame]); }
+const nearCue = (s) => { const f = s / SPF; return CUEF.some((c) => Math.abs(f - c) <= 3.2) || KEY_RUNS.some(([a, z]) => f >= a - 3 && f <= z + 3); };
+const addHit = (bus, start, x, g, pan = 0) => { if (!nearCue(start)) add(bus, start, x, g, pan); };
+const kickTimes = [];
+
+function svfLP(x, fcAt, q = 0.8) { // TPT state variable low pass with a per sample cutoff function
+  let ic1 = 0, ic2 = 0; const k = 1 / q;
+  for (let i = 0; i < x.length; i++) {
+    const g = Math.tan((Math.PI * Math.min(20000, Math.max(30, fcAt(i)))) / SR);
+    const a1 = 1 / (1 + g * (g + k)), a2 = g * a1, a3 = g * a2;
+    const v3 = x[i] - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3;
+    ic1 = 2 * v1 - ic1; ic2 = 2 * v2 - ic2; x[i] = v2;
+  }
+  return x;
+}
+function kick4(seed) { // a house kick: a fast pitch drop from about 160 Hz, a click, a little drive
+  const x = voice(0.38); const r = rng(seed); let ph = 0;
+  for (let i = 0; i < x.length; i++) {
+    const t = i / SR;
+    ph += (TWO_PI * (47 + 115 * Math.exp(-t / 0.026))) / SR;
+    const body = Math.sin(ph) * Math.exp(-t / 0.21) * Math.min(1, t / 0.0008);
+    void r; // no noise click: it sat in the tap ticks' band
+    x[i] = Math.tanh(1.5 * body) / Math.tanh(1.5);
+  }
+  return x;
+}
+function clap(seed) { // three hand bursts nine ms apart and a short room
+  const x = voice(0.32); const r = rng(seed);
+  for (let i = 0; i < x.length; i++) {
+    const t = i / SR;
+    let e = 0; for (const o of [0, 0.009, 0.018]) if (t >= o) e += Math.exp(-(t - o) / 0.005);
+    const tail = t >= 0.018 ? 0.55 * Math.exp(-(t - 0.018) / 0.12) : 0;
+    x[i] = (r() * 2 - 1) * (0.7 * e + tail);
+  }
+  return biquad("hp", 650, 0.7)(biquad("bp", 1450, 0.9)(x));
+}
+function hat(open, seed) {
+  const x = voice(open ? 0.32 : 0.06); const r = rng(seed); const tau = open ? 0.085 : 0.016;
+  for (let i = 0; i < x.length; i++) { const t = i / SR; x[i] = (r() * 2 - 1) * Math.min(1, t / 0.0005) * Math.exp(-t / tau); }
+  return biquad("hp", 7600, 0.8)(biquad("hp", 7600, 0.8)(x));
+}
+function pluckBass(midi, durSec) { // a saw through a resonant low pass with a fast envelope, a sine underneath
+  const f = midiHz(midi); const x = voice(durSec + 0.06); let p = 0, ps = 0;
+  for (let i = 0; i < x.length; i++) {
+    const t = i / SR; const dt = f / SR;
+    p += dt; if (p >= 1) p -= 1; ps += TWO_PI * dt;
+    x[i] = 2 * p - 1 - polyblep(p, dt);
+  }
+  svfLP(x, (i) => 160 + 1150 * Math.exp(-i / SR / 0.06), 1.3); // dark enough to stay under the effects' bands
+  for (let i = 0; i < x.length; i++) { const t = i / SR; const env = Math.min(1, t / 0.003) * (t > durSec ? Math.exp(-(t - durSec) / 0.018) : 1); x[i] = env * (0.75 * x[i] + 0.55 * Math.sin(TWO_PI * f * t)); }
+  return onePoleHP(x, 32);
+}
+function stab(midis, seed, bright = 1, len = 0.3) { // supersaw chord stab: three saws a note at -11, 0, +11 cents, the filter snapping shut
+  const x = voice(len); const r = rng(seed);
+  const osc = midis.flatMap((m) => [-11, 0, 11].map((c) => ({ f: midiHz(m) * 2 ** (c / 1200), p: r() })));
+  for (let i = 0; i < x.length; i++) {
+    let s = 0;
+    for (const o of osc) { const dt = o.f / SR; o.p += dt; if (o.p >= 1) o.p -= 1; s += 2 * o.p - 1 - polyblep(o.p, dt); }
+    x[i] = s / osc.length;
+  }
+  svfLP(x, (i) => 450 + 5600 * bright * Math.exp(-i / SR / 0.055), 0.9);
+  for (let i = 0; i < x.length; i++) { const t = i / SR; x[i] *= Math.min(1, t / 0.002) * Math.exp(-t / 0.1); }
+  return x;
+}
+function riser(lenS, seed) { // noise opening upward through a band pass, a rising saw, growing to the cut
+  const x = voice(lenS); const r = rng(seed); let p = 0, ic1 = 0, ic2 = 0;
+  for (let i = 0; i < x.length; i++) {
+    const t = i / SR, u = t / lenS;
+    const fc = 280 * 42 ** u, g = Math.tan((Math.PI * Math.min(16000, fc)) / SR), k = 1 / 2.2;
+    const a1 = 1 / (1 + g * (g + k)), a2 = g * a1, a3 = g * a2;
+    const n = r() * 2 - 1; const v3 = n - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3; ic1 = 2 * v1 - ic1; ic2 = 2 * v2 - ic2;
+    const f = 110 * 2 ** (2.5 * u); p += f / SR; if (p >= 1) p -= 1;
+    x[i] = u ** 2.2 * (1.1 * v1 + 0.12 * (2 * p - 1 - polyblep(p, f / SR)));
+  }
+  return x;
+}
+function impact(seed) { // the drop: a sub boom falling from 100 Hz and a long bright crash
+  const len = 2.2; const boom = voice(len), crash = voice(len); const r = rng(seed); let ph = 0;
+  for (let i = 0; i < boom.length; i++) {
+    const t = i / SR;
+    ph += (TWO_PI * (34 + 66 * Math.exp(-t / 0.05))) / SR;
+    boom[i] = Math.tanh(1.5 * Math.sin(ph) * Math.exp(-t / 0.5) * Math.min(1, t / 0.002));
+    crash[i] = (r() * 2 - 1) * Math.exp(-t / 0.6) * Math.min(1, t / 0.0015);
+  }
+  biquad("hp", 4200, 0.7)(crash); biquad("hp", 4200, 0.7)(crash);
+  for (let i = 0; i < boom.length; i++) boom[i] = boom[i] + 0.32 * crash[i];
+  return boom;
+}
+
+const GAIN = { hook: 0.4, pain: 0.36, sol: 0.88, payoff: 0.95, sol3: 0.92, urgency: 0.62, cta: 0.92 }; // the drops sit 6 to 8 dB over the builds
+// the stab and pad filter by section: closed in the hook and pains, opening across each pain into its drop
+const PADCUT = { hook: [700, 1500], pain: [500, 3600], sol: [5200, 5200], payoff: [6500, 6500], sol3: [6000, 6000], urgency: [1400, 5000], cta: [6500, 6500] };
 const padCutAt = new Float64Array(N);
 const secGain = new Float64Array(N).fill(0);
+const GROOVE = new Set(["sol", "payoff", "sol3", "cta"]);
+const inHoldF = (f) => f >= HOLD.from && f < HOLD.to; // the designed still hold on the supervisor line: kick and hats only
 
 for (let bar = 1; bar <= 32; bar++) {
   const sec = sectionOf(bar);
   const kind = sec.kind;
-  const g = GAIN[kind];
+  const lastOfPain = kind === "pain" && bar === sec.to;
   const barStart = at(b(bar));
   const chords = CHORDS[bar];
   const half = chords.length === 2;
   for (let i = 0; i < 4 * BEAT_S; i++) {
     const j = barStart + i; if (j >= N) break;
-    secGain[j] = g;
+    secGain[j] = GAIN[kind];
     const [c0, c1] = PADCUT[kind];
     const u = (bar - sec.from + i / (4 * BEAT_S)) / (sec.to - sec.from + 1);
     padCutAt[j] = c0 * (c1 / c0) ** u;
   }
+  const chordAtBeat = (bt) => V[half && bt >= 2 ? chords[1] : chords[0]];
   chords.forEach((name, ci) => {
     const v = V[name];
-    const beat0 = half ? ci * 2 : 0;
-    const beats = half ? 2 : 4;
+    const beat0 = half ? ci * 2 : 0, beats = half ? 2 : 4;
     const start = at(b(bar, beat0));
     const durS = (beats * BEAT_S) / SR;
-    const hold = b(bar, beat0) >= HOLD.from && b(bar, beat0) < HOLD.to;
-    const vo = inVO(b(bar, beat0));
-    // Rhodes
-    const strum = (k) => Math.round((k === 0 ? 0 : 5 + 5 * (k - 1)) * SR / 1000);
-    const vel = kind === "pain" || kind === "hook" ? 0.4 : kind === "cta" ? 0.4 : kind === "urgency" ? 0.35 : 0.52;
-    if (kind === "urgency") {
-      for (let e = 0; e < beats; e++) v.rh.forEach((m, k) => add(rh, at(b(bar, beat0 + e, 2)) + strum(k), rhodes(m, vel, 0.18, `u${bar}${e}${k}`), 0.18, k % 2 ? 0.2 : -0.2));
-    } else {
-      v.rh.forEach((m, k) => {
-        add(rh, start + strum(k), rhodes(m, vel, durS * 0.95, `r${bar}${ci}${k}`), 0.13, -0.2);
-        add(rh, start + strum(k) + 24, rhodes(m, vel * 0.96, durS * 0.95, `r${bar}${ci}${k}d`, 1, 3), 0.13, 0.2);
-      });
-      if ((kind === "sol" || kind === "payoff" || kind === "sol3") && !hold && !vo && !half) {
-        // comp: a softer restrike of the top two notes on beat 2.5
-        v.rh.slice(2).forEach((m, k) => add(rh, at(b(bar, 2, 2)) + strum(k), rhodes(m, 0.36, 0.5, `c${bar}${k}`), 0.18, k ? 0.2 : -0.2));
-      }
-      if (kind === "pain") v.rh.slice(2).forEach((m, k) => add(rh, at(b(bar, 2, 2)) + strum(k), rhodes(m, 0.3, 0.6, `p${bar}${k}`), 0.16, k ? 0.2 : -0.2));
-    }
-    // pad
-    const attack = kind === "pain" ? 0.9 : 0.6;
-    v.pad.forEach((m, k) => add(pad, start, padVoice(m, durS + 0.35, attack, `pad${bar}${ci}${k}`), 0.09, [-0.3, 0, 0.3][k]));
-    // sub (enters at bar 3 in the hook; a held pedal in the pains)
-    if (bar >= 3) add(subB, start, sub(v.root - 12 >= 28 ? v.root - 12 : v.root, durS * 0.98), 0.32);
+    // the Rhodes stays as the warm bed under the stabs, lower than before
+    v.rh.forEach((m, k) => add(rh, start + Math.round(((k === 0 ? 0 : 4 * k) * SR) / 1000), rhodes(m, 0.42, durS * 0.95, `r${bar}${ci}${k}`), 0.085, k % 2 ? 0.25 : -0.25));
+    v.pad.forEach((m, k) => add(pad, start, padVoice(m, durS + 0.3, kind === "pain" ? 0.7 : 0.25, `pad${bar}${ci}${k}`), 0.075, [-0.35, 0, 0.35][k]));
+    if (!GROOVE.has(kind) && kind !== "urgency" && bar >= 2) add(subB, start, sub(v.root - 12 >= 28 ? v.root - 12 : v.root, durS * 0.98), 0.3);
   });
-  // drums
-  const beatsIn = [0, 1, 2, 3];
-  const sayHold = (beat) => b(bar, beat) >= HOLD.from && b(bar, beat) < HOLD.to;
-  if (kind === "payoff" || kind === "sol3" || kind === "urgency") {
-    const kicks = kind === "payoff" ? [0, 2.5] : kind === "sol3" ? [0] : [0, 2];
-    kicks.forEach((k) => add(drums, at(b(bar, Math.floor(k), (k % 1) * 4)), kick(`k${bar}${k}`), 0.42));
+  // ---- drums
+  const kicks = GROOVE.has(kind) || kind === "urgency" || (kind === "hook" && bar >= 2) || lastOfPain ? [0, 1, 2, 3] : kind === "pain" ? [0, 2] : [];
+  for (const bt of kicks) { const s = at(b(bar, bt)); add(drums, s, kick4(`k${bar}${bt}`), kind === "hook" ? 0.36 : 0.5); kickTimes.push(s); }
+  for (let bt = 0; bt < 4; bt++) for (let sx = 0; sx < 4; sx++) {
+    const f = b(bar, bt, sx), s = at(f);
+    const hold = inHoldF(f);
+    const acc = [0.55, 0.3, 1, 0.38][sx];
+    if (kind !== "pain" || sx % 2 === 0 || lastOfPain) addHit(drums, s + (sx % 2 ? 640 : 0), hat(false, `h${bar}${bt}${sx}`), (kind === "pain" ? 0.07 : 0.1) * acc, 0.25);
+    if ((GROOVE.has(kind) || kind === "urgency") && sx === 2 && !hold) addHit(drums, s, hat(true, `o${bar}${bt}`), 0.07, -0.2);
   }
-  if (kind === "sol" || kind === "payoff" || kind === "sol3") {
-    if (!sayHold(2)) addDrum(drums, at(b(bar, 2)), rim(`rim${bar}`), 0.22, 0.1);
-    const sixteenths = kind === "sol" ? [0, 2] : [0, 1, 2, 3];
-    const acc = [1.0, 0.42, 0.68, 0.5];
-    beatsIn.forEach((bt) => sixteenths.forEach((s) => {
-      const f = b(bar, bt, s);
-      if (sayHold(bt) || (inVO(f) && s % 2)) return;
-      const swing = s % 2 ? 1024 : 0;
-      addDrum(drums, at(f) + swing, shaker(acc[s], `sh${bar}${bt}${s}`), (kind === "sol" ? db(-4) : 1) * 0.07 * acc[s], 0.2);
-    }));
+  if ((GROOVE.has(kind) || kind === "urgency") ) [1, 3].forEach((bt) => { if (!inHoldF(b(bar, bt))) addHit(drums, at(b(bar, bt)), clap(`c${bar}${bt}`), 0.34, 0.05); });
+  if (lastOfPain) for (let e = 0; e < 8; e++) addHit(drums, at(b(bar, Math.floor(e / 2), (e % 2) * 2)), clap(`pr${bar}${e}`), 0.1 + 0.035 * e, 0); // the build: claps on 8ths, growing
+  if (kind === "urgency" && bar === sec.to) for (let e = 0; e < 8; e++) { const f = b(bar, 2 + Math.floor(e / 4), e % 4); if (f < STOP) addHit(drums, at(f), clap(`ur${e}`), 0.12 + 0.03 * e, 0); } // a 16th roll into the stop
+  // ---- bass
+  if (GROOVE.has(kind) || kind === "urgency" || (kind === "hook" && bar >= 2)) {
+    const pat = kind === "urgency" ? [[0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0], [3, 3, 12]] : [[0, 2, 0], [1, 2, 12], [1, 3, 0], [2, 2, 0], [3, 0, 12], [3, 2, 0]];
+    for (const [bt, sx, oct] of pat) {
+      const f = b(bar, bt, sx);
+      if (inHoldF(f) && oct) continue;
+      const v = chordAtBeat(bt);
+      if (CUEF.some((c) => Math.abs(f - c) <= 2.2)) continue; // a rest under an effect
+      add(bass, at(f), pluckBass(v.root - 12 + oct, 0.16), kind === "hook" ? 0.2 : 0.3);
+    }
   }
-  if (kind === "urgency") {
-    [1, 3].forEach((bt) => addDrum(drums, at(b(bar, bt)), rim(`urim${bar}${bt}`), 0.2, 0.1));
-    beatsIn.forEach((bt) => [0, 1, 2, 3].forEach((s) => add(drums, at(b(bar, bt, s)) + (s % 2 ? 1024 : 0), shaker([1, 0.42, 0.68, 0.5][s], `ush${bar}${bt}${s}`), 0.06 * [1, 0.42, 0.68, 0.5][s], 0.2)));
-    beatsIn.forEach((bt) => add(drums, at(b(bar, bt)), clockTick(bt % 2 === 1), 0.12, -0.1));
+  // ---- stabs
+  if (GROOVE.has(kind) || kind === "hook" || kind === "urgency") {
+    const pat = kind === "urgency" ? [[0, 2], [1, 2], [2, 2], [3, 2]] : kind === "hook" ? [[1, 2], [3, 2]] : [[0, 3], [1, 2], [2, 3], [3, 2]];
+    for (const [bt, sx] of pat) {
+      const f = b(bar, bt, sx);
+      if (inHoldF(f) || (inVO(f) && kind === "hook")) continue;
+      if ([12, 24].some((d) => CUEF.some((c) => Math.abs(f + d - c) <= 3.2))) continue; // its delay echoes (12 f apart) would land on an effect
+      const v = chordAtBeat(bt);
+      addHit(stabs, at(f), stab(v.rh, `s${bar}${bt}${sx}`, kind === "payoff" || kind === "cta" ? 1 : 0.8), 0.2, sx === 3 ? 0.3 : -0.3);
+    }
   }
 }
-// the logo resolve: Fadd9 strummed, the 1 5 9 motif on the tine, a soft sub (sound.md 3.9)
-[41, 48, 57, 67, 72].forEach((m, k) => add(rh, at(RESOLVE) + Math.round((8 * k * SR) / 1000), rhodes(m, 0.5, 2.0, `res${k}`), 0.22, [-0.25, -0.1, 0, 0.1, 0.25][k]));
+// risers into each drop, ending on the breath; one into the stop; one into the logo resolve
+for (const bar of LIFTS) { const e = at(b(bar) - 8), s = e - Math.round(4 * BEAT_S); add(fxm, s, riser((e - s) / SR, `rz${bar}`), 0.16); }
+{ const e = at(STOP), s = at(b(30)); add(fxm, s, riser((e - s) / SR, "rzU"), 0.16); }
+{ const e = at(CTA_END), s = at(b(32, 2)); add(fxm, s, riser((e - s) / SR, "rzC"), 0.13); }
+// impacts on the four drops (timeline DROPS) and on the resolve
+for (const f of [...DROPS]) add(fxm, at(f), impact(`im${f}`), 0.22);
+add(fxm, at(RESOLVE), impact("imR"), 0.24);
+// the logo resolve: Fadd9 strummed, the 1 5 9 motif on the tine, a bright stab and a soft sub
+[41, 48, 57, 67, 72].forEach((m, k) => add(rh, at(RESOLVE) + Math.round((8 * k * SR) / 1000), rhodes(m, 0.5, 2.0, `res${k}`), 0.2, [-0.25, -0.1, 0, 0.1, 0.25][k]));
 [[77, 0], [84, 0.5], [91, 1.5]].forEach(([m, bt], k) => add(rh, at(RESOLVE) + Math.round(bt * BEAT_S), rhodes(m, 0.42, 0.8, `mot${k}`, 1.6), 0.13, k * 0.15 - 0.15));
+add(stabs, at(RESOLVE), stab([57, 60, 64, 67, 72], "resStab", 1, 0.9), 0.24);
 add(subB, at(RESOLVE), (() => { const x = voice(2.6); for (let i = 0; i < x.length; i++) { const t = i / SR; x[i] = Math.min(1, t / 0.03) * Math.exp(-t / 0.9) * Math.sin(TWO_PI * 43.65 * t); } return x; })(), 0.28);
 
-// ---------------------------------------------------------------- buses, the lifts, the stop, sidechain
-both(rh, biquad("hp", 110));
+// ---------------------------------------------------------------- buses, the breaths, the stop, sidechain
+both(rh, biquad("hp", 140));
 both(rh, (x) => onePoleLP(x, 5500));
 both(rh, (x) => { for (let i = 0; i < x.length; i++) x[i] = Math.tanh(1.3 * x[i]) / Math.tanh(1.3); return x; });
-// pad: time varying low pass (TPT state variable), slow movement, the reserved -2 dB at 2.5 kHz for a voice
-for (const ch of [pad.L, pad.R]) {
-  let ic1 = 0, ic2 = 0, g = 0, a1 = 0, a2 = 0, a3 = 0;
-  for (let i = 0; i < N; i++) {
-    if (i % 32 === 0) { const fc = Math.max(200, (padCutAt[i] || 700) * (1 + 0.06 * Math.sin(TWO_PI * 0.11 * (i / SR)))); g = Math.tan((Math.PI * fc) / SR); const k = 1 / 0.65; a1 = 1 / (1 + g * (g + k)); a2 = g * a1; a3 = g * a2; }
-    const v3 = ch[i] - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3; ic1 = 2 * v1 - ic1; ic2 = 2 * v2 - ic2; ch[i] = v2;
-  }
-}
+for (const bus of [pad, stabs]) for (const ch of [bus.L, bus.R]) svfLP(ch, (i) => (padCutAt[i] || 900) * (1 + 0.05 * Math.sin(TWO_PI * 0.11 * (i / SR))), 0.75);
 both(pad, biquad("hp", 170));
 both(pad, biquad("peak", 2500, 0.8, -2));
-// section level and envelopes
+both(stabs, biquad("hp", 180));
+both(bass, (x) => { for (let i = 0; i < x.length; i++) x[i] = Math.tanh(1.4 * x[i]) / Math.tanh(1.4); return x; });
 const env = new Float64Array(N).fill(1);
 const rc = (u) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
-for (const bar of LIFTS) { // the breath: down to -30 dB over 40 ms from the last 8th of the pain, back on the downbeat
+for (const bar of LIFTS) { // the breath before each drop: down to -30 dB over 40 ms from the last 8th, back on the downbeat
   const s = at(b(bar) - 8), e = at(b(bar));
   for (let i = s; i < e; i++) env[i] = Math.min(env[i], 1 - (1 - db(-30)) * rc((i - s) / (0.04 * SR)));
 }
 for (let i = at(STOP); i < at(b(31)); i++) env[i] = Math.min(env[i], 1 - rc((i - at(STOP)) / (0.03 * SR))); // dead stop, one 8th of air
-for (let i = at(CTA_END) - Math.round(0.06 * SR); i < N; i++) env[i] = Math.min(env[i], 1 - rc((i - (at(CTA_END) - 0.06 * SR)) / (0.06 * SR))); // music out before the resolve
-const side = new Float64Array(N).fill(1); // the kick breathes the Rhodes and pad by 2 dB
-for (let i = 0; i < N; i++) {
-  // reconstructed from the drum bus energy below 120 Hz would be costlier; use the kick times instead
+for (let i = at(CTA_END) - Math.round(0.06 * SR); i < N; i++) env[i] = Math.min(env[i], 1 - rc((i - (at(CTA_END) - 0.06 * SR)) / (0.06 * SR))); // the groove out before the resolve
+for (const c of sfxCues().filter((c) => c.kind !== "resolve" && c.kind !== "whoosh")) {
+  const s0 = at(c.frame) - Math.round(0.03 * SR), h = at(c.frame) + Math.round(0.09 * SR), e = h + Math.round(0.22 * SR);
+  for (let i = Math.max(0, s0 - Math.round(0.02 * SR)); i < Math.min(N, e); i++) {
+    const u = i < s0 ? 1 - (s0 - i) / (0.02 * SR) : i <= h ? 1 : 1 - (i - h) / (e - h);
+    env[i] = Math.min(env[i], 1 - (1 - db(-5)) * rc(u));
+  }
 }
-const kickTimes = [];
-for (let bar = 15; bar <= 30; bar++) { const k = sectionOf(bar).kind; (k === "payoff" ? [0, 2.5] : k === "sol3" ? [0] : k === "urgency" ? [0, 2] : []).forEach((x) => kickTimes.push(at(b(bar, Math.floor(x), (x % 1) * 4)))); }
-for (const t0 of kickTimes) for (let i = t0; i < Math.min(N, t0 + 0.6 * SR); i++) { const u = (i - t0) / SR; const dip = u < 0.005 ? u / 0.005 : Math.exp(-(u - 0.005) / 0.12); side[i] = Math.min(side[i], 1 - (1 - db(-2)) * dip); }
+const side = new Float64Array(N).fill(1); // the four on the floor pumps everything but the drums by 4 dB
+for (const t0 of kickTimes) for (let i = t0; i < Math.min(N, t0 + 0.5 * SR); i++) { const u = (i - t0) / SR; const dip = u < 0.004 ? u / 0.004 : Math.exp(-(u - 0.004) / 0.11); side[i] = Math.min(side[i], 1 - (1 - db(-4)) * dip); }
 const music = stereo();
 for (let i = 0; i < N; i++) {
   const resolveOK = i >= at(RESOLVE) - 2;
   const g = resolveOK ? 1 : secGain[i] * env[i];
-  music.L[i] = g * side[i] * (rh.L[i] + pad.L[i]) + g * (subB.L[i] + drums.L[i]);
-  music.R[i] = g * side[i] * (rh.R[i] + pad.R[i]) + g * (subB.R[i] + drums.R[i]);
+  const gx = resolveOK ? 1 : env[i]; // risers and impacts keep their own level but obey the breaths and the stop
+  for (const c of ["L", "R"]) music[c][i] = g * side[i] * (rh[c][i] + pad[c][i] + stabs[c][i] + 0.8 * bass[c][i]) + g * (subB[c][i] + drums[c][i]) + gx * fxm[c][i];
 }
-// sends: the Rhodes delay and the hall on the music
-for (let i = 0; i < N; i++) { const kind = sectionOf(Math.min(32, Math.floor(i / (4 * BEAT_S)) + 1))?.kind; const s = db(kind === "pain" ? -12 : -16); rhDelaySend.L[i] = rh.L[i] * s * secGain[i] * env[i]; rhDelaySend.R[i] = rh.R[i] * s * secGain[i] * env[i]; }
-const dly = pingPong(rhDelaySend);
+// sends: the stabs and the Rhodes through the ping pong delay, everything into the hall
+const rhDelaySend = stereo();
+for (let i = 0; i < N; i++) { const s = db(-15) * secGain[i] * env[i]; rhDelaySend.L[i] = (rh.L[i] + stabs.L[i]) * s; rhDelaySend.R[i] = (rh.R[i] + stabs.R[i]) * s; }
+const dly = pingPong(rhDelaySend, 19200, 0.28);
 const hallIn = stereo();
-for (let i = 0; i < N; i++) { hallIn.L[i] = music.L[i] * db(-14) + dly.L[i] * db(-14); hallIn.R[i] = music.R[i] * db(-14) + dly.R[i] * db(-14); }
-const hall = fdn(hallIn, 2.4);
+for (let i = 0; i < N; i++) { hallIn.L[i] = music.L[i] * db(-17) + dly.L[i] * db(-14); hallIn.R[i] = music.R[i] * db(-17) + dly.R[i] * db(-14); }
+const hall = fdn(hallIn, 1.9);
 for (let i = 0; i < N; i++) { music.L[i] += dly.L[i] + hall.L[i]; music.R[i] += dly.R[i] + hall.R[i]; }
 
 // ---------------------------------------------------------------- effects, placed on exact samples

@@ -5,7 +5,7 @@ import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { C, FONT, BUBBLE_PATH } from '../brand';
 import { E, prog, fd, mix, lmix, spr, clamp } from '../lib/anim';
 import { CONTACT } from '../data';
-import { ACT, CUE, copy } from '../timeline';
+import { ACT, CUE, IGNITE, copy } from '../timeline';
 import { chitPath } from '../fx/Chit';
 import { TypingDots } from '../fx/Thread';
 import { MaskRise } from '../fx/MaskRise';
@@ -23,10 +23,30 @@ const LOCK = { mark: 120 }; // final mark height (px); the wordmark sits to its 
 const LOCKUP = { y: 300, gap: 32, word: 150 };
 const markX = () => 960 - (LOCK.mark + LOCKUP.gap + 470) / 2; // the lockup is centred (wordmark about 470 px wide)
 
+const GROW = { damping: 12, stiffness: 200, mass: 0.7 }; // about 14 % overshoot: the close's drop
+
+// ---- the trace glow: the product's own ChitMark idle state (src/components/shared/ChitMark.tsx), a
+// glowing Saffron segment, 22 % of the outline, lapping the chit every 2.6 s while the mark breathes 3.5 %.
+// Here it ignites first: the whole outline draws in and flashes on the resolve (ChitMark's "hero" beat,
+// held about 450 ms), then shrinks into the travelling segment, over the splash's ambient Saffron glow.
+const TRACE = { fraction: 0.22, loopF: 2.6 * 30, width: 3, glow: 4 }; // ChitMark's constants, in its 72 unit box
+const T0 = IGNITE - 8, HERO_END = IGNITE + 13, SETTLED = HERO_END + 12;
+const traceAt = (F: number) => {
+  const draw = prog(F, T0, IGNITE, E.out);
+  const toIdle = prog(F, HERO_END, SETTLED, E.inOut);
+  const flash = prog(F, IGNITE - 2, IGNITE, E.out) * (1 - prog(F, IGNITE, HERO_END, E.smooth));
+  const seg = mix(100, 100 * TRACE.fraction, toIdle);
+  const lap = F > HERO_END ? (F - HERO_END) / TRACE.loopF : 0;
+  const dash = draw < 1 ? '100 100' : `${seg.toFixed(3)} ${(100 - seg).toFixed(3)}`;
+  const offset = draw < 1 ? 100 * (1 - draw) : -100 * lap;
+  const breathe = 1 + 0.0175 * (1 - Math.cos(2 * Math.PI * lap)); // ChitMark's raised cosine breath, one per lap
+  return { on: F >= T0, draw, toIdle, flash, dash, offset, breathe, width: mix(5, TRACE.width, toIdle) + 1.5 * flash, ambient: Math.max(0, mix(0.95, 0.4, toIdle) * prog(F, T0, IGNITE, E.out)) };
+};
+
 /** The bubble's geometry at absolute frame F. */
-const bubbleAt = (F: number) => {
+export const bubbleAt = (F: number) => {
   const appear = spr(F, BUBBLE_AT - 4, SPX.bubble);
-  const grow = prog(F, CUE.close - 4, CUE.close + 14, E.out);
+  const grow = spr(F, CUE.close - 4, GROW); // the answer bursts the bubble open on the drop
   const w0 = 300, h0 = 110; // the empty bubble with typing dots
   const w1 = mix(w0, BIG.w, grow), h1 = mix(h0, BIG.h, grow);
   const m = prog(F, MORPH[0], MORPH[1], E.inOut);
@@ -42,20 +62,36 @@ const Device: React.FC<{ F: number }> = ({ F }) => {
   const s = b.h / 46;
   const landed = F >= MORPH[1] - 1;
   const contact = F >= MORPH[1] - 1 ? spr(F, MORPH[1] - 1, SPX.landCalm) : 0;
-  const settle = landed ? 1 + (1 - contact) * 0.06 : 1; // the second landing: a small settle on the mark
+  const tr = traceAt(F);
+  const settle = (landed ? 1 + (1 - contact) * 0.06 : 1) * (tr.on ? tr.breathe : 1); // the second landing, then the trace's breath
   const textO = prog(F, FILL, FILL + 8, E.smooth) * (1 - prog(F, MORPH[0], MORPH[0] + 8, E.smooth));
   const dotsO = prog(F, BUBBLE_AT, BUBBLE_AT + 6, E.smooth) * (1 - prog(F, FILL - 4, FILL + 2, E.smooth));
   const fill = b.m < 0.5 ? C.saffron : C.parchment; // the device becomes the mark (Parchment on Ink) at the morph's midpoint
+  const amb = tr.on && b.m >= 1 ? tr.ambient : 0;
+  const ambR = (b.h + 13 * s) * 2.1;
   return (
+    <>
+    {amb > 0.01 && (
+      <div style={{ position: 'absolute', left: b.x + b.w / 2 - ambR, top: b.y + (b.h + 13 * s) / 2 - ambR, width: ambR * 2, height: ambR * 2, borderRadius: '50%', opacity: amb,
+        background: 'radial-gradient(circle, rgba(232,169,59,0.55) 0%, rgba(232,169,59,0.26) 30%, rgba(232,169,59,0) 62%)' }} />
+    )}
     <div style={{ position: 'absolute', left: 0, top: 0, transform: `translate3d(${b.x.toFixed(2)}px, ${b.y.toFixed(2)}px, 0) scale(${(mix(0.85, 1, b.appear) * settle).toFixed(4)})`, transformOrigin: '50% 100%', width: b.w, height: b.h + 13 * s }}>
       <svg width={b.w} height={b.h + 13 * s} style={{ position: 'absolute', overflow: 'visible' }}>
         {b.m < 1 ? <path d={chitPath(b.w, b.h, s)} fill={fill} /> : <g transform={`scale(${(b.h + 13 * s) / 72})`}><path d={BUBBLE_PATH} fill={C.parchment} /></g>}
       </svg>
+      {tr.on && b.m >= 1 && (
+        <svg width={b.w} height={b.h + 13 * s} style={{ position: 'absolute', overflow: 'visible', filter: `drop-shadow(0 0 ${(mix(mix(10, 22, tr.flash), TRACE.glow * ((b.h + 13 * s) / 72), tr.toIdle)).toFixed(2)}px ${C.saffron})` }}>
+          <g transform={`scale(${(b.h + 13 * s) / 72})`}>
+            <path d={BUBBLE_PATH} fill="none" stroke={C.saffron} strokeWidth={tr.width} strokeLinecap="round" strokeLinejoin="round" pathLength={100} strokeDasharray={tr.dash} strokeDashoffset={tr.offset} />
+          </g>
+        </svg>
+      )}
       {dotsO > 0 && <div style={{ position: 'absolute', left: b.w / 2 - 70, top: b.h / 2 - 32, opacity: dotsO }}><TypingDots frame={F} show={1} /></div>}
       {textO > 0 && (
         <div style={{ position: 'absolute', left: 0, top: 0, width: b.w, height: b.h, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: 10 * s, fontFamily: FONT.display, fontWeight: 700, fontSize: 64, color: C.ink, letterSpacing: '-0.015em', opacity: textO }}>{CONTACT.cta}</div>
       )}
     </div>
+    </>
   );
 };
 
@@ -89,7 +125,6 @@ export const Close: React.FC = () => {
   const word = prog(F, MORPH[1] - 8, CUE.wordmark + 4, E.out); // the wordmark slides out from behind the mark once it has landed
   const lineY = mix(470, 492, prog(F, MORPH[0], MORPH[1], E.inOut));
   const contacts = [
-    { id: 'phone', text: CONTACT.phone, at: CUE.phone },
     { id: 'url', text: CONTACT.url, at: CUE.url },
     { id: 'email', text: CONTACT.email, at: CUE.email },
   ];

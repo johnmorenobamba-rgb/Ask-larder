@@ -46,7 +46,7 @@ export const Capture: React.FC<{ src: string; w: number; h: number; style?: Reac
 
 const farthest = (x: number, y: number) => Math.hypot(Math.max(x, 1920 - x), Math.max(y, 1080 - y));
 /** Iris reveal of the incoming scene from a screen point: radius in log space on E.iris, already moving on its first frame. */
-export const Iris: React.FC<{ frame: number; at: number; x: number; y: number; r0?: number; dur?: number; children: React.ReactNode }> = ({ frame: f, at, x, y, r0 = 40, dur = 18, children }) => {
+export const Iris: React.FC<{ frame: number; at: number; x: number; y: number; r0?: number; dur?: number; children: React.ReactNode }> = ({ frame: f, at, x, y, r0 = 40, dur = 12, children }) => {
   const t = prog(f, at - 1, at + dur, E.iris);
   const r = t >= 1 ? 9999 : lmix(r0, farthest(x, y) + 4, clamp(t));
   return <AbsoluteFill style={{ clipPath: t >= 1 ? undefined : `circle(${r.toFixed(2)}px at ${x.toFixed(2)}px ${y.toFixed(2)}px)` }}>{children}</AbsoluteFill>;

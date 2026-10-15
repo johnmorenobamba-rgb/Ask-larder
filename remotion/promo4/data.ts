@@ -103,7 +103,6 @@ export const STATION = {
 export const CONTACT = {
   cta: "Book a walk through",
   url: "asklarder.com.au",
-  phone: "0477 120 624",
   email: "hello@asklarder.com.au",
 };
 
@@ -115,7 +114,7 @@ assert(FORMS.checks.length <= FORMS.checkCount, "visible checks are a subset of 
 assert(ASK.safeAnswer.length > ASK.shortAnswerChars, "the safe answer renders in Inter, as the app would");
 assert(STATION.cards[2].text.startsWith("5 ") && STATION.otherIssues.length + 1 === 5, "5 issues shown, 5 in the database");
 assert(FORMS.unit.readingC > 5, "the cool room reading must be out of range for a 5°C limit");
-assert(/^0\d{3} \d{3} \d{3}$/.test(CONTACT.phone), "phone in 4 3 3 grouping");
 const ALL = JSON.stringify({ Q, PHONE, ASK, FORMS: { ...FORMS, outOfRange: FORMS.outOfRange(FORMS.unit.limit, FORMS.unit.reading) }, STATION, CONTACT });
 assert(!/[–—]/.test(ALL), "no en or em dashes in any on screen string");
 assert(!/!/.test(ALL), "no exclamation marks");
+assert(!/\b0\d{3} ?\d{3} ?\d{3}\b|0477/.test(ALL), "no phone number in the promo (taken out 15 Oct 2026)");

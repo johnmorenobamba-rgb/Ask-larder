@@ -36,7 +36,7 @@ const cellarShot = (f: number): Shot => {
   const wob = handheld(f, 6 * (1 - prog(f, LOCK - 10, LOCK, E.smooth)) * t);
   return { ...s, sx: s.sx + wob.x, sy: s.sy + wob.y, k: s.k * breath(prog(f, 0, L(CUE.brackets), E.smooth), 0.04) * lmix(1, 2.2, out) };
 };
-const qrScreen = (f: number) => {
+export const qrScreen = (f: number) => {
   const s = cellarShot(f);
   const p = toScreen(s, { x: STICK.x + QR_IN_STICK.x, y: STICK.y + QR_IN_STICK.y });
   return { x: p.x, y: p.y, w: QR_IN_STICK.s * s.k, h: QR_IN_STICK.s * s.k };

@@ -43,8 +43,20 @@ for (const c of man.cues) {
     const j0 = Math.max(1, Math.floor((expected - gap) / hop)), j1 = Math.min(e.length - 1, Math.floor((expected + gap) / hop));
     let best = j0, bv = -Infinity;
     if (c.kind === "whoosh") { for (let j = j0; j <= j1; j++) if (e[j] > bv) { bv = e[j]; best = j; } return best * hop + win / 2; }
-    for (let j = j0; j <= j1; j++) { const d = e[j] - e[j - 1]; if (d > bv) { bv = d; best = j; } }
-    return best * hop;
+    // Threshold crossing: the first moment the band climbs halfway (in dB) from the bed to the event's peak.
+    // The largest dB step (the first detector) is fooled by tiny steps out of near silence between the upbeat
+    // bed's hi hats; the largest power step picks the second part of a two part sound. A crossing is neither.
+    const preA = Math.max(0, j0 - 40), pre = Array.from(e.subarray(preA, j0)).sort((p, q) => p - q);
+    const bed = pre.length ? pre[Math.floor(pre.length / 2)] : -120;
+    let peak = -Infinity, jp = j0; for (let j = j0; j <= j1; j++) if (e[j] > peak) { peak = e[j]; jp = j; }
+    const thr = bed + 0.5 * (peak - bed);
+    // walk back from the peak to where its own rise crossed the threshold (a neighbour's tail never counts)
+    // dips under 6 ms are bridged: two tones sounding together beat, and their 2 ms envelope flickers
+    const above = (j) => { for (let q = Math.max(j0, j - 6); q < j; q++) if (e[q] >= thr) return true; return false; };
+    let j = jp; while (j > j0 && above(j)) j--;
+    while (j < jp && e[j] < thr) j++;
+    void best;
+    return j * hop;
   };
   const eS = banded("sfx", sfx, c.kind), eMix = banded("mix", mix, c.kind), eMus = banded("music", music, c.kind);
   const tS = findOnset(eS), tM = findOnset(eMix);

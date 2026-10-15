@@ -1,7 +1,7 @@
 // remotion/promo4/fx/springs.ts. Measured at 30 fps: 97 % / contact / overshoot / settled.
 import type { Spr } from '../lib/anim';
 export const SPX = {
-  bubble: { damping: 22, stiffness: 120, mass: 0.9 }, // 14 f / 26 f / 0 / 20 f: hook chits, message bubbles. Calm.
+  bubble: { damping: 14, stiffness: 220, mass: 0.7 }, // hook chits, message bubbles: lands fast with about 12 % overshoot (15 Oct 2026, was calm)
   chip: { damping: 28, stiffness: 220, mass: 0.8 }, // 10 f / 19 f / 0 / 14 f: pins, small UI. Calm.
   pin: { damping: 26, stiffness: 300, mass: 0.7 }, // 7 f / 9 f / 0.2 % / 8 f: pin drop settle after contact
   glide: { damping: 20, stiffness: 80, mass: 1 }, // 18 f / 34 f / 0 / 25 f: camera follow, slow lifts

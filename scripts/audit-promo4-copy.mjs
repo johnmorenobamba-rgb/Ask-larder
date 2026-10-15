@@ -25,7 +25,10 @@ for (const s of strings) {
   if (/(^|\s)-(\s|$)|\d-\d|\w-\w/.test(t)) fails.push(`${s.path}: hyphen used as punctuation in "${s.text}"`);
   for (const r of BANNED) if (r.test(t)) fails.push(`${s.path}: banned pattern ${r} in "${s.text}"`);
 }
-const want = { cta: "Book a walk through", url: "asklarder.com.au", phone: "0477 120 624", email: "hello@asklarder.com.au" };
+const want = { cta: "Book a walk through", url: "asklarder.com.au", email: "hello@asklarder.com.au" };
+// the phone number was taken out of the promo (15 Oct 2026): it must not appear anywhere on screen
+if ("phone" in D.CONTACT) fails.push("CONTACT still has a phone field");
+for (const s of strings) if (/\b0\d{3} ?\d{3} ?\d{3}\b|0477/.test(s.text)) fails.push(`${s.path}: a phone number on screen in "${s.text}"`);
 for (const [k, v] of Object.entries(want)) if (D.CONTACT[k] !== v) fails.push(`CONTACT.${k} is "${D.CONTACT[k]}", the brief says "${v}"`);
 console.log(`${strings.length} strings checked`);
 for (const f of fails) console.log("FAIL", f);

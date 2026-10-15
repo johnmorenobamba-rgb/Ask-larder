@@ -4,6 +4,8 @@ Two full scripts (A and B) for a 75 second launch film, with beat tables, on-scr
 
 Times are written "0:13.8 to 0:16.8" (no dashes, same rule as the copy).
 
+**Update 15 Oct 2026: the phone number is out of the promo.** John asked for it to be removed from both videos. Version B's CTA line is now "Book a walk through at ask larder dot com dot au." (10 words, about 4 s), and the end card shows only the URL and the email. Every phone number line below is superseded; it is kept only as the record of the original draft. The timeline's reserved window `vo13` is already retimed to the new line.
+
 ## 1. Ground rules applied to every line
 
 Copy rules (CLAUDE.md):

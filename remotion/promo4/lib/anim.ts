@@ -16,14 +16,14 @@ export const E = {
   inOut: Easing.bezier(0.87, 0, 0.13, 1), // expo-in-out: whips and lockup slides
   smooth: Easing.bezier(0.65, 0, 0.35, 1), // cubic-in-out: drifts and 10-14 f fades
   ui: Easing.bezier(0.4, 0, 0.2, 1), // small UI state changes
-  cam: Easing.bezier(0.48, 0.1, 0, 0.9), // camera: slow start, peak at ~27%, long settle
-  glide: Easing.bezier(0.47, 0.2, 0.15, 1), // 150-350 px moves with a soft landing
+  cam: Easing.bezier(0.78, 0, 0.12, 1), // camera (15 Oct 2026, more explosive): a held breath, a hard burst through the middle, a firm stop
+  glide: Easing.bezier(0.66, 0, 0.1, 1), // 150-350 px moves: quick launch, firm landing
   rest: Easing.bezier(0.45, 0, 0.1, 1), // zero-slope start, ends at rest: chains after another move
   contact: Easing.bezier(0.55, 0, 0.9, 0.55), // accelerates INTO an impact (ends with velocity)
   whip: Easing.bezier(0.6, 0, 0.15, 1), // feature-to-feature whips
   dolly: Easing.bezier(0.35, 0, 0.65, 1), // slow push through a hold
   type: Easing.bezier(0.5, 1, 0.89, 1), // quad-out: an eased typewriter, 2x its mean rate at the start, last key at ~80%
-  pull: Easing.bezier(0.5, 0, 0.12, 1), // a long pull back (Cinetic specialist token)
+  pull: Easing.bezier(0.82, 0, 0.1, 1), // a pull back that loads, then snaps out (Cinetic specialist token, sharpened)
   iris: Easing.bezier(0.4, 0, 0.7, 0.92), // an iris or flood, applied in log space
   linear: (t: number) => t, // drift only
 };
