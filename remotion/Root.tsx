@@ -6,6 +6,7 @@ import { BentoGridTest } from "./compositions/BentoGridTest";
 import { OwnerDashboardTest } from "./compositions/OwnerDashboardTest";
 import { Explainer, EXPLAINER_DURATION_FRAMES, EXPLAINER_FPS } from "./compositions/Explainer";
 import { HeroTileDrop, HERO_TILE_DROP_DURATION } from "./compositions/HeroTileDrop";
+import { Promo4, Promo4Cut, TOTAL as PROMO4_FRAMES, CUT_TOTAL as PROMO4_CUT_FRAMES } from "./promo4/Film";
 import { Promo3, Promo3Cut, TOTAL_FRAMES as PROMO3_FRAMES, CUT_FRAMES as PROMO3_CUT_FRAMES } from "./promo3/Promo3";
 import { Promo2, TOTAL_FRAMES as PROMO2_FRAMES } from "./promo2/Promo2";
 import { ExplainerV2,ExplainerV2Cutdown, EXPLAINER_V2_FRAMES, CUTDOWN_FRAMES } from "./v2/ExplainerV2";
@@ -64,6 +65,9 @@ export const RemotionRoot: React.FC = () => {
       {/* video-v2 branch, longer film and 30 second cutdown. Render with --public-dir remotion/public-promo3 */}
       <Composition id="LarderPromo3" component={Promo3} durationInFrames={PROMO3_FRAMES} fps={30} width={1920} height={1080} />
       <Composition id="LarderPromo3Cut" component={Promo3Cut} durationInFrames={PROMO3_CUT_FRAMES} fps={30} width={1920} height={1080} />
+      {/* video-v3 branch: promo v4, three questions. Render with --public-dir remotion/public-promo4 */}
+      <Composition id="LarderPromo4" component={Promo4} durationInFrames={PROMO4_FRAMES} fps={30} width={1920} height={1080} />
+      <Composition id="LarderPromo4Cut" component={Promo4Cut} durationInFrames={PROMO4_CUT_FRAMES} fps={30} width={1920} height={1080} />
     </>
   );
 };
