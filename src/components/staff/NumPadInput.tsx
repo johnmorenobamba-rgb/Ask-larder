@@ -20,7 +20,22 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
 
 export function NumPadInput({ value, onChange, allowDecimal = true, maxLength = 8, onFocus, onBlur, ...rest }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const padRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+
+  // The keypad closes on Done, or when the person taps outside the field and the keypad. It deliberately does NOT close
+  // when the field loses focus: on an iPad a tap on a key can blur the field first, which used to remove the keypad
+  // before the tap landed, so the tap fell through to whatever was underneath (the minus button) and no digit was added.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: Event) => {
+      const t = e.target as Node | null;
+      if (t && (padRef.current?.contains(t) || inputRef.current?.contains(t))) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [open]);
 
   // Keep the field above the keypad while it is open.
   useEffect(() => {
@@ -55,10 +70,7 @@ export function NumPadInput({ value, onChange, allowDecimal = true, maxLength = 
           setOpen(true);
           onFocus?.(e);
         }}
-        onBlur={(e) => {
-          setOpen(false);
-          onBlur?.(e);
-        }}
+        onBlur={onBlur}
       />
       {open &&
         createPortal(
@@ -66,9 +78,10 @@ export function NumPadInput({ value, onChange, allowDecimal = true, maxLength = 
             {/* Spacer so the page can scroll the field clear of the keypad. */}
             <div aria-hidden className="h-96" />
             <div
+              ref={padRef}
               role="group"
               aria-label="Number keypad"
-              // Keeps focus in the field while a key is pressed, so the keypad does not close itself.
+              // Keeps focus in the field while a key is pressed.
               onPointerDown={(e) => e.preventDefault()}
               className="fixed inset-x-0 bottom-0 z-[70] border-t-2 border-ink bg-parchment px-4 pb-6 pt-3 shadow-[0_-8px_24px_rgba(31,27,22,0.18)]"
             >
@@ -95,7 +108,10 @@ export function NumPadInput({ value, onChange, allowDecimal = true, maxLength = 
                 </button>
                 <button
                   type="button"
-                  onClick={() => inputRef.current?.blur()}
+                  onClick={() => {
+                    setOpen(false);
+                    inputRef.current?.blur();
+                  }}
                   className="col-span-3 min-h-14 rounded-full bg-ink font-sans text-lg font-medium text-parchment"
                 >
                   Done

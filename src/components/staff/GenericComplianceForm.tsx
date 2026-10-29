@@ -113,7 +113,7 @@ export function GenericComplianceForm(props: FormViewProps) {
       const raw = values[f.key];
       if (f.type === "number" || f.type === "money") {
         const s = typeof raw === "string" ? raw : "";
-        if (s.trim() === "") continue;
+        if (s.trim() === "" || isPendingMinus(s)) continue; // a lone minus is unfinished, not a wrong answer
         const n = parseNumber(s);
         if (n === null || (f.type === "money" && (n < 0 || hasMoreThanTwoDecimals(n))) || n < (f.type === "number" ? f.min : (f.min ?? 0)) || n > (f.max ?? (f.type === "money" ? 10000000 : 150))) {
           bad.push(f.label);
