@@ -313,10 +313,10 @@ test.describe.serial("B2 temperature log", () => {
     await expect(page.getByText("Only the latest reading for a unit can be corrected. Log a new reading to change it.").first()).toBeVisible();
   });
 
-  test("manager tier (FOH Duty Manager) can open the log", async ({ page }) => {
+  test("manager tier is scoped to their department: a FOH Duty Manager is sent home from the log", async ({ page }) => {
     await loginStaff(page, "Dave Duty");
     await page.goto(`/${SLUG}/temperature`);
-    await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/${SLUG}/home`));
   });
 
   test("owner sees the cell and page; an open flag stays until a LATER in range reading", async ({ page, browser }) => {
