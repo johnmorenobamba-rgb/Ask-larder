@@ -18,7 +18,7 @@ export function SiteHeader({ slug }: { slug: string }) {
         <Link href="/#features" className="hover:text-ink">
           Features
         </Link>
-        <Link href="/two-fires" className="hidden hover:text-ink sm:inline">
+        <Link href="/coachmans-arms-wizard" className="hidden hover:text-ink sm:inline">
           See a live demo
         </Link>
         <Link href="/contact" className="hidden hover:text-ink md:inline">

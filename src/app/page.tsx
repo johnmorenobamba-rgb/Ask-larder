@@ -9,7 +9,7 @@ import { SkipLink } from "@/components/marketing/SkipLink";
 // Hub page. Block N1/N2 replaced the "under construction" placeholder at the bare root domain; the hub and spoke restructure
 // (branch landing-hub-and-spoke, see DECISIONS.md) cut this page down to five blocks: the hero, the film, the feature cards,
 // the closing call to action and the footer. Everything else that used to live here moved to a page under /features.
-// Nav wiring (Block N4, 6 Sep 2026): "See a live demo" links to the real Two Fires demo venue's gateway page, labelled
+// Nav wiring (Block N4, 6 Sep 2026): "See a live demo" links to the real Coachman's Arms demo venue's gateway page (switched from Two Fires on 29 Oct 2026), labelled
 // honestly because Larder is founder onboarded, not self serve. "Contact us" and the closing "Book a walkthrough" lead to
 // the real `/contact` form (`ContactForm.tsx` -> `/api/contact` -> Resend).
 export default function Home() {

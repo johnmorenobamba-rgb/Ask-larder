@@ -753,12 +753,12 @@ test.describe("back-button audit: public pages (9 pages)", () => {
     await expectHealthyPage(page);
   });
 
-  test("home -> venue gateway (/two-fires) -> back to home", async ({ page }) => {
+  test("home -> venue gateway (/coachmans-arms-wizard) -> back to home", async ({ page }) => {
     await page.goto("/");
     // Appears twice (header + footer) -- either is a real, equally valid
     // "came from home" link, so .first() is fine here.
     await page.getByRole("link", { name: "See a live demo" }).first().click();
-    await page.waitForURL(/\/two-fires$/, { waitUntil: "commit" });
+    await page.waitForURL(/\/coachmans-arms-wizard$/, { waitUntil: "commit" });
     await expectHealthyPage(page);
     await page.goBack();
     await page.waitForURL(/\/$/, { waitUntil: "commit" });

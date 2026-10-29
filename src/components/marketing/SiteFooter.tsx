@@ -6,7 +6,7 @@ const SITE_LINKS = [
   { label: "Features", href: "/#features" },
   { label: "See it in motion", href: "/#explainer-video" },
   { label: "Book a walkthrough", href: "/contact" },
-  { label: "See a live demo", href: "/two-fires" },
+  { label: "See a live demo", href: "/coachmans-arms-wizard" },
 ];
 
 /**
