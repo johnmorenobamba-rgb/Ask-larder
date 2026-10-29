@@ -173,7 +173,7 @@ export function BentoGrid({
    * fetches suggestion data for a frontline account, so undefined here
    * means "don't render the tile at all", not "zero suggestions". */
   suggestions?: { count: number; preview: string | null };
-  /** B2 temperature log tile: BOH staff and manager tier only (undefined hides it). */
+  /** B2 temperature log tile: BOH and BAR staff and manager tier only (undefined hides it). */
   temperature?: { done: number; total: number; openFlags: number; degraded: boolean };
   /** Compliance forms hub tile (every staff member): forms still to do and overdue. */
   forms?: { todo: number; overdue: number; degraded: boolean };
@@ -424,7 +424,7 @@ export function BentoGrid({
           </a>
         </div>
 
-        {/* Temperature log (B2) -- BOH staff and manager tier only. Ink by default, Preserve
+        {/* Temperature log (B2) -- BOH and BAR staff and manager tier only. Ink by default, Preserve
             Red when a unit is still out of range, so the one thing that needs action is
             the one thing that is loud. No Stamp: a routine log is not a trust moment. */}
         {temperature && (

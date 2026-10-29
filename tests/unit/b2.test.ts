@@ -226,8 +226,9 @@ describe("catalog", () => {
     ];
     for (const s of strings) expect(s).not.toMatch(/[-–—]/);
   });
-  it("audience: BOH plus manager tier and owner; FOH and no department are denied", () => {
+  it("audience: BOH and BAR plus manager tier and owner; FOH and no department are denied", () => {
     expect(canSubmitForm(b2, { isManagerTier: false, department: "BOH" })).toBe(true);
+    expect(canSubmitForm(b2, { isManagerTier: false, department: "BAR" })).toBe(true);
     expect(canSubmitForm(b2, { isManagerTier: false, department: "FOH" })).toBe(false);
     expect(canSubmitForm(b2, { isManagerTier: false, department: null })).toBe(false);
     expect(canSubmitForm(b2, { isManagerTier: true, department: "FOH" })).toBe(true);

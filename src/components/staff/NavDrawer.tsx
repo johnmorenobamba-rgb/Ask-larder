@@ -14,7 +14,7 @@ const ITEMS = [
   { segment: "settings", label: "Settings" },
 ] as const;
 
-// Only shown to the B2 audience (BOH staff, manager tier, owners).
+// Only shown to the B2 audience (BOH and BAR staff, manager tier, owners).
 const TEMPERATURE_ITEM = { segment: "temperature", label: "Temperature log" } as const;
 const FORMS_ITEM = { segment: "forms", label: "Compliance forms" } as const;
 

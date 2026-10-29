@@ -29,7 +29,7 @@ export function StaffHeader({
 }: {
   venueSlug: string;
   venueName: string;
-  /** BOH staff and manager tier only (B2 temperature log audience). */
+  /** BOH and BAR staff and manager tier only (B2 temperature log audience). */
   showTemperature?: boolean;
 }) {
   const pathname = usePathname();

@@ -56,7 +56,7 @@ export const COMPLIANCE_FORMS = {
     category: "BOH",
     statusTag: "M*",
     statusNote: "A recommended record. A written log is one way to show your temperature controls work. Check what your venue must keep with your local council or regulator.",
-    visibleToRoles: ["BOH"],
+    visibleToRoles: ["BOH", "BAR"],
     managerTierAlways: true,
     limits: {
       cold: {

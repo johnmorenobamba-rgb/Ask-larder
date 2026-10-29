@@ -17,7 +17,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// B2 storage temperature log, staff side. Visible to BOH staff plus manager tier
+// B2 storage temperature log, staff side. Visible to BOH and BAR staff plus manager tier
 // and owners (catalog); everyone else is sent home.
 export default async function TemperaturePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;

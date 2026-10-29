@@ -13,7 +13,7 @@ import {
 
 // Loads everything the staff temperature page, the home tile, the owner cell
 // and the owner page need, through the CALLER's client so RLS decides what they
-// can see (a BOH staff member sees the B2 rows of their venue, FOH sees none,
+// can see (a BOH or BAR staff member sees the B2 rows of their venue, FOH sees none,
 // manager tier and owner see all). `now` is a parameter so the logic is testable.
 
 type Client = SupabaseClient<Database>;

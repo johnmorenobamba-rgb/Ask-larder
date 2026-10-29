@@ -175,7 +175,7 @@ test.describe.serial("B2 temperature log", () => {
     expect(rows![0].submitted_by).toBe(staffIds.kit); // the session, not the forged id
     expect(rows![0].submitted_by_name).toBe("Kit Hand");
     expect(rows![0].venue_id).toBe(venueId);
-    expect(rows![0].visible_to_roles).toEqual(["BOH"]); // from the catalog, not the body
+    expect(rows![0].visible_to_roles).toEqual(["BOH", "BAR"]); // from the catalog, not the body
     expect(new Date(rows![0].submitted_at).getFullYear()).toBeGreaterThan(2025); // server time
 
     // an out of range reading cannot be passed off as in range, and needs a note
