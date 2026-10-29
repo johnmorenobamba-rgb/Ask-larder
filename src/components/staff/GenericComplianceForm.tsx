@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
+import { BackToFormsLink } from "@/components/staff/BackToFormsLink";
 import { formatTemp, isPendingMinus } from "@/lib/compliance/b2";
 import { parseNumberInput } from "@/lib/compliance/engine/numberInput";
 import { evaluateFail, type FieldValue } from "@/lib/compliance/engine/rules";
@@ -386,6 +387,7 @@ export function GenericComplianceForm(props: FormViewProps) {
                   {result.failed ? " It failed and is flagged for the owner." : ""}
                 </p>
               )}
+              {result && <BackToFormsLink />}
             </div>
             <button
               type="button"

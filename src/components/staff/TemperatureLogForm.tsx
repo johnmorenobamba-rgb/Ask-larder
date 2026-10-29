@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
+import { BackToFormsLink } from "@/components/staff/BackToFormsLink";
 import { formatTemp, isPendingMinus, parseReadingInput, unitOutOfRange, type LimitKind } from "@/lib/compliance/b2";
 
 // Staff B2 temperature log, built for a kitchen iPad: one card per unit, a large
@@ -382,6 +383,7 @@ export function TemperatureLogForm({
                     : ""}
                 </p>
               )}
+              {result && <BackToFormsLink />}
             </div>
             <button
               type="button"
