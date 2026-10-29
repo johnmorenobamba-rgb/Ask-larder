@@ -31,6 +31,8 @@ John has real full-stack ability but limited hands-on Claude Code experience. Pr
 
 - **Wizard stays adjacent to software needs.** Whenever the product gains a new capability that depends on a piece of intake data, the onboarding wizard must be checked and updated to capture that data in the same pass, not discovered as a gap later. Example: the manufacturer-sourced content pipeline (station QR / troubleshooting work) cannot function without `equipment_manufacturer`/`model`/`serial`, so the wizard's equipment step had to be updated before that pipeline could be built, not after.
 
+- **Venue parity.** Before building, finishing or auditing any wizard-built venue (venue #2 onward), read `docs/venue-build-manual.md`. It defines what a complete venue contains, the mechanism parity checklist against the reference venue (`coachmans-arms-wizard`), and the audit queries. When a feature adds something a venue needs, update that manual's checklist in the same pass as the wizard.
+
 ## Tech stack (see Tech Bible for full rationale)
 
 Next.js + TypeScript + Tailwind · Vercel hosting · Supabase (Postgres/Auth/Storage/pgvector) · Claude API (Sonnet) for module generation + chat · Voyage AI embeddings · Resend (transactional email) · Supabase Edge Functions + pg_cron (scheduled cert-expiry nudges) · Sentry (errors) · PostHog (analytics — instruments whether staff actually use the chatbot unprompted, the core success metric) · Playwright (E2E/agentic testing) · GitHub + Vercel auto-deploy.
