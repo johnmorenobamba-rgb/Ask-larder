@@ -208,7 +208,7 @@ export default async function StaffHomePage({
   // else (the overview is never fetched for them).
   let temperature: { done: number; total: number; openFlags: number; degraded: boolean } | undefined;
   {
-    const dept = staff.isManagerTier ? { department: null, ok: true } : await getStaffDepartment(supabase, staff.staff_role_id);
+    const dept = await getStaffDepartment(supabase, staff.staff_role_id);
     if (canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department })) {
       const overview = await loadB2Overview(supabase, staff.venue_id!, now);
       temperature = {
@@ -224,7 +224,7 @@ export default async function StaffHomePage({
   let forms: { todo: number; overdue: number; degraded: boolean } | undefined;
   {
     try {
-      const dept = staff.isManagerTier ? { department: null, ok: true } : await getStaffDepartment(supabase, staff.staff_role_id);
+      const dept = await getStaffDepartment(supabase, staff.staff_role_id);
       const hub = await loadHub(supabase, createAdminClient(), staff.venue_id!, { isManagerTier: staff.isManagerTier, department: dept.department }, now);
       const mine = hub.forms.filter((f) => f.on && f.canFill);
       forms = {

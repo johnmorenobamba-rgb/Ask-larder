@@ -3,6 +3,7 @@ import type { Database } from "@/lib/supabase/types";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 import { venueTimeZone } from "../b2";
 import { loadB2Overview } from "../b2Data";
+import { COMPLIANCE_FORMS, canSubmitForm } from "../catalog";
 import { FORMS, getGenericForm } from "./forms";
 import { activatedAt, canOpenForm, isFormOn, type ActivationRow, type Who } from "./activation";
 import { formStatus, localMidnightInstant, previousPeriodStart, type FormStatus } from "./due";
@@ -203,7 +204,7 @@ export async function loadHub(supabase: Client, admin: Client, venueId: string, 
     forms,
     b2: {
       on: b2Row ? b2Row.enabled : true,
-      canFill: who.isManagerTier || who.department === "BOH",
+      canFill: canSubmitForm(COMPLIANCE_FORMS.B2, who),
       total: b2.summary.total,
       doneToday: b2.summary.doneToday,
       openFlags: b2.summary.openFlags,

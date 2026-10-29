@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 // Staff hub: the venue's compliance forms by cadence with Not started, Done and Overdue states in venue
 // local time. Overdue is shown here on screen only; nothing is emailed or pushed. A person sees the forms
-// their role fills (manager tier and owners see every form that is switched on).
+// their role fills (owners and managers without a department see every form that is switched on; manager tier staff see their own department's forms).
 export default async function FormsHubPage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
   const sp = await searchParams;

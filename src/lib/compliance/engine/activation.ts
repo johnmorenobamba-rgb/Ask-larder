@@ -35,14 +35,23 @@ export function activatedAt(row: ActivationRow | undefined, settingsCreatedAt: s
 
 export type Who = { isManagerTier: boolean; department: string | null | undefined };
 
+/**
+ * Owners and managers without a department see every form. A manager tier staff member WITH a department (a Head Chef,
+ * a Bar Supervisor, a Duty Manager) sees only the forms for their own department, like everyone else in it. The manager
+ * tools (switching forms on or off, the compliance overview) are separate and stay open to the whole manager tier.
+ */
+export function seesEveryForm(who: Who): boolean {
+  return who.isManagerTier && !who.department;
+}
+
 /** Departments allowed to open a form (any stage). Manager tier and owners always can. */
 export function canOpenForm(def: FormDef, who: Who): boolean {
-  if (who.isManagerTier) return true;
+  if (seesEveryForm(who)) return true;
   return !!who.department && (def.departments as readonly string[]).includes(who.department);
 }
 
 export function canFillStage(def: FormDef, stage: StageDef | null, who: Who): boolean {
-  if (who.isManagerTier) return true;
+  if (seesEveryForm(who)) return true;
   const allowed: readonly Department[] = stage ? stage.departments : def.departments;
   return !!who.department && (allowed as readonly string[]).includes(who.department);
 }

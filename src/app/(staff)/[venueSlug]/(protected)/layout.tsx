@@ -40,13 +40,11 @@ export default async function ProtectedStaffLayout({
   let venueName = "";
   let ipadMode = false;
   // Temperature log nav item: BOH staff plus manager tier and owners (catalog audience).
-  let showTemperature = staff.isManagerTier;
+  let showTemperature = false;
   if (staff.venue_id) {
     const supabase = await createClient();
-    if (!showTemperature) {
-      const dept = await getStaffDepartment(supabase, staff.staff_role_id);
-      showTemperature = canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: false, department: dept.department });
-    }
+    const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+    showTemperature = canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department });
     const { data: venue, error: venueError } = await supabase
       .from("venues")
       .select("name, ipad_mode_enabled")

@@ -351,11 +351,18 @@ describe("activation defaults and access", () => {
     const boh = { isManagerTier: false, department: "BOH" };
     const foh = { isManagerTier: false, department: "FOH" };
     const none = { isManagerTier: false, department: null };
-    const mgr = { isManagerTier: true, department: "FOH" };
+    const mgr = { isManagerTier: true, department: "FOH" }; // a Duty Manager: front of house forms only
+    const owner = { isManagerTier: true, department: null }; // owner or manager with no department: every form
+    const headChef = { isManagerTier: true, department: "BOH" };
     expect(canOpenForm(FORM_BY_ID.B5, boh)).toBe(true);
     expect(canOpenForm(FORM_BY_ID.B5, foh)).toBe(false);
     expect(canOpenForm(FORM_BY_ID.B5, none)).toBe(false);
-    expect(canOpenForm(FORM_BY_ID.B5, mgr)).toBe(true);
+    expect(canOpenForm(FORM_BY_ID.B5, mgr)).toBe(false);
+    expect(canOpenForm(FORM_BY_ID.B5, headChef)).toBe(true);
+    expect(canOpenForm(FORM_BY_ID.F1, headChef)).toBe(false);
+    expect(canOpenForm(FORM_BY_ID.F1, mgr)).toBe(true);
+    expect(canOpenForm(FORM_BY_ID.B5, owner)).toBe(true);
+    expect(canOpenForm(FORM_BY_ID.F1, owner)).toBe(true);
     expect(canOpenForm(FORM_BY_ID.F7, foh)).toBe(true);
     expect(canOpenForm(FORM_BY_ID.F7, boh)).toBe(true);
     const ticket = findStage(FORM_BY_ID.F7, "ticket")!;
@@ -364,7 +371,9 @@ describe("activation defaults and access", () => {
     expect(canFillStage(FORM_BY_ID.F7, ticket, boh)).toBe(false);
     expect(canFillStage(FORM_BY_ID.F7, confirm, boh)).toBe(true);
     expect(canFillStage(FORM_BY_ID.F7, confirm, foh)).toBe(false);
-    expect(canFillStage(FORM_BY_ID.F7, confirm, mgr)).toBe(true);
+    expect(canFillStage(FORM_BY_ID.F7, confirm, mgr)).toBe(false);
+    expect(canFillStage(FORM_BY_ID.F7, confirm, owner)).toBe(true);
+    expect(canFillStage(FORM_BY_ID.F7, ticket, headChef)).toBe(false);
     expect(gateRoles(FORM_BY_ID.F7, confirm)).toEqual(["BOH"]);
     expect(visibleRoles(FORM_BY_ID.F7)).toEqual(["FOH", "BOH"]);
     expect(visibleRoles(FORM_BY_ID.B5)).toEqual(["BOH"]);

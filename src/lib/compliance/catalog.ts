@@ -89,11 +89,14 @@ export function getForm(id: ComplianceFormId): ComplianceFormDef {
   return COMPLIANCE_FORMS[id];
 }
 
-/** Who may submit (and see) a form: manager tier and owners always, otherwise the form's departments. */
+/**
+ * Who may submit (and see) a form: owners and managers without a department always; manager tier staff with a
+ * department and everyone else only for the form's departments.
+ */
 export function canSubmitForm(
   form: ComplianceFormDef,
   who: { isManagerTier: boolean; department: string | null | undefined },
 ): boolean {
-  if (who.isManagerTier) return true;
+  if (who.isManagerTier && !who.department) return true;
   return !!who.department && (form.visibleToRoles as readonly string[]).includes(who.department);
 }
