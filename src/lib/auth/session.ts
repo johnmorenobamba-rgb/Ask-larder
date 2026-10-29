@@ -16,7 +16,9 @@ import type { Tables } from "@/lib/supabase/types";
 // dashboard at all, no matter what their fallback_tier said). Every caller
 // that needs to know "is this person authorized" should read
 // staff.isManagerTier, not staff.role directly.
-export type CurrentStaff = Tables<"app_users"> & { isManagerTier: boolean };
+// isDevice is true for the shared venue iPad account (role 'device', venue iPad mode). That account may read venue
+// content at the lowest access level and use Ask Larder, but never records anything under a person's name.
+export type CurrentStaff = Tables<"app_users"> & { isManagerTier: boolean; isDevice: boolean };
 
 /**
  * The signed-in staff/owner/manager row for the current request, or null if
@@ -56,5 +58,5 @@ export async function getCurrentStaff(): Promise<CurrentStaff | null> {
   };
   const isManagerTier = row.role === "owner" || row.role === "manager" || staff_roles?.fallback_tier === "authorized";
 
-  return { ...row, isManagerTier };
+  return { ...row, isManagerTier, isDevice: row.role === "device" };
 }

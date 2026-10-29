@@ -2,6 +2,7 @@ import { requireStationContext } from "@/lib/stations/requireStationContext";
 import { createClient } from "@/lib/supabase/server";
 import { PressableLink } from "@/components/shared/PressableLink";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
+import { SessionActions } from "@/components/staff/SessionActions";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
@@ -17,7 +18,7 @@ export default async function StationPage({
 }) {
   const { venueSlug, qrCodeSlug } = await params;
   const currentPath = `/${venueSlug}/station/${qrCodeSlug}`;
-  const { staff, station } = await requireStationContext(venueSlug, qrCodeSlug, currentPath);
+  const { staff, station, ipadMode } = await requireStationContext(venueSlug, qrCodeSlug, currentPath);
 
   const supabase = await createClient();
 
@@ -50,6 +51,20 @@ export default async function StationPage({
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-8">
+        {ipadMode && (
+          <div className="flex items-center justify-between gap-4">
+            {staff.isDevice ? (
+              <a href={`/${venueSlug}/device`} className="font-mono text-xs text-clay-brown underline">
+                Back to venue iPad home
+              </a>
+            ) : (
+              <span className="font-mono text-xs text-clay-brown">{staff.name}</span>
+            )}
+            <div className="w-40">
+              <SessionActions venueSlug={venueSlug} isDevice={staff.isDevice} />
+            </div>
+          </div>
+        )}
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">{station.name}</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-ink">What do you need?</h1>
@@ -81,7 +96,7 @@ export default async function StationPage({
           />
         </div>
       </div>
-      <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id!} stationId={station.id} />
+      {!staff.isDevice && <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id!} stationId={station.id} />}
       <AskLarderChat venueSlug={venueSlug} stationId={station.id} />
     </main>
   );

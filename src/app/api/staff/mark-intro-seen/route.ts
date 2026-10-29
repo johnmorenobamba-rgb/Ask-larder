@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const supabase = await createClient();
   const {
     data: { user },

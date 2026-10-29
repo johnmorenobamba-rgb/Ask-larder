@@ -26,11 +26,14 @@ export function StaffHeader({
   venueSlug,
   venueName,
   showTemperature = false,
+  ipadMode = false,
 }: {
   venueSlug: string;
   venueName: string;
   /** BOH and BAR staff and manager tier only (B2 temperature log audience). */
   showTemperature?: boolean;
+  /** Venue iPad mode: the drawer gets Log out and Switch user. */
+  ipadMode?: boolean;
 }) {
   const pathname = usePathname();
   const segment = pathname?.split("/")[2];
@@ -72,6 +75,7 @@ export function StaffHeader({
         open={open}
         onClose={() => setOpen(false)}
         showTemperature={showTemperature}
+        ipadMode={ipadMode}
       />
     </>
   );

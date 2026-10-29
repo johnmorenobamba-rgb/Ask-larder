@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { LarderMark } from "@/components/shared/LarderMark";
 import { SPRING_PRESS } from "@/lib/motion/springPress";
+import { SessionActions } from "@/components/staff/SessionActions";
 
 const MotionLink = motion.create(Link);
 
@@ -70,12 +71,15 @@ export function NavDrawer({
   open,
   onClose,
   showTemperature = false,
+  ipadMode = false,
 }: {
   venueSlug: string;
   activeSegment: string;
   open: boolean;
   onClose: () => void;
   showTemperature?: boolean;
+  /** Venue iPad mode: shows Log out and Switch user at the bottom of the drawer. */
+  ipadMode?: boolean;
 }) {
   const items: readonly { segment: string; label: string }[] = showTemperature
     ? [...ITEMS.slice(0, 3), FORMS_ITEM, TEMPERATURE_ITEM, ...ITEMS.slice(3)]
@@ -122,6 +126,11 @@ export function NavDrawer({
             </MotionLink>
           );
         })}
+        {ipadMode && (
+          <div className="mt-auto pt-4">
+            <SessionActions venueSlug={venueSlug} isDevice={false} onDone={onClose} />
+          </div>
+        )}
       </div>
     </div>
   );

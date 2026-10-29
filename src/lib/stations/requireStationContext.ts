@@ -19,16 +19,16 @@ export async function requireStationContext(
   venueSlug: string,
   qrCodeSlug: string,
   currentPath: string,
-): Promise<{ staff: CurrentStaff; station: StationSummary }> {
+): Promise<{ staff: CurrentStaff; station: StationSummary; ipadMode: boolean }> {
   const staff = await getCurrentStaff();
   if (!staff) {
     redirect(`/${venueSlug}/login?redirectTo=${encodeURIComponent(currentPath)}`);
   }
   // Known gap accepted for v1: a staff member with no role yet loses this
   // return-to after selecting a role (bounces to /modules instead).
-  if (!staff.staff_role_id) redirect(`/${venueSlug}/roles`);
+  if (!staff.staff_role_id && !staff.isDevice) redirect(`/${venueSlug}/roles`);
 
-  const outstanding = await getOutstandingAcknowledgements(staff.id);
+  const outstanding = staff.isDevice ? [] : await getOutstandingAcknowledgements(staff.id);
   if (outstanding.length > 0) redirect(`/${venueSlug}/module-updates`);
 
   const supabase = await createClient();
@@ -47,5 +47,11 @@ export async function requireStationContext(
   // guard called before any page has rendered anything yet.
   if (!station) notFound();
 
-  return { staff, station };
+  // Venue iPad mode: the device account is only valid while the venue has the setting on, and the station hub shows
+  // the log out controls when it is on.
+  const { data: venue } = await supabase.from("venues").select("ipad_mode_enabled").eq("id", staff.venue_id!).maybeSingle();
+  const ipadMode = !!venue?.ipad_mode_enabled;
+  if (staff.isDevice && !ipadMode) redirect(`/${venueSlug}/login`);
+
+  return { staff, station, ipadMode };
 }

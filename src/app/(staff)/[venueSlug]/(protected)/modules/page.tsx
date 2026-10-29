@@ -16,7 +16,7 @@ export default async function ModulesPage({
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
   if (!staff) redirect(`/${venueSlug}/login`);
-  if (!staff.staff_role_id) redirect(`/${venueSlug}/roles`);
+  if (!staff.staff_role_id && !staff.isDevice) redirect(`/${venueSlug}/roles`);
 
   const supabase = await createClient();
 
@@ -53,11 +53,13 @@ export default async function ModulesPage({
       <PassSlide>
         <div className="mx-auto w-full max-w-lg space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-display text-3xl font-bold text-ink">Your modules</h1>
-            <span className="font-mono text-xs text-clay-brown">
-              {visibleModules.filter((m) => progressByModule.get(m.id) === "completed").length} of{" "}
-              {visibleModules.length}
-            </span>
+            <h1 className="font-display text-3xl font-bold text-ink">{staff.isDevice ? "Training" : "Your modules"}</h1>
+            {!staff.isDevice && (
+              <span className="font-mono text-xs text-clay-brown">
+                {visibleModules.filter((m) => progressByModule.get(m.id) === "completed").length} of{" "}
+                {visibleModules.length}
+              </span>
+            )}
           </div>
           {visibleModules.length === 0 ? (
             <p className="font-sans text-ink">
@@ -72,9 +74,11 @@ export default async function ModulesPage({
                     href={`/${venueSlug}/modules/${module.id}`}
                     className="flex items-center gap-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-4 hover:border-preserve-red"
                   >
-                    <ModuleStateChip
-                      state={(progressByModule.get(module.id) as "not_started" | "in_progress" | "completed") ?? "not_started"}
-                    />
+                    {!staff.isDevice && (
+                      <ModuleStateChip
+                        state={(progressByModule.get(module.id) as "not_started" | "in_progress" | "completed") ?? "not_started"}
+                      />
+                    )}
                     <span className="font-sans text-ink">{module.title}</span>
                   </PressableLink>
                 </li>

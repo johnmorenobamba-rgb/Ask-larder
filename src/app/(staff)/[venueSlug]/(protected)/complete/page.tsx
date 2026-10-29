@@ -12,6 +12,8 @@ export default async function CompletePage({
 }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
+  // Personal pages are never shown on the shared venue iPad account.
+  if (staff?.isDevice) redirect(`/${venueSlug}/device`);
   if (!staff) redirect(`/${venueSlug}/login`);
 
   const supabase = await createClient();

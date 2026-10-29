@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth/session";
@@ -58,6 +59,9 @@ function mapRpcError(message: string): FriendlyError {
 }
 
 export async function POST(request: Request) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const staff = await getCurrentStaff();
   if (!staff || !staff.venue_id) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });

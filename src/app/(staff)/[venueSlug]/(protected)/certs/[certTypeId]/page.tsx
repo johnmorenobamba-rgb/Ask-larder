@@ -12,6 +12,8 @@ export default async function CertUploadPage({
 }) {
   const { venueSlug, certTypeId } = await params;
   const staff = await getCurrentStaff();
+  // Personal pages are never shown on the shared venue iPad account.
+  if (staff?.isDevice) redirect(`/${venueSlug}/device`);
   if (!staff) redirect(`/${venueSlug}/login`);
   if (!staff.staff_role_id) redirect(`/${venueSlug}/roles`);
 

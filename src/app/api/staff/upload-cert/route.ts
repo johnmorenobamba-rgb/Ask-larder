@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 import { computeCertDueDate } from "@/lib/certs/certTracking";
 
 export async function POST(request: Request) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const body = await request.json().catch(() => null);
   if (!body?.certificateTypeId || !body?.photoRef || !body?.issuedDate) {
     return NextResponse.json(

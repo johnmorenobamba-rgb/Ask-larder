@@ -12,6 +12,8 @@ export default async function WelcomePage({
 }) {
   const { venueSlug } = await params;
   const staff = await getCurrentStaff();
+  // Personal pages are never shown on the shared venue iPad account.
+  if (staff?.isDevice) redirect(`/${venueSlug}/device`);
   if (!staff) redirect(`/${venueSlug}/login`);
   // Real completion, not just "has a role assigned" -- a role gets set by
   // the owner at hire time, before onboarding even starts, so it can't be

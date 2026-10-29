@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { ReadOnlyModule } from "@/components/staff/ReadOnlyModule";
 import { ModuleRunner } from "@/components/staff/ModuleRunner";
 import { getModuleStationPhoto } from "@/lib/stations/getModuleStationPhoto";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -18,7 +19,7 @@ export default async function ModulePage({
   const { venueSlug, moduleId } = await params;
   const staff = await getCurrentStaff();
   if (!staff) redirect(`/${venueSlug}/login`);
-  if (!staff.staff_role_id) redirect(`/${venueSlug}/roles`);
+  if (!staff.staff_role_id && !staff.isDevice) redirect(`/${venueSlug}/roles`);
 
   const supabase = await createClient();
 
@@ -29,6 +30,25 @@ export default async function ModulePage({
     .single();
   logQueryError(`[${venueSlug}] module ${moduleId}`, moduleError);
   if (!module) notFound();
+
+  // Shared venue iPad: read only. RLS and the status filter keep it to approved or live content; the device account
+  // has no staff role, so a module restricted to specific roles is not shown to it.
+  if (staff.isDevice) {
+    const { data: mod } = await supabase
+      .from("modules")
+      .select("id, title, status, module_roles(role_id)")
+      .eq("id", moduleId)
+      .eq("venue_id", staff.venue_id!)
+      .in("status", ["approved", "live"])
+      .maybeSingle();
+    if (!mod || mod.module_roles.length > 0) notFound();
+    const { data: secs } = await supabase
+      .from("module_sections")
+      .select("id, section_order, content")
+      .eq("module_id", moduleId)
+      .order("section_order");
+    return <ReadOnlyModule title={mod.title} sections={secs ?? []} backHref={`/${venueSlug}/modules`} backLabel="Back to training" />;
+  }
 
   // Same role-visibility filter as the checklist (modules/page.tsx) — needed
   // here only to compute this module's "X of Y" position, per the New-Hire

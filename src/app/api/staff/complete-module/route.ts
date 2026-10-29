@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const body = await request.json().catch(() => null);
   if (!body?.moduleId) {
     return NextResponse.json({ error: "moduleId is required." }, { status: 400 });

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { ClientDetailsForm } from "@/components/owner/ClientDetailsForm";
+import { VenueIpadCard } from "@/components/owner/VenueIpadCard";
 import { ChangePasswordCard } from "@/components/owner/ChangePasswordCard";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
@@ -30,11 +31,20 @@ export default async function OwnerSettingsPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
 
   const [{ data: venue, error: venueError }, { data: licence, error: licenceError }] = await Promise.all([
-    supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
+    supabase.from("venues").select("name, ipad_mode_enabled").eq("id", staff!.venue_id!).maybeSingle(),
     supabase.from("venue_licence_profile").select("legal_name, abn, address").eq("venue_id", staff!.venue_id!).maybeSingle(),
   ]);
   logQueryError(`[${venueSlug}] settings venue`, venueError);
   logQueryError(`[${venueSlug}] settings licence`, licenceError);
+  const { data: devices, error: devicesError } = venue?.ipad_mode_enabled
+    ? await supabase
+        .from("venue_devices")
+        .select("id, label, created_at, last_seen_at")
+        .eq("venue_id", staff!.venue_id!)
+        .is("revoked_at", null)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
+  logQueryError(`[${venueSlug}] settings devices`, devicesError);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
@@ -50,6 +60,8 @@ export default async function OwnerSettingsPage({ params }: { params: Promise<{ 
           ownerEmail={staff!.email ?? ""}
           ownerPhone={staff!.phone ?? ""}
         />
+
+        {venue?.ipad_mode_enabled && <VenueIpadCard devices={devices ?? []} />}
 
         <ChangePasswordCard email={staff!.email ?? ""} venueSlug={venueSlug} />
 

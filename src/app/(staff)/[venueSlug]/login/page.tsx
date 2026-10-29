@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { DeviceResume } from "@/components/staff/DeviceResume";
+import { hasDeviceCookie } from "@/lib/auth/device";
 import { PinLoginForm } from "@/components/staff/PinLoginForm";
 import { LoginBackdrop } from "@/components/shared/LoginBackdrop";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -13,10 +15,10 @@ export default async function LoginPage({
   searchParams,
 }: {
   params: Promise<{ venueSlug: string }>;
-  searchParams: Promise<{ redirectTo?: string }>;
+  searchParams: Promise<{ redirectTo?: string; pin?: string }>;
 }) {
   const { venueSlug } = await params;
-  const { redirectTo } = await searchParams;
+  const { redirectTo, pin } = await searchParams;
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("venue_roster", { p_slug: venueSlug });
@@ -40,16 +42,23 @@ export default async function LoginPage({
     );
   }
 
+  const form = (
+    <PinLoginForm venueSlug={venueSlug} staff={roster.staff} redirectTo={redirectTo || `/${venueSlug}/welcome`} />
+  );
+  // Venue iPad mode: a paired iPad signs itself in as the venue device account unless a person asked for the PIN picker
+  // (?pin=1). If the pairing is missing or revoked, DeviceResume falls back to the picker.
+  const paired = pin !== "1" && (await hasDeviceCookie());
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-parchment flex items-center justify-center px-6">
       <LoginBackdrop />
       <div className="relative z-10 w-full max-w-sm space-y-6">
         <h1 className="font-display text-3xl font-bold text-ink">{roster.venue.name}</h1>
-        <PinLoginForm
-          venueSlug={venueSlug}
-          staff={roster.staff}
-          redirectTo={redirectTo || `/${venueSlug}/welcome`}
-        />
+        {paired ? (
+          <DeviceResume venueSlug={venueSlug}>{form}</DeviceResume>
+        ) : (
+          form
+        )}
       </div>
     </main>
   );

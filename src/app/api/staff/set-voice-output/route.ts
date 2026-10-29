@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const body = await request.json().catch(() => null);
   if (typeof body?.enabled !== "boolean") {
     return NextResponse.json({ error: "enabled must be a boolean." }, { status: 400 });

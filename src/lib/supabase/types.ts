@@ -2168,6 +2168,57 @@ export type Database = {
           },
         ]
       }
+      venue_devices: {
+        Row: {
+          app_user_id: string
+          created_at: string
+          id: string
+          label: string
+          last_seen_at: string | null
+          paired_by: string | null
+          revoked_at: string | null
+          token_hash: string
+          venue_id: string
+        }
+        Insert: {
+          app_user_id: string
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string | null
+          paired_by?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          venue_id: string
+        }
+        Update: {
+          app_user_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string | null
+          paired_by?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_devices_app_user_id_fkey"
+            columns: ["app_user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_devices_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           branding: Json | null
@@ -2176,6 +2227,7 @@ export type Database = {
           created_at: string | null
           created_by_specialist_id: string | null
           id: string
+          ipad_mode_enabled: boolean
           monthly_tier: string | null
           multi_venue_group_id: string | null
           name: string
@@ -2189,6 +2241,7 @@ export type Database = {
           created_at?: string | null
           created_by_specialist_id?: string | null
           id?: string
+          ipad_mode_enabled?: boolean
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name: string
@@ -2202,6 +2255,7 @@ export type Database = {
           created_at?: string | null
           created_by_specialist_id?: string | null
           id?: string
+          ipad_mode_enabled?: boolean
           monthly_tier?: string | null
           multi_venue_group_id?: string | null
           name?: string

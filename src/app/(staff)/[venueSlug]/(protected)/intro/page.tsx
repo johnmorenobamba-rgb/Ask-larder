@@ -14,6 +14,8 @@ export default async function IntroPage({
   const { venueSlug } = await params;
   const { replay } = await searchParams;
   const staff = await getCurrentStaff();
+  // Personal pages are never shown on the shared venue iPad account.
+  if (staff?.isDevice) redirect(`/${venueSlug}/device`);
   if (!staff) redirect(`/${venueSlug}/login`);
 
   // Shown once per user, ever, unless explicitly replayed from Settings'

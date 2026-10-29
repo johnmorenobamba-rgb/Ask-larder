@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth/session";
@@ -73,6 +74,9 @@ function cleanValue(v: unknown): unknown {
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ formId: string }> }) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const { formId } = await params;
   const staff = await getCurrentStaff();
   if (!staff || !staff.venue_id) return NextResponse.json({ error: "Not authorized." }, { status: 401 });

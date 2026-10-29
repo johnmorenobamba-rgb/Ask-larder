@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { rejectDevice } from "@/lib/auth/device";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
+  const deniedDevice = await rejectDevice();
+  if (deniedDevice) return deniedDevice;
+
   const body = await request.json().catch(() => null);
   const typedName = typeof body?.typedName === "string" ? body.typedName.trim() : "";
   // Same rule as the signature form (at least 2 characters); the database function refuses anything over 200.

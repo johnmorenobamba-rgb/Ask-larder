@@ -57,7 +57,7 @@ export default async function StationTroubleshootingPage({
           </div>
         )}
       </div>
-      <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id!} stationId={station.id} />
+      {!staff.isDevice && <NearMissReportButton venueSlug={venueSlug} venueId={staff.venue_id!} stationId={station.id} />}
       <AskLarderChat venueSlug={venueSlug} stationId={station.id} />
     </main>
   );
