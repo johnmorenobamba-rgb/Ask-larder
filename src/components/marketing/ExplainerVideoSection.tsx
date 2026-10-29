@@ -4,23 +4,24 @@ import { useEffect, useRef } from "react";
 import { track } from "@/lib/analytics/track";
 
 /**
- * Video v4 (video-v3 branch, revision 2): a 74 second film with the words burned into the picture, an upbeat synthesised music track and
- * sound effects. It is a rendered MP4, so no Remotion runtime reaches the browser. It always starts muted, plays on mute when scrolled into
- * view and pauses when it leaves, but it never autoplays for a visitor who asked for reduced motion, it stops autoplaying once the viewer
- * pauses it themselves (WCAG 2.2.2), controls are always visible, the file loads only when needed (preload none, the poster shows first),
- * and a text transcript sits under it as the accessible alternative. There is no narration, so there is nothing to caption beyond the
- * burned in words; the sound is music, taps, key clicks and a scan beep.
+ * Video v5 (video-promo-30s branch, 29 Oct 2026): a 45 second vertical (9:16) film with an ElevenLabs voiceover, word by word captions
+ * burned into the picture, a synthesised music track and sound effects. It merges promo v4's in-app Ask Larder demo, its three tap
+ * checklist and its glowing chit close into the new fast cut. It is a rendered MP4, so no Remotion runtime reaches the browser. It always
+ * starts muted, plays on mute when scrolled into view and pauses when it leaves, but it never autoplays for a visitor who asked for reduced
+ * motion, it stops autoplaying once the viewer pauses it themselves (WCAG 2.2.2), controls are always visible, the file loads only when
+ * needed (preload none, the poster shows first), and a text transcript sits under it as the accessible alternative. The voiceover is
+ * captioned in the picture (lines that repeat words already full screen are not captioned twice); the transcript has every spoken line.
  */
 const TRANSCRIPT: string[] = [
-  "Every shift, the same questions. How do I change the fryer oil? Have the fridges been checked? Why is the beer pouring flat?",
-  "Your day off. Their question. Sorry to bother you on your day off.",
-  "Ask Larder. How do I change the fryer oil? The answer comes from procedures you approved. Where is the key to the safe? Ask your supervisor for assistance, as they have access to the safe. Keys and safes go to a supervisor.",
-  "Every shift. Every day. Every week. Three taps, nothing typed: open the checklist, tap Mark the rest as pass, tap Save record. That is when everything passes.",
-  "A walk in cool room reading of 8°C is out of range. No note, no save: pick what you did about it, then save the reading. It is flagged on your dashboard.",
-  "First shift in the cellar. Why is the beer pouring flat? Scan the station. Its own fixes, at the station: try this, then this, and if that does not fix it, stop and ask your supervisor for help.",
-  "Tonight, someone closes without you. Who do they call?",
-  "Book a walk through. asklarder.com.au. hello@asklarder.com.au.",
-  "The screens in the film are from example venues with invented names. The Ask Larder panel, the checklist, the temperature log, the station page and the troubleshooting page are redrawn from the app; the forms hub and the owner dashboard are real screens. The cellar photo is a stock image with a sticker added.",
+  "Day one. New starter.",
+  "Nobody's free to train them. Every answer? Ask Dave. Certificates? Nobody's tracking.",
+  "Larder trains your team from your own SOPs.",
+  "Stuck mid shift? Ask Larder. How do I change the fryer oil? It answers from the procedures you approved.",
+  "Daily checklists, done in three taps: tap Pass, tap Mark the rest as pass, tap Save record. Pass, 11 of 11 checks passed. Three taps. Nothing typed.",
+  "Your dashboard tracks completion and certificate expiry: RSA, food handling, WWCC and first aid.",
+  "Opening procedure, module completed. Trained your way, from day one.",
+  "Larder. Book a walkthrough. asklarder.com.au.",
+  "The app screens in the film are redrawn from the app for an example venue with invented names.",
 ];
 
 export function ExplainerVideoSection() {
@@ -62,11 +63,16 @@ export function ExplainerVideoSection() {
         <h2 id="film-heading" className="mb-10 text-center font-display text-3xl font-bold text-parchment sm:text-4xl">
           From a pile of forms to a few taps.
         </h2>
-        <div ref={wrapperRef} className="relative overflow-hidden rounded-3xl shadow-2xl">
+        {/* the film is vertical (9:16): as wide as fits, at most 28rem, and never taller than 80 percent of the screen (45svh x 16/9) */}
+        <div
+          ref={wrapperRef}
+          className="relative mx-auto aspect-[9/16] overflow-hidden rounded-3xl shadow-2xl"
+          style={{ width: "min(100%, 28rem, 45svh)" }}
+        >
           <video
             ref={videoRef}
-            src="/videos/larder-v4-web.mp4"
-            poster="/videos/larder-v4-poster.jpg"
+            src="/videos/larder-v5-web.mp4"
+            poster="/videos/larder-v5-poster.jpg"
             muted
             controls
             playsInline
@@ -81,8 +87,8 @@ export function ExplainerVideoSection() {
               if (!byScript) viewerPausedRef.current = true;
               track("video_pause", { trigger: byScript ? "scroll" : "viewer" });
             }}
-            aria-label="A 74 second film: staff questions reaching the owner on their day off, Ask Larder answering from approved procedures and sending a question about the safe key to a supervisor, a three tap checklist, an out of range temperature that needs a note, scanning a station QR code for its own troubleshooting, and how to book a walk through. It has music and sound effects but no narration, and it starts muted. A transcript follows."
-            className="aspect-video w-full bg-ink"
+            aria-label="A 45 second film with a voiceover: a new starter's first day with nobody free to train them, Larder training staff from the venue's own procedures, Ask Larder answering a question from approved procedures, a daily checklist finished in three taps, the owner dashboard tracking certificate expiry, a completed module, and how to book a walkthrough. It starts muted, the voiceover is captioned in the picture, and a transcript follows."
+            className="h-full w-full bg-ink object-contain"
           />
         </div>
         <details className="mt-6 rounded-2xl border-2 border-parchment/30 px-5 py-4 text-parchment open:border-parchment/60">
