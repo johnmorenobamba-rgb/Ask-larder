@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
+import { NumPadInput } from "@/components/staff/NumPadInput";
 import { BackToFormsLink } from "@/components/staff/BackToFormsLink";
 import { formatTemp, isPendingMinus, parseReadingInput, unitOutOfRange, type LimitKind } from "@/lib/compliance/b2";
 
@@ -267,14 +268,12 @@ export function TemperatureLogForm({
                           >
                             {"−"}
                           </button>
-                          <input
+                          <NumPadInput
                             id={fieldId}
-                            type="text"
-                            inputMode="decimal"
                             autoComplete="off"
                             enterKeyHint="done"
                             value={st.value}
-                            onChange={(e) => setRow(u, { value: e.target.value })}
+                            onChange={(v) => setRow(u, { value: v })}
                             aria-describedby={`${fieldId}-status`}
                             aria-invalid={typedBad || out}
                             placeholder="0.0"

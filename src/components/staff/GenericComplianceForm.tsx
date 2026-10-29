@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
+import { NumPadInput } from "@/components/staff/NumPadInput";
 import { BackToFormsLink } from "@/components/staff/BackToFormsLink";
 import { formatTemp, isPendingMinus } from "@/lib/compliance/b2";
 import { parseNumberInput } from "@/lib/compliance/engine/numberInput";
@@ -569,14 +570,12 @@ function FieldInput({ field, raw, onChange }: { field: FieldView; raw: Raw | und
             </button>
           )}
           {field.type === "money" && <span className="flex items-center font-display text-2xl font-bold text-ink">$</span>}
-          <input
+          <NumPadInput
             id={id}
-            type="text"
-            inputMode="decimal"
             autoComplete="off"
             enterKeyHint="done"
             value={v}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(next) => onChange(next)}
             placeholder={field.type === "money" ? "0.00" : "0.0"}
             className="min-h-14 w-full rounded-2xl border-2 border-clay-brown bg-parchment px-4 font-display text-3xl font-bold text-ink outline-none focus:ring-4 focus:border-ink focus:ring-ink/60"
           />
