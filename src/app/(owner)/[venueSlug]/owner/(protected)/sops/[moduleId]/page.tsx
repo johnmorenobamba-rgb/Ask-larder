@@ -6,6 +6,7 @@ import { SopDocumentView } from "@/components/owner/SopDocumentView";
 import { GenerateSopButton } from "@/components/owner/GenerateSopButton";
 import { RequestEditForm } from "@/components/owner/RequestEditForm";
 import { PrintButton } from "@/components/owner/PrintButton";
+import { ModuleStatusActions } from "@/components/owner/ModuleStatusActions";
 import { ProvenanceBadge, type Provenance } from "@/components/owner/ProvenanceBadge";
 
 // The View page doubles as the Print page (Block R3): no separate PDF
@@ -36,6 +37,20 @@ export default async function SopDocumentPage({
   // available only while the module is still being set up (pre-live); once
   // it's live, changes go through Request edit like everything else.
   const canRegenerate = moduleRow?.status !== "live";
+  // The draft to live steps (Submit for approval, Approve, Go live) used to be on the Modules page only. They are shown
+  // here too, next to the document an owner is reading, with the same checks on the server.
+  const statusLabel: Record<string, string> = { draft: "Draft", pending_approval: "Pending approval", approved: "Approved", live: "Live" };
+  const hasPendingRecommendation = (sections ?? []).some((s) => s.provenance === "ai_recommended_pending");
+  const statusBar = moduleRow ? (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-clay-brown/30 px-4 py-3 print:hidden">
+      <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">Status: {statusLabel[moduleRow.status ?? "draft"] ?? moduleRow.status}</p>
+      <ModuleStatusActions
+        moduleId={moduleId}
+        status={moduleRow.status ?? "draft"}
+        blockedReason={hasPendingRecommendation ? "Confirm Larder's suggested content before approving." : null}
+      />
+    </div>
+  ) : null;
   let manufacturer: string | null = null;
   if (moduleRow?.topic_key?.startsWith("station_equipment_")) {
     const slug = moduleRow.topic_key.replace("station_equipment_", "");
@@ -62,6 +77,7 @@ export default async function SopDocumentPage({
           <Link href={`/${venueSlug}/owner/sops`} className="font-mono text-xs uppercase tracking-wide text-clay-brown">
             Back to SOPs
           </Link>
+          {statusBar}
           <p className="font-sans text-ink">No curated SOP document exists for this module yet.</p>
           {canRegenerate ? (
             <GenerateSopButton moduleId={moduleId} hasExisting={false} />
@@ -107,6 +123,8 @@ export default async function SopDocumentPage({
             <RequestEditForm moduleId={moduleId} />
           </div>
         </div>
+
+        {statusBar}
 
         {distinctProvenance.size > 0 && (
           <div className="space-y-2 rounded-2xl border-2 border-clay-brown/20 bg-parchment/60 px-4 py-3 print:hidden">
