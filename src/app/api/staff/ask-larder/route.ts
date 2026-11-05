@@ -5,6 +5,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { embedTexts } from "@/lib/ai/voyage";
 import { createAnthropicClient } from "@/lib/ai/anthropic";
 import { CONTACT_TYPES } from "@/lib/onboarding/constants";
+import { loadApprovedStationContent } from "@/lib/ai/ingestStationContent";
 
 const CONTACT_TYPE_LABEL = new Map<string, string>(CONTACT_TYPES.map((t) => [t.value, t.label]));
 
@@ -53,7 +54,9 @@ Role-tiered access (Tech Bible §15i): this is what step zero above implements, 
 
 If the question isn't answerable from the retrieved content and isn't a fallback-rule case, say so plainly and suggest asking a supervisor -- don't guess or answer from outside knowledge.
 
-Isolation note: the content you were given has already been filtered to this venue, this staff member's role, and only approved (live) modules -- you don't need to enforce that, it's already done. Your job is just to answer accurately from what's provided, and to apply the fallback rule only when it's genuinely a request for a specific secret or a physical/system action on the person's behalf.
+Isolation note: the content you were given has already been filtered to this venue, this staff member's role, and only approved (live) modules and approved station content -- you don't need to enforce that, it's already done. Your job is just to answer accurately from what's provided, and to apply the fallback rule only when it's genuinely a request for a specific secret or a physical/system action on the person's behalf.
+
+Station content: if a "Station content" block appears below, it is approved venue content for the station the question was asked from. Treat it exactly like Retrieved venue content: answer from it, and prefer it for questions about that station's equipment.
 
 Venue contacts: if a "Venue contacts" block appears below, use it for any question about who to call for a supplier, tradesperson, or other outside help. If an entry has a check-first step, lead with that as the thing to try before calling, not the number. If the entry shows a real phone number, give it plainly once the check-first step (if any) doesn't apply or has already been tried. If an entry instead says the number is withheld pending manager authorization, that is a genuine fallback-rule case exactly like a restricted chunk: use the locked phrase, filling [X] with "contacting [name]", and set fallback_triggered true. Don't invent or guess a number that isn't shown to you, and don't treat a withheld contact number as merely "not covered."
 
@@ -169,6 +172,26 @@ export async function POST(request: Request) {
           .join("\n")}`
       : null;
 
+  // Station content (5 Nov 2026 demo fix): when the question is asked from a
+  // station page, that station's approved troubleshooting entries and FAQs go
+  // into the context deterministically, like the contacts block, so a question
+  // about the equipment in front of the staff member never depends on vector
+  // ranking. Approved rows only (loadApprovedStationContent), same text as the
+  // station's knowledge_chunks rows.
+  let stationContentBlock: string | null = null;
+  if (resolvedStationId) {
+    try {
+      const content = await loadApprovedStationContent(resolvedStationId, supabase);
+      if (content && content.entries.length > 0) {
+        stationContentBlock = `Station content (approved, ${content.station.name}):\n${content.entries
+          .map((e) => `- ${e}`)
+          .join("\n")}`;
+      }
+    } catch (err) {
+      console.error("ask-larder station content fetch error:", err);
+    }
+  }
+
   let queryEmbedding: number[];
   try {
     [queryEmbedding] = await embedTexts([question], "query");
@@ -230,6 +253,7 @@ export async function POST(request: Request) {
     askerIdentityLine,
     station ? `Asked from station: ${station.name}` : null,
     contactsBlock,
+    stationContentBlock,
     withheldCount > 0
       ? `Note: ${withheldCount} additional matching chunk(s) exist for this question but are restricted to authorized roles (manager and above); they have been withheld because this staff member is not authorized. If the question is genuinely asking for that restricted information, this IS a fallback-rule case -- apply it, don't say the topic "isn't covered."`
       : null,
