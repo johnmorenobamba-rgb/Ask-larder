@@ -559,6 +559,7 @@ export type Database = {
           id: string
           is_restricted: boolean | null
           source_module_id: string | null
+          source_station_id: string | null
           venue_id: string | null
         }
         Insert: {
@@ -567,6 +568,7 @@ export type Database = {
           id?: string
           is_restricted?: boolean | null
           source_module_id?: string | null
+          source_station_id?: string | null
           venue_id?: string | null
         }
         Update: {
@@ -575,6 +577,7 @@ export type Database = {
           id?: string
           is_restricted?: boolean | null
           source_module_id?: string | null
+          source_station_id?: string | null
           venue_id?: string | null
         }
         Relationships: [
@@ -583,6 +586,13 @@ export type Database = {
             columns: ["source_module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_chunks_source_station_id_fkey"
+            columns: ["source_station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
             referencedColumns: ["id"]
           },
           {
