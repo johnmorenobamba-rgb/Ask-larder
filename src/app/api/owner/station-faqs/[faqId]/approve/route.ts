@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { ingestStationContentBestEffort } from "@/lib/ai/ingestStationContent";
 
 export async function POST(request: Request, { params }: { params: Promise<{ faqId: string }> }) {
   const { faqId } = await params;
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ faq
   const supabase = await createClient();
   const { data: faq, error: faqError } = await supabase
     .from("station_faqs")
-    .select("id, provenance, stations!inner(venue_id)")
+    .select("id, station_id, provenance, stations!inner(venue_id)")
     .eq("id", faqId)
     .eq("stations.venue_id", staff.venue_id)
     .maybeSingle();
@@ -26,6 +27,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ faq
 
   const { error: updateError } = await supabase.from("station_faqs").update({ status: "approved" }).eq("id", faqId);
   if (updateError) return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+
+  // Approved station content must reach Ask Larder (knowledge_chunks). Best
+  // effort: the approval itself is saved either way.
+  await ingestStationContentBestEffort(faq.station_id, supabase, "station-faqs approve");
 
   return NextResponse.json({ ok: true });
 }

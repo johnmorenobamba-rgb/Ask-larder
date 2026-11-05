@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth/session";
+import { ingestStationContentBestEffort } from "@/lib/ai/ingestStationContent";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,6 +52,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (!data) {
     return NextResponse.json({ error: "Station not found." }, { status: 404 });
+  }
+
+  // Station chunks name the station and its equipment, so a rename or an
+  // equipment change rewrites their text. Deleting a station needs nothing:
+  // knowledge_chunks.source_station_id cascades.
+  if (update.name !== undefined || update.equipment_manufacturer !== undefined || update.equipment_model !== undefined) {
+    await ingestStationContentBestEffort(id, supabase, "station update");
   }
 
   return NextResponse.json({ ok: true });
