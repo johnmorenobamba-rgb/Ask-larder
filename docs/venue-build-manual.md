@@ -71,7 +71,8 @@ Tick every line for a new venue. "Verify" is how Claude Code checks it without t
 **Content and the owner gate**
 - [ ] Every applicable module is `live`, none left `draft` or `pending_approval` without the owner knowing why.
 - [ ] Role scoped modules have `module_roles` rows; unrestricted modules have none. Restricted content has `is_restricted` chunks.
-- [ ] `knowledge_chunks` exist for every live module (count above zero for each module id).
+- [ ] `knowledge_chunks` exist for every live module (count above zero for each module id). Station content has its own chunks; see
+      Stations below.
 - [ ] The curated SOP document exists for each live module (Owner, SOPs).
 - [ ] Compliance content traces to a real standard (Sources and References in Notion). RSA and WWCC are state specific.
 
@@ -98,6 +99,20 @@ Tick every line for a new venue. "Verify" is how Claude Code checks it without t
 **Stations**
 - [ ] Each station has a QR slug, a primary module, and equipment manufacturer, model and serial wherever known (the manufacturer
       sourced content pipeline cannot run without them). FAQs and troubleshooting are approved before staff rely on them.
+- [ ] Approved station content has `knowledge_chunks` rows (`source_station_id`), one per approved FAQ or troubleshooting entry.
+      Ask Larder only finds station content through these rows (plus the station page block, which only works when asked from that
+      station's page). Approving an entry in Owner, Stations writes them; content loaded by a script or edited in the database does
+      not, so run `npx tsx scripts/ingest-stations.ts <venueId>` afterwards. Verify with the query below: `approved` and `chunks`
+      must match for every station. Until 5 Nov 2026 nothing wrote these rows, and the reference venue's Kitchen oven
+      troubleshooting entry was invisible to Ask Larder.
+
+```sql
+select s.name,
+  (select count(*) from station_faqs f where f.station_id = s.id and f.status = 'approved')
+  + (select count(*) from station_troubleshooting_issues t where t.station_id = s.id and t.status = 'approved') as approved,
+  (select count(*) from knowledge_chunks k where k.source_station_id = s.id) as chunks
+from stations s where s.venue_id = '<VENUE_ID>' order by s.name;
+```
 
 **Venue iPad mode** (off by default; the reference has it on)
 - [ ] `venues.ipad_mode_enabled = true` is set deliberately, then the owner taps Set up this iPad on the venue iPad.
