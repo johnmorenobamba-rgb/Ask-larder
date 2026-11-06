@@ -26,7 +26,7 @@ export function LoadingOverlay() {
       aria-live="polite"
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 backdrop-blur-sm"
     >
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">Loading</span>
       <div className="animate-loading-overlay-in">
         <ChitMark size={64} fillColor="var(--color-parchment)" traceColor="var(--color-saffron)" />
       </div>
