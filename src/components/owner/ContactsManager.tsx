@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CONTACT_TYPES } from "@/lib/onboarding/constants";
@@ -102,7 +103,8 @@ export function ContactsManager({ contacts }: { contacts: Contact[] }) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function addContact() {
@@ -121,7 +123,7 @@ export function ContactsManager({ contacts }: { contacts: Contact[] }) {
       return;
     }
     setDraft(EMPTY_DRAFT);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function startEdit(c: Contact) {
@@ -146,12 +148,12 @@ export function ContactsManager({ contacts }: { contacts: Contact[] }) {
       return;
     }
     setEditingId(null);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function deleteContact(id: string) {
     await fetch(`/api/owner/onboarding/contacts?id=${id}`, { method: "DELETE" });
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -166,7 +168,7 @@ export function ContactsManager({ contacts }: { contacts: Contact[] }) {
           disabled={loading || !draft.name.trim()}
           className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
         >
-          {loading && !editingId ? "Adding…" : "Add contact"}
+          {loading && !editingId ? "Adding" : "Add contact"}
         </button>
       </div>
 
@@ -183,7 +185,7 @@ export function ContactsManager({ contacts }: { contacts: Contact[] }) {
                   disabled={loading}
                   className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
                 >
-                  {loading ? "Saving…" : "Save"}
+                  {loading ? "Saving" : "Save"}
                 </button>
                 <button
                   type="button"

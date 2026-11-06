@@ -67,3 +67,27 @@ export function useBusyNavigation() {
 
   return { busy: requesting || isPending, isPending, begin, navigate, fail, end: fail };
 }
+
+/**
+ * Drop in replacement for `const [busy, setBusy] = useState(false)` in a
+ * component that already manages its own busy flag around a request and
+ * then calls router.refresh / router.push. Same [busy, setBusy] shape, so
+ * the existing set calls stay as they are; the only other change is
+ * routing the navigation through the returned `navigate`:
+ *
+ *   const [saving, setSaving, navigate] = useBusyState();
+ *   ...
+ *   setSaving(false);
+ *   navigate(() => router.refresh());
+ *
+ * `busy` stays true while that transition is pending, so the button no
+ * longer re-enables while the old content is still on screen. Both calls
+ * in the same tick (or setSaving(false) in a `finally` right after) batch
+ * into one render, so there is no gap.
+ */
+export function useBusyState(): [boolean, (value: boolean) => void, (go: () => void) => void] {
+  const [isPending, startTransition] = useTransition();
+  const [busy, setBusy] = useState(false);
+  const navigate = useCallback((go: () => void) => startTransition(go), []);
+  return [busy || isPending, setBusy, navigate];
+}

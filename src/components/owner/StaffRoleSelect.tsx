@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -30,7 +31,8 @@ export function StaffRoleSelect({
 }) {
   const router = useRouter();
   const [value, setValue] = useState(currentRoleId ?? "");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [okText, setOkText] = useState("");
   const [errorText, setErrorText] = useState("");
 
@@ -68,7 +70,7 @@ export function StaffRoleSelect({
       return;
     }
     setOkText(`Role changed to ${body?.roleName ?? "the new role"}.`);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (

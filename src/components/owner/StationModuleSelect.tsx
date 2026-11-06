@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,7 +15,8 @@ export function StationModuleSelect({
 }) {
   const router = useRouter();
   const [value, setValue] = useState(currentModuleId ?? "");
-  const [saving, setSaving] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [saving, setSaving, navigate] = useBusyState();
 
   async function onChange(next: string) {
     setValue(next);
@@ -25,7 +27,7 @@ export function StationModuleSelect({
       body: JSON.stringify({ primaryModuleId: next || null }),
     });
     setSaving(false);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (

@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useRouter } from "next/navigation";
 
 export function DeleteStationButton({ stationId }: { stationId: string }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
 
   async function remove() {
     if (!confirm("Delete this station?")) return;
     setLoading(true);
     await fetch(`/api/owner/stations/${stationId}`, { method: "DELETE" });
     setLoading(false);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (

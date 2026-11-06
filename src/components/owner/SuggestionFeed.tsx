@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { formatDate } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,8 @@ function asEvidence(value: unknown): Evidence {
 function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow; onResolved: () => void }) {
   const router = useRouter();
   const [showEvidence, setShowEvidence] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
   const evidence = asEvidence(suggestion.evidence);
 
@@ -48,7 +50,7 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
       return;
     }
     onResolved();
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function dismiss() {
@@ -62,7 +64,7 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
       return;
     }
     onResolved();
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   const items = evidence.items ?? [];
@@ -121,7 +123,7 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
             disabled={loading}
             className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Approving…" : "Approve"}
+            {loading ? "Approving" : "Approve"}
           </button>
         )}
         <button type="button" onClick={dismiss} disabled={loading} className="font-mono text-xs uppercase tracking-wide text-clay-brown underline disabled:opacity-50">
@@ -135,7 +137,8 @@ function SuggestionCard({ suggestion, onResolved }: { suggestion: SuggestionRow;
 export function SuggestionFeed({ pending, resolved }: { pending: SuggestionRow[]; resolved: SuggestionRow[] }) {
   const router = useRouter();
   const [items, setItems] = useState(pending);
-  const [running, setRunning] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [running, setRunning, navigate] = useBusyState();
   const [runError, setRunError] = useState<string | null>(null);
 
   async function checkForNew() {
@@ -148,7 +151,7 @@ export function SuggestionFeed({ pending, resolved }: { pending: SuggestionRow[]
       setRunError(body?.error ?? "Couldn't check for new suggestions.");
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -160,7 +163,7 @@ export function SuggestionFeed({ pending, resolved }: { pending: SuggestionRow[]
           disabled={running}
           className="rounded-full border-2 border-clay-brown/40 px-5 py-2 font-sans text-sm font-medium text-ink disabled:opacity-50"
         >
-          {running ? "Checking…" : "Check for new suggestions"}
+          {running ? "Checking" : "Check for new suggestions"}
         </button>
         {runError && <p className="font-sans text-sm text-preserve-red">{runError}</p>}
       </div>

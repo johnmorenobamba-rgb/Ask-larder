@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -8,7 +9,8 @@ export function CreateStationForm({ modules }: { modules: { id: string; title: s
   const [name, setName] = useState("");
   const [qrCodeSlug, setQrCodeSlug] = useState("");
   const [primaryModuleId, setPrimaryModuleId] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -31,7 +33,7 @@ export function CreateStationForm({ modules }: { modules: { id: string; title: s
     setName("");
     setQrCodeSlug("");
     setPrimaryModuleId("");
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -70,7 +72,7 @@ export function CreateStationForm({ modules }: { modules: { id: string; title: s
         disabled={loading || !name.trim() || !qrCodeSlug.trim()}
         className="rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
       >
-        {loading ? "Creating…" : "Create station"}
+        {loading ? "Creating" : "Create station"}
       </button>
     </div>
   );

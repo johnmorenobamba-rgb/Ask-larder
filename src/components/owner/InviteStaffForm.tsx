@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -11,7 +12,8 @@ export function InviteStaffForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -37,7 +39,7 @@ export function InviteStaffForm() {
     setPhone("");
     setOpen(false);
     setLoading(false);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   if (!open) {
@@ -82,7 +84,7 @@ export function InviteStaffForm() {
           disabled={loading || !name.trim() || (!email.trim() && !phone.trim())}
           className="rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
         >
-          {loading ? "Adding…" : "Add staff member"}
+          {loading ? "Adding" : "Add staff member"}
         </button>
         <button
           type="button"

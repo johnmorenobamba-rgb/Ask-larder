@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -7,7 +8,8 @@ import { useRouter } from "next/navigation";
 // action with no reverse would be a real gap.
 export function ReactivateStaffButton({ staffUserId }: { staffUserId: string }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function reactivate() {
@@ -20,7 +22,7 @@ export function ReactivateStaffButton({ staffUserId }: { staffUserId: string }) 
       setError(body?.error ?? "Couldn't reactivate this staff member.");
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -31,7 +33,7 @@ export function ReactivateStaffButton({ staffUserId }: { staffUserId: string }) 
         disabled={loading}
         className="rounded-full border-2 border-clay-brown/40 px-4 py-2 font-sans text-sm text-ink disabled:opacity-50"
       >
-        {loading ? "Reactivating…" : "Reactivate"}
+        {loading ? "Reactivating" : "Reactivate"}
       </button>
       {error && <p className="font-sans text-xs text-preserve-red">{error}</p>}
     </div>

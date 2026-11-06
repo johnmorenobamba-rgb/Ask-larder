@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useRouter } from "next/navigation";
 
 export function GenerateSopButton({
@@ -11,7 +12,8 @@ export function GenerateSopButton({
   hasExisting: boolean;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [busy, setBusy, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function generate() {
@@ -24,7 +26,7 @@ export function GenerateSopButton({
       setError(body?.error ?? "Couldn't generate the SOP document.");
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -35,7 +37,7 @@ export function GenerateSopButton({
         disabled={busy}
         className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
       >
-        {busy ? "Generating…" : hasExisting ? "Regenerate" : "Generate SOP document"}
+        {busy ? "Generating" : hasExisting ? "Regenerate" : "Generate SOP document"}
       </button>
       {error && <p className="mt-2 font-sans text-sm text-preserve-red">{error}</p>}
     </div>

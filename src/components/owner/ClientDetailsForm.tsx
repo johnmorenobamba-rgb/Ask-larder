@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +23,8 @@ export function ClientDetailsForm({
 }) {
   const router = useRouter();
   const [form, setForm] = useState({ tradingName, legalName, abn, address, ownerName, ownerPhone });
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -47,7 +49,7 @@ export function ClientDetailsForm({
       return;
     }
     setSaved(true);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -78,7 +80,7 @@ export function ClientDetailsForm({
         disabled={loading}
         className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
       >
-        {loading ? "Saving…" : "Save client details"}
+        {loading ? "Saving" : "Save client details"}
       </button>
     </div>
   );

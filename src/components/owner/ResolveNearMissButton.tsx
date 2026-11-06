@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useRouter } from "next/navigation";
 
 export function ResolveNearMissButton({ reportId }: { reportId: string }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function resolve() {
@@ -18,7 +20,7 @@ export function ResolveNearMissButton({ reportId }: { reportId: string }) {
       setError(body.error ?? "Couldn't resolve.");
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
