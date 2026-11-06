@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageFile } from "@/lib/photos/compressImageFile";
@@ -13,11 +15,13 @@ import { compressImageFile } from "@/lib/photos/compressImageFile";
 export function StationPhotoUpload({ venueId, stationId }: { venueId: string; stationId: string }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  // Busy until the refreshed page has rendered, not just until the request
+  // returns; one request per tap.
+  const { busy: uploading, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
 
   async function handleFile(file: File) {
-    setUploading(true);
+    if (!begin()) return;
     setError(null);
     try {
       const compressed = await compressImageFile(file);
@@ -35,11 +39,10 @@ export function StationPhotoUpload({ venueId, stationId }: { venueId: string; st
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Couldn't save this photo.");
       }
-      router.refresh();
+      navigate(() => router.refresh());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save this photo.");
-    } finally {
-      setUploading(false);
+      fail();
     }
   }
 
@@ -60,9 +63,10 @@ export function StationPhotoUpload({ venueId, stationId }: { venueId: string; st
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
+        aria-busy={uploading}
         className="rounded-full border-2 border-clay-brown px-4 py-2 font-mono text-xs uppercase tracking-wide text-ink disabled:opacity-60"
       >
-        {uploading ? "Uploading…" : "Upload photo"}
+        <BusyLabel busy={uploading} idle="Upload photo" busyText="Uploading" spinnerSize={12} />
       </button>
       {error && <p className="mt-1 font-sans text-xs text-preserve-red">{error}</p>}
     </div>

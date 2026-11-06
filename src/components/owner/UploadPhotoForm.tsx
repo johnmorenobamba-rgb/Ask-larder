@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageFile } from "@/lib/photos/compressImageFile";
@@ -21,12 +23,14 @@ export function UploadPhotoForm({
   const [tag, setTag] = useState<Tag>("general");
   const [stationId, setStationId] = useState("");
   const [moduleId, setModuleId] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Busy until the refreshed page has rendered, not just until the request
+  // returns; one request per tap.
+  const { busy: loading, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    if (!file || loading) return;
-    setLoading(true);
+    if (!file) return;
+    if (!begin()) return;
     setError(null);
 
     try {
@@ -54,11 +58,10 @@ export function UploadPhotoForm({
       setFile(null);
       setStationId("");
       setModuleId("");
-      router.refresh();
+      navigate(() => router.refresh());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save this photo.");
-    } finally {
-      setLoading(false);
+      fail();
     }
   }
 
@@ -125,9 +128,10 @@ export function UploadPhotoForm({
         type="button"
         onClick={submit}
         disabled={loading || !file}
+        aria-busy={loading}
         className="rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
       >
-        {loading ? "Uploading…" : "Upload"}
+        <BusyLabel busy={loading} idle="Upload" busyText="Uploading" />
       </button>
     </div>
   );

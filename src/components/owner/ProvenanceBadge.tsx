@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 
 export type Provenance = "owner_sourced" | "ai_standard_fill" | "ai_manual_sourced" | "ai_recommended_pending" | "ai_recommended_confirmed";
@@ -100,13 +102,15 @@ export function ProvenanceBadge({
 
 function PendingRecommendationBadge({ citation, confirmUrl }: { citation?: string | null; confirmUrl?: string }) {
   const router = useRouter();
-  const [confirming, setConfirming] = useState(false);
+  // Busy until the refreshed page has rendered, not just until the request
+  // returns; one request per tap.
+  const { busy: confirming, begin, navigate, fail } = useBusyNavigation();
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
-    if (!confirmUrl || confirming) return;
-    setConfirming(true);
+    if (!confirmUrl) return;
+    if (!begin()) return;
     setError(null);
     try {
       const res = await fetch(confirmUrl, { method: "POST" });
@@ -115,11 +119,10 @@ function PendingRecommendationBadge({ citation, confirmUrl }: { citation?: strin
         throw new Error(body?.error ?? "Couldn't confirm this.");
       }
       setConfirmed(true);
-      router.refresh();
+      navigate(() => router.refresh());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't confirm this.");
-    } finally {
-      setConfirming(false);
+      fail();
     }
   }
 
@@ -144,9 +147,10 @@ function PendingRecommendationBadge({ citation, confirmUrl }: { citation?: strin
           type="button"
           onClick={handleConfirm}
           disabled={confirming}
+          aria-busy={confirming}
           className="rounded-full bg-preserve-red px-4 py-1.5 font-sans text-xs font-medium text-parchment disabled:opacity-50"
         >
-          {confirming ? "Confirming…" : "Confirm this content"}
+          <BusyLabel busy={confirming} idle="Confirm this content" busyText="Confirming" spinnerSize={12} />
         </button>
       )}
       {error && <p className="font-sans text-xs text-preserve-red">{error}</p>}

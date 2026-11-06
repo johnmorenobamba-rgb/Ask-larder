@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 
 export function ModuleStatusActions({
@@ -14,20 +16,26 @@ export function ModuleStatusActions({
   blockedReason?: string | null;
 }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  // Busy until the refreshed page has rendered, not just until the request
+  // returns; one request per tap.
+  const { busy: loading, begin, navigate, fail } = useBusyNavigation();
+  // Which action is running, so only that button changes its label.
+  const [action, setAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function transition(action: "submit-for-approval" | "approve" | "go-live") {
-    setLoading(true);
+  async function transition(nextAction: "submit-for-approval" | "approve" | "go-live") {
+    const action = nextAction;
+    if (!begin()) return;
+    setAction(action);
     setError(null);
-    const res = await fetch(`/api/owner/modules/${moduleId}/${action}`, { method: "POST" });
-    const body = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(body.error ?? "Couldn't update this module.");
+    const res = await fetch(`/api/owner/modules/${moduleId}/${action}`, { method: "POST" }).catch(() => null);
+    const body = res ? await res.json().catch(() => ({})) : {};
+    if (!res || !res.ok) {
+      setError(body.error ?? "Couldn't update this module. Check your connection and try again.");
+      fail();
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -37,9 +45,10 @@ export function ModuleStatusActions({
           type="button"
           onClick={() => transition("submit-for-approval")}
           disabled={loading}
+          aria-busy={loading}
           className="rounded-full border-2 border-clay-brown/40 px-4 py-2 font-sans text-sm font-medium text-ink disabled:opacity-50"
         >
-          Submit for approval
+          <BusyLabel busy={loading && action === "submit-for-approval"} idle="Submit for approval" busyText="Submitting" />
         </button>
       )}
       {status === "pending_approval" && (
@@ -48,10 +57,11 @@ export function ModuleStatusActions({
             type="button"
             onClick={() => transition("approve")}
             disabled={loading || Boolean(blockedReason)}
+            aria-busy={loading}
             title={blockedReason ?? undefined}
             className="rounded-full bg-preserve-red px-4 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
           >
-            Approve
+            <BusyLabel busy={loading && action === "approve"} idle="Approve" busyText="Approving" />
           </button>
           {blockedReason && <p className="font-sans text-xs text-saffron">{blockedReason}</p>}
         </div>
@@ -61,9 +71,10 @@ export function ModuleStatusActions({
           type="button"
           onClick={() => transition("go-live")}
           disabled={loading}
+          aria-busy={loading}
           className="rounded-full bg-preserve-red px-4 py-2 font-sans text-sm font-medium text-parchment disabled:opacity-50"
         >
-          Go live
+          <BusyLabel busy={loading && action === "go-live"} idle="Go live" busyText="Going live" />
         </button>
       )}
       {error && <p className="font-sans text-xs text-preserve-red">{error}</p>}
