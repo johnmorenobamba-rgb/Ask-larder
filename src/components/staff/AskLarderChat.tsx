@@ -62,6 +62,9 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
   const [isEscalation, setIsEscalation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Synchronous lock: two Enter presses (or Enter plus a tap on Ask) inside
+  // one frame both see loading === false; this ref does not.
+  const submitting = useRef(false);
   const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
 
   const pressStartRef = useRef<number | null>(null);
@@ -241,7 +244,8 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
 
   async function submit(retryText?: string) {
     const trimmed = (retryText ?? question).trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || submitting.current) return;
+    submitting.current = true;
 
     setLoading(true);
     setError(null);
@@ -268,6 +272,8 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
       setIconState("idle");
       track("ask_larder_error_shown");
     } finally {
+      // No navigation follows an answer, so releasing here is correct.
+      submitting.current = false;
       setLoading(false);
     }
   }
@@ -399,6 +405,7 @@ export function AskLarderChat({ stationId }: { venueSlug: string; stationId?: st
                   type="button"
                   onClick={() => submit()}
                   disabled={loading || !question.trim()}
+                  aria-busy={loading}
                   className="rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
                 >
                   Ask

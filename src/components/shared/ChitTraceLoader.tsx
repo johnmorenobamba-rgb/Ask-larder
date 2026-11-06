@@ -52,7 +52,7 @@ export function ChitTraceLoader({
           }
         />
       </svg>
-      <span className="font-mono text-xs uppercase tracking-wide text-clay-brown">{label}…</span>
+      <span className="font-mono text-xs uppercase tracking-wide text-clay-brown">{label}</span>
     </span>
   );
 }
