@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { COMMON_ALLERGENS, MENU_CATEGORIES } from "@/lib/onboarding/constants";
@@ -48,7 +49,8 @@ export function MenuReviewTable({
   const [modifierName, setModifierName] = useState("");
   const [modifierAllergensAdded, setModifierAllergensAdded] = useState<string[]>([]);
   const [modifierAllergensRemoved, setModifierAllergensRemoved] = useState<string[]>([]);
-  const [modifierSaving, setModifierSaving] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [modifierSaving, setModifierSaving, navigate] = useBusyState();
 
   async function saveItem(item: { name: string; category: string; description: string; base_allergens: string[] }) {
     const res = await fetch("/api/owner/onboarding/menu-items", {
@@ -70,7 +72,7 @@ export function MenuReviewTable({
       setManualName("");
       setManualDescription("");
       setManualAllergens([]);
-      router.refresh();
+      navigate(() => router.refresh());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save that item.");
     }
@@ -87,7 +89,7 @@ export function MenuReviewTable({
     try {
       await saveItem({ name: item.name, category: item.category || "food", description: item.description, base_allergens: item.base_allergens });
       setPending((prev) => prev.filter((_, i) => i !== index));
-      router.refresh();
+      navigate(() => router.refresh());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save that item.");
     } finally {
@@ -101,7 +103,7 @@ export function MenuReviewTable({
 
   async function deleteExisting(id: string) {
     await fetch(`/api/owner/onboarding/menu-items?id=${id}`, { method: "DELETE" });
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function addModifier(menuItemId: string) {
@@ -129,7 +131,7 @@ export function MenuReviewTable({
     setModifierName("");
     setModifierAllergensAdded([]);
     setModifierAllergensRemoved([]);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function toggleAllergen(allergen: string) {
@@ -140,7 +142,7 @@ export function MenuReviewTable({
     // Menu items are optional (a venue may have none yet), so Continue
     // never blocks on having at least one row.
     const flags: VenueTypeFlags = {};
-    router.push(stepHref(venueSlug, getNextStep("menu", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("menu", flags))));
   }
 
   return (
@@ -199,7 +201,7 @@ export function MenuReviewTable({
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => confirmPending(i)} disabled={savingIndex === i} className={primaryButtonClass}>
-                    {savingIndex === i ? "Saving…" : "Confirm and add"}
+                    {savingIndex === i ? "Saving" : "Confirm and add"}
                   </button>
                   <button type="button" onClick={() => discardPending(i)} className={secondaryButtonClass}>
                     Discard
@@ -338,7 +340,7 @@ export function MenuReviewTable({
                   disabled={modifierSaving || !modifierGroupName.trim() || !modifierName.trim()}
                   className={primaryButtonClass}
                 >
-                  {modifierSaving ? "Saving…" : "Add modifier"}
+                  {modifierSaving ? "Saving" : "Add modifier"}
                 </button>
               </div>
             )}
@@ -347,7 +349,7 @@ export function MenuReviewTable({
         {existingItems.length === 0 && <p className="font-sans text-sm text-clay-brown">No menu items yet.</p>}
       </div>
 
-      <button type="button" onClick={continueWizard} className={primaryButtonClass}>
+      <button type="button" onClick={continueWizard} disabled={modifierSaving} aria-busy={modifierSaving} className={primaryButtonClass}>
         Continue
       </button>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS_OF_WEEK, LICENCE_TYPES } from "@/lib/onboarding/constants";
@@ -42,7 +43,8 @@ export function LicenceDetailForm({
   // submit below and surfaced as an outstanding item on Review & activate.
   const [sourcedFromDocument, setSourcedFromDocument] = useState(initial.sourcedFromDocument);
   const [gamingEgm, setGamingEgm] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   const capacityNum = Number(licensedCapacity);
@@ -79,7 +81,7 @@ export function LicenceDetailForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("licence-detail", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("licence-detail", flags))));
   }
 
   return (
@@ -213,7 +215,7 @@ export function LicenceDetailForm({
 
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

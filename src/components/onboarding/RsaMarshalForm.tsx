@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -25,7 +26,8 @@ export function RsaMarshalForm({
   const [marshalName, setMarshalName] = useState(initial.marshalName);
   const [marshalPhone, setMarshalPhone] = useState(initial.marshalPhone);
   const [marshalEmail, setMarshalEmail] = useState(initial.marshalEmail);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   // roleIds is deliberately NOT required to submit: Staff roles is a later
@@ -60,7 +62,7 @@ export function RsaMarshalForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("rsa", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("rsa", flags))));
   }
 
   return (
@@ -130,7 +132,7 @@ export function RsaMarshalForm({
 
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

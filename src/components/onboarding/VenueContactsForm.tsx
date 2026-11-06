@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CONTACT_TYPES } from "@/lib/onboarding/constants";
@@ -26,7 +27,8 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [checkFirstStep, setCheckFirstStep] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function addContact() {
@@ -49,17 +51,17 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
     setEmail("");
     setNotes("");
     setCheckFirstStep("");
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function deleteContact(id: string) {
     await fetch(`/api/owner/onboarding/contacts?id=${id}`, { method: "DELETE" });
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function continueWizard() {
     const flags: VenueTypeFlags = {};
-    router.push(stepHref(venueSlug, getNextStep("contacts", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("contacts", flags))));
   }
 
   return (
@@ -93,7 +95,7 @@ export function VenueContactsForm({ venueSlug, existing }: { venueSlug: string; 
         />
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={addContact} disabled={loading || !name.trim()} className={secondaryButtonClass}>
-          {loading ? "Adding…" : "Add contact"}
+          {loading ? "Adding" : "Add contact"}
         </button>
 
         <div className="space-y-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -21,7 +22,8 @@ export function StaffInviteForm({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [staffRoleId, setStaffRoleId] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function addStaff() {
@@ -42,17 +44,17 @@ export function StaffInviteForm({
     setName("");
     setEmail("");
     setPhone("");
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function removeStaff(id: string) {
     await fetch(`/api/owner/onboarding/staff-invite?id=${id}`, { method: "DELETE" });
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function continueWizard() {
     const flags: VenueTypeFlags = {};
-    router.push(stepHref(venueSlug, getNextStep("staff-invite", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("staff-invite", flags))));
   }
 
   return (
@@ -76,7 +78,7 @@ export function StaffInviteForm({
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className={inputClass} />
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={addStaff} disabled={loading || !name.trim() || (!email.trim() && !phone.trim())} className={secondaryButtonClass}>
-          {loading ? "Adding…" : "Add staff member"}
+          {loading ? "Adding" : "Add staff member"}
         </button>
 
         <div className="space-y-2">

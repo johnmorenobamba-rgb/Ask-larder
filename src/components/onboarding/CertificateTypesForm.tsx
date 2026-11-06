@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { VIC_WWCC_LABEL } from "@/lib/onboarding/constants";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -28,6 +29,9 @@ export function CertificateTypesForm({
   const router = useRouter();
   const [customWwccName, setCustomWwccName] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  // Refresh after an add, and Continue to the next step, run as transitions
+  // so the buttons stay disabled until the new content has rendered.
+  const [navPending, startNav] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const hasWwcc = existing.some((c) => c.name.toLowerCase().includes("working with children") || c.name.toLowerCase().includes("wwcc"));
@@ -49,12 +53,13 @@ export function CertificateTypesForm({
       return;
     }
     setCustomWwccName("");
-    router.refresh();
+    startNav(() => router.refresh());
   }
 
   function continueWizard() {
+    if (navPending) return;
     const flags: VenueTypeFlags = {};
-    router.push(stepHref(venueSlug, getNextStep("certificate-types", flags)));
+    startNav(() => router.push(stepHref(venueSlug, getNextStep("certificate-types", flags))));
   }
 
   return (
@@ -80,7 +85,7 @@ export function CertificateTypesForm({
           <p className="font-sans text-sm text-ink/70">Already added.</p>
         ) : state === "VIC" ? (
           <button type="button" onClick={() => addType(VIC_WWCC_LABEL, "wwcc")} disabled={loading === VIC_WWCC_LABEL} className={secondaryButtonClass}>
-            {loading === VIC_WWCC_LABEL ? "Adding…" : `Add ${VIC_WWCC_LABEL}`}
+            {loading === VIC_WWCC_LABEL ? "Adding" : `Add ${VIC_WWCC_LABEL}`}
           </button>
         ) : (
           <>
@@ -112,14 +117,14 @@ export function CertificateTypesForm({
           <p className="font-sans text-sm text-ink/70">Already added.</p>
         ) : (
           <button type="button" onClick={() => addType("First Aid", "first_aid")} disabled={loading === "First Aid"} className={secondaryButtonClass}>
-            {loading === "First Aid" ? "Adding…" : "Add First Aid"}
+            {loading === "First Aid" ? "Adding" : "Add First Aid"}
           </button>
         )}
       </div>
 
       {error && <p className={errorClass}>{error}</p>}
-      <button type="button" onClick={continueWizard} className={primaryButtonClass}>
-        Continue
+      <button type="button" onClick={continueWizard} disabled={navPending} aria-busy={navPending} className={primaryButtonClass}>
+        <BusyLabel busy={navPending} idle="Continue" busyText="Continue" />
       </button>
     </div>
   );

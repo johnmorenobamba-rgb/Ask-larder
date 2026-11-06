@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FOOD_SERVICE_LEVELS } from "@/lib/onboarding/constants";
@@ -28,7 +29,8 @@ export function FoodServiceGateForm({
   const [fssPhone, setFssPhone] = useState(initial.fssPhone);
   const [fssEmail, setFssEmail] = useState(initial.fssEmail);
   const [foodHandlingRoleIds, setFoodHandlingRoleIds] = useState<string[]>(initial.foodHandlingRoleIds);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   const triggered = level === "full_kitchen";
@@ -62,7 +64,7 @@ export function FoodServiceGateForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("food-service", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("food-service", flags))));
   }
 
   return (
@@ -127,7 +129,7 @@ export function FoodServiceGateForm({
 
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

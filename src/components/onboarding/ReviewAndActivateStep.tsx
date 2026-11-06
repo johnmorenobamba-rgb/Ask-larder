@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,7 +48,8 @@ export function ReviewAndActivateStep({
   outstandingItems: string[];
 }) {
   const router = useRouter();
-  const [activating, setActivating] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [activating, setActivating, navigate] = useBusyState();
   const [activated, setActivated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +66,7 @@ export function ReviewAndActivateStep({
       return;
     }
     setActivated(true);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   return (
@@ -126,7 +128,7 @@ export function ReviewAndActivateStep({
             </div>
           ) : (
             <button type="button" onClick={activate} disabled={activating} className={`${primaryButtonClass} mt-2`}>
-              {activating ? "Activating…" : "Mark onboarding complete"}
+              {activating ? "Activating" : "Mark onboarding complete"}
             </button>
           )}
         </div>

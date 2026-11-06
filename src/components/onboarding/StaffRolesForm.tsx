@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEPARTMENTS, FALLBACK_TIERS, isManagerTierRoleName } from "@/lib/onboarding/constants";
@@ -23,7 +24,8 @@ export function StaffRolesForm({
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [fallbackTier, setFallbackTier] = useState("frontline");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
   // Locked policy (19 Sep 2026), enforced server-side too (staff-roles/
   // route.ts) -- this is just live feedback while typing, not the actual
@@ -42,7 +44,7 @@ export function StaffRolesForm({
       setError(body?.error ?? "Couldn't change this department.");
       return;
     }
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function saveRosterLocation() {
@@ -57,7 +59,7 @@ export function StaffRolesForm({
     }
     setError(null);
     setRosterSaved(true);
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function addRole() {
@@ -78,12 +80,12 @@ export function StaffRolesForm({
     setName("");
     setDepartment("");
     setFallbackTier("frontline");
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function continueWizard() {
     const flags: VenueTypeFlags = {};
-    router.push(stepHref(venueSlug, getNextStep("staff-roles", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("staff-roles", flags))));
   }
 
   return (
@@ -158,7 +160,7 @@ export function StaffRolesForm({
           </p>
         )}
         <button type="button" onClick={addRole} disabled={loading || !name.trim()} className={secondaryButtonClass}>
-          {loading ? "Adding…" : "Add role"}
+          {loading ? "Adding" : "Add role"}
         </button>
 
         <div className="space-y-2">

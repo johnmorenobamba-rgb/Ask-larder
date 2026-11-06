@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -30,7 +31,8 @@ export function OwnerVenueCreateForm() {
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
   const [specialistPin, setSpecialistPin] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   function handleVenueNameChange(value: string) {
@@ -72,7 +74,7 @@ export function OwnerVenueCreateForm() {
       return;
     }
 
-    router.push(`/${venueSlug}/owner/onboarding/venue-basics`);
+    navigate(() => router.push(`/${venueSlug}/owner/onboarding/venue-basics`));
   }
 
   return (
@@ -141,7 +143,7 @@ export function OwnerVenueCreateForm() {
       </div>
       {error && <p className={errorClass}>{error}</p>}
       <button type="button" onClick={submit} disabled={loading || !valid} className={`w-full ${primaryButtonClass}`}>
-        {loading ? "Creating…" : "Create venue and start onboarding"}
+        {loading ? "Creating" : "Create venue and start onboarding"}
       </button>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS_OF_WEEK } from "@/lib/onboarding/constants";
@@ -15,7 +16,8 @@ export function PromotionsForm({ venueSlug, existing }: { venueSlug: string; exi
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function addPromotion() {
@@ -36,17 +38,17 @@ export function PromotionsForm({ venueSlug, existing }: { venueSlug: string; exi
     setStartTime("");
     setEndTime("");
     setDescription("");
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   async function deletePromotion(id: string) {
     await fetch(`/api/owner/onboarding/promotions?id=${id}`, { method: "DELETE" });
-    router.refresh();
+    navigate(() => router.refresh());
   }
 
   function continueWizard() {
     const flags: VenueTypeFlags = { runs_happy_hour: runsHappyHour ?? false };
-    router.push(stepHref(venueSlug, getNextStep("promotions", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("promotions", flags))));
   }
 
   return (
@@ -90,7 +92,7 @@ export function PromotionsForm({ venueSlug, existing }: { venueSlug: string; exi
             </div>
             {error && <p className={errorClass}>{error}</p>}
             <button type="button" onClick={addPromotion} disabled={loading || !startTime || !endTime} className={secondaryButtonClass}>
-              {loading ? "Adding…" : "Add promotion"}
+              {loading ? "Adding" : "Add promotion"}
             </button>
 
             <div className="space-y-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LICENCE_STATUSES } from "@/lib/onboarding/constants";
@@ -16,7 +17,8 @@ import { cardClass, primaryButtonClass, errorClass, labelClass, rowClass } from 
 export function LicensingGateForm({ venueSlug, initial }: { venueSlug: string; initial: string }) {
   const router = useRouter();
   const [licenceStatus, setLicenceStatus] = useState(initial);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -37,7 +39,7 @@ export function LicensingGateForm({ venueSlug, initial }: { venueSlug: string; i
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("licensing", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("licensing", flags))));
   }
 
   return (
@@ -75,7 +77,7 @@ export function LicensingGateForm({ venueSlug, initial }: { venueSlug: string; i
 
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !licenceStatus} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
       <p className={labelClass}>This answer decides which later pages apply to this venue.</p>

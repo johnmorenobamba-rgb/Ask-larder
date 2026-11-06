@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AU_STATES } from "@/lib/onboarding/constants";
@@ -20,7 +21,8 @@ export function VenueBasicsForm({
   const [state, setState] = useState(initial.state);
   const [address, setAddress] = useState(initial.address);
   const [abn, setAbn] = useState(initial.abn);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   const valid = tradingName.trim() && state && address.trim() && /^\d{11}$/.test(abn.replace(/\s/g, ""));
@@ -43,7 +45,7 @@ export function VenueBasicsForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("venue-basics", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("venue-basics", flags))));
   }
 
   return (
@@ -101,7 +103,7 @@ export function VenueBasicsForm({
         </div>
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

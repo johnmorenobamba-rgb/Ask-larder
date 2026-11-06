@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HIGH_RISK_ACTIVITIES, TRADE_WASTE_OPTIONS, UNIT_TYPES, VENUE_TYPES } from "@/lib/onboarding/constants";
@@ -45,7 +46,8 @@ export function ComplianceSetupForm({
   const [offersAccommodation, setOffersAccommodation] = useState(initial.offersAccommodation);
   const [tradeWaste, setTradeWaste] = useState(initial.tradeWasteAgreement);
   const [venueType, setVenueType] = useState(initial.venueType);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   // Retired units stay on file (past readings point at them) but don't need
@@ -97,7 +99,7 @@ export function ComplianceSetupForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("compliance-setup", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("compliance-setup", flags))));
   }
 
   return (
@@ -260,7 +262,7 @@ export function ComplianceSetupForm({
         )}
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -64,7 +65,8 @@ interface TopicState {
 // content" textarea -- read a question, answer or attach a file, move on.
 export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string; venueId: string; topics: TopicEntry[] }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [busy, setBusy, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   const [topicState, setTopicState] = useState<Record<string, TopicState>>(() =>
@@ -306,7 +308,7 @@ export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string
         pendingContact: body.extractedContact ?? null,
         contactResolved: !body.extractedContact,
       });
-      router.refresh();
+      navigate(() => router.refresh());
       setStepIndex(currentIndex);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't generate this module.");
@@ -337,7 +339,7 @@ export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string
   }
 
   function continueWizard() {
-    router.push(stepHref(venueSlug, getNextStep("content-intake", {})));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("content-intake", {}))));
   }
 
   if (!currentStep) {
@@ -347,7 +349,7 @@ export function SopInterview({ venueSlug, venueId, topics }: { venueSlug: string
           <h2 className={pageTitleClass}>SOPs & training content</h2>
           <p className={pageIntroClass}>Every topic this venue needs has been generated. You can continue.</p>
         </div>
-        <button type="button" onClick={continueWizard} className={primaryButtonClass}>
+        <button type="button" onClick={continueWizard} disabled={busy} aria-busy={busy} className={primaryButtonClass}>
           Continue
         </button>
       </div>

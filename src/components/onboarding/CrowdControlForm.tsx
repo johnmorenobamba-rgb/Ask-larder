@@ -1,5 +1,6 @@
 "use client";
 
+import { useBusyState } from "@/lib/hooks/useBusyNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
@@ -17,7 +18,8 @@ export function CrowdControlForm({
   const [required, setRequired] = useState<boolean | null>(initial.required || null);
   const [securityFirmName, setSecurityFirmName] = useState(initial.securityFirmName);
   const [controllerLicenceNumbers, setControllerLicenceNumbers] = useState(initial.controllerLicenceNumbers);
-  const [loading, setLoading] = useState(false);
+  // Stays busy until the refresh/navigation below has rendered.
+  const [loading, setLoading, navigate] = useBusyState();
   const [error, setError] = useState<string | null>(null);
 
   const valid = required !== null && (!required || securityFirmName.trim());
@@ -40,7 +42,7 @@ export function CrowdControlForm({
     }
 
     const flags = body.flags as VenueTypeFlags;
-    router.push(stepHref(venueSlug, getNextStep("crowd-control", flags)));
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("crowd-control", flags))));
   }
 
   return (
@@ -92,7 +94,7 @@ export function CrowdControlForm({
 
         {error && <p className={errorClass}>{error}</p>}
         <button type="button" onClick={submit} disabled={loading || !valid} className={primaryButtonClass}>
-          {loading ? "Saving…" : "Continue"}
+          {loading ? "Saving" : "Continue"}
         </button>
       </div>
     </div>

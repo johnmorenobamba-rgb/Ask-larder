@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { getNextStep, stepHref, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { primaryButtonClass } from "./fieldStyles";
 
@@ -12,19 +14,23 @@ import { primaryButtonClass } from "./fieldStyles";
  */
 export function EquipmentContinueButton({ venueSlug, flags }: { venueSlug: string; flags: VenueTypeFlags }) {
   const router = useRouter();
+  // Busy from the tap until the next step has rendered.
+  const { busy, begin, navigate } = useBusyNavigation();
 
   async function handleContinue() {
+    if (!begin()) return;
+    // As before, the step marker is best effort; Continue goes on regardless.
     await fetch("/api/owner/onboarding/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentStep: "equipment" }),
-    });
-    router.push(stepHref(venueSlug, getNextStep("equipment", flags)));
+    }).catch(() => null);
+    navigate(() => router.push(stepHref(venueSlug, getNextStep("equipment", flags))));
   }
 
   return (
-    <button type="button" onClick={handleContinue} className={primaryButtonClass}>
-      Continue
+    <button type="button" onClick={handleContinue} disabled={busy} aria-busy={busy} className={primaryButtonClass}>
+      <BusyLabel busy={busy} idle="Continue" busyText="Continue" />
     </button>
   );
 }
