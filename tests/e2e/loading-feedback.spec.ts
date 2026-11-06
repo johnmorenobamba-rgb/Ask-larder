@@ -83,6 +83,8 @@ async function slow3g(page: Page): Promise<CDPSession> {
 async function measuredTap(page: Page, step: string, target: Locator, done: () => Promise<unknown>, doneText?: string) {
   await target.waitFor({ state: "visible", timeout: 120_000 });
   await target.evaluate((el, doneText) => {
+    // An earlier tap's marker can still be in the DOM (the nav drawer persists in the layout): clear it first.
+    document.querySelectorAll("[data-tap-target]").forEach((n) => n.removeAttribute("data-tap-target"));
     el.setAttribute("data-tap-target", "");
     const w = window as unknown as { __tap: { t0: number; feedback: number | null; wasBusy: boolean; early: boolean } };
     w.__tap = { t0: 0, feedback: null, wasBusy: false, early: false };
@@ -101,7 +103,8 @@ async function measuredTap(page: Page, step: string, target: Locator, done: () =
     document.addEventListener("click", () => { w.__tap.t0 = performance.now(); requestAnimationFrame(check); }, { capture: true, once: true });
     new MutationObserver(check).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-busy", "disabled", "data-link-pending", "class"] });
   }, doneText ?? null);
-  await target.click({ force: true });
+  // Native click: several targets sit in floating animated cells, where a coordinate click lands off target.
+  await target.evaluate((el) => (el as HTMLElement).click());
   await done();
   const tap = await page.evaluate(() => (window as unknown as { __tap?: { feedback: number | null; early: boolean } }).__tap ?? null).catch(() => null);
   // A full navigation (rare) replaces the window and its recorder; the in page numbers are lost then, say so.
@@ -112,11 +115,31 @@ async function measuredTap(page: Page, step: string, target: Locator, done: () =
   console.log(`[tap] ${step}: feedback ${r.feedbackMs ?? "n/a"} ms${r.earlyReenable ? ", RE-ENABLED EARLY" : ""}${r.note ? ` (${r.note})` : ""}`);
 }
 
+/** Native click: many targets sit in floating animated cells, where a coordinate click lands off target. */
+const tapEl = (l: Locator) => l.evaluate((el) => (el as HTMLElement).click());
+
 async function staffLogin(page: Page, name: string) {
   await page.context().clearCookies();
   await page.goto(`/${fx.slug}/login`, { timeout: 180_000 });
-  await nativeClick(page, pickerName(name));
-  await page.locator('input[type="password"]').fill(PIN);
+  // On a fast unthrottled load the roster can be tapped before React hydrates it; tap again until the PIN field shows.
+  const pinField = page.locator('input[type="password"]');
+  await expect(async () => {
+    if (!(await pinField.isVisible())) await nativeClick(page, pickerName(name));
+    await expect(pinField).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 60_000 });
+  await pinField.fill(PIN);
+}
+
+/** Owner sign in, same hydration retry as staffLogin. */
+async function ownerLogin(page: Page) {
+  await page.context().clearCookies();
+  await page.goto(`/${fx.slug}/owner/login`, { timeout: 180_000 });
+  await page.locator('input[type="email"]').fill(fx.ownerEmail);
+  await page.locator('input[type="password"]').fill(fixtureOwnerPassword());
+  await expect(async () => {
+    if (!/\/owner\/dashboard/.test(page.url())) await nativeClick(page, "Log in");
+    await page.waitForURL(/\/owner\/dashboard/, { timeout: 15_000, waitUntil: "commit" });
+  }).toPass({ timeout: 180_000 });
 }
 
 test("throttled staff walk on the iPad viewport", async ({ browser }) => {
@@ -132,7 +155,7 @@ test("throttled staff walk on the iPad viewport", async ({ browser }) => {
 
   await staffLogin(page, FIXTURE_NAMES.kitchenHand);
   await measuredTap(page, "staff login: Log in", page.getByRole("button", { name: "Log in", exact: true }), () =>
-    page.waitForURL(/\/(home|modules)$/, { timeout: T }),
+    page.waitForURL(/\/(home|modules)$/, { timeout: T, waitUntil: "commit" }),
   );
   await expect(page.getByText("modules complete")).toBeVisible({ timeout: T });
 
@@ -148,7 +171,7 @@ test("throttled staff walk on the iPad viewport", async ({ browser }) => {
   );
 
   // Ask Larder from the station
-  await page.getByRole("button", { name: "Ask Larder" }).click({ force: true });
+  await page.getByRole("button", { name: "Ask Larder" }).click({ force: true }); // opens on pointer up, not click
   await page.getByPlaceholder("Type your question").fill("What do I do if the oil is smoking?");
   const askBtn = page.getByRole("button", { name: "Ask", exact: true });
   await measuredTap(page, "Ask Larder: Ask", askBtn, async () => {
@@ -157,13 +180,13 @@ test("throttled staff walk on the iPad viewport", async ({ browser }) => {
     await expect(page.getByPlaceholder("Type your question")).toBeDisabled();
     await expect(page.locator('[data-testid="ask-larder-answer"], .border-preserve-red').first()).toBeVisible({ timeout: T });
   });
-  await page.getByRole("button", { name: "Close" }).click({ force: true });
+  await tapEl(page.getByRole("button", { name: "Close" }));
 
   await measuredTap(page, "station hub: Training card", page.getByRole("link", { name: /Training/ }), () =>
     expect(page.getByRole("button", { name: "Continue" })).toBeVisible({ timeout: T }),
   );
-  await page.getByRole("button", { name: "Continue" }).click({ force: true });
-  await page.getByRole("button", { name: "Once it has cooled" }).click({ force: true });
+  await tapEl(page.getByRole("button", { name: "Continue" }));
+  await tapEl(page.getByRole("button", { name: "Once it has cooled" }));
   await measuredTap(page, "module: last Continue (posts completion)", page.getByRole("button", { name: "Continue" }), () =>
     expect(page.getByRole("button", { name: "Back to station" })).toBeVisible({ timeout: T }),
     "Back to station",
@@ -198,15 +221,11 @@ test("throttled owner walk on the iPad viewport", async ({ browser }) => {
   await slow3g(page);
   const T = 180_000;
 
-  await page.goto(`/${fx.slug}/owner/login`, { timeout: T });
-  await page.locator('input[type="email"]').fill(fx.ownerEmail);
-  await page.locator('input[type="password"]').fill(fixtureOwnerPassword());
-  await nativeClick(page, "Log in");
-  await page.waitForURL(/\/owner\/dashboard/, { timeout: T });
+  await ownerLogin(page);
 
-  await page.getByRole("button", { name: /menu/i }).first().click({ force: true });
+  await tapEl(page.getByRole("button", { name: /menu/i }).first());
   await measuredTap(page, "owner nav drawer: Modules", page.getByRole("link", { name: "Modules", exact: true }), () =>
-    page.waitForURL(/\/owner\/modules$/, { timeout: T }),
+    page.waitForURL(/\/owner\/modules$/, { timeout: T, waitUntil: "commit" }),
   );
   const approve = page.getByRole("button", { name: "Approve", exact: true }).first();
   await measuredTap(page, "owner modules: Approve", approve, () =>
@@ -237,32 +256,46 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     const i = Object.keys(VIEWPORTS).indexOf(vpName);
     const context = await browser.newContext({ viewport: vp, hasTouch: vpName !== "desktop", baseURL: info.project.use.baseURL });
     const page = await context.newPage();
-    const shot = (name: string) => page.screenshot({ path: path.join(SHOTS, `${name}-${vpName}.png`) });
+    const shot = async (name: string) => {
+      console.log(`[shot] ${name}-${vpName}`);
+      await page.screenshot({ path: path.join(SHOTS, `${name}-${vpName}.png`), timeout: 30_000 });
+    };
+    test.setTimeout(300_000);
     const isRsc = (u: URL) => u.searchParams.has("_rsc");
 
     // Staff: station card pending (RSC for the next screen held 4 s)
     await staffLogin(page, FIXTURE_NAMES.kitchenHand);
     await nativeClick(page, "Log in");
-    await page.waitForURL(/\/(home|modules)$/, { timeout: 120_000 });
+    await page.waitForURL(/\/(home|modules)$/, { timeout: 120_000, waitUntil: "commit" });
+    // Overlay: the hub has already prefetched the next screen's loading shell, so the overlay shows at once.
     await page.goto(hubPath);
     await expect(page.getByRole("heading", { name: "What do you need?" })).toBeVisible({ timeout: 60_000 });
-    await page.unrouteAll();
+    await page.waitForTimeout(1_500); // let the prefetches land
     await hold(page, (u) => isRsc(u), 4_000);
-    await page.getByRole("link", { name: /Troubleshooting/ }).click({ force: true });
-    await page.waitForTimeout(350);
-    await shot("01-station-card-pending");
-    await page.waitForTimeout(1_600);
+    await tapEl(page.getByRole("link", { name: /Troubleshooting/ }));
+    await page.waitForTimeout(500);
     await shot("02-route-loading-overlay");
     await expect(page.getByRole("heading", { name: "Troubleshooting" })).toBeVisible({ timeout: 60_000 });
+    await page.unrouteAll();
+
+    // Card pending: hold every RSC request from page load, so nothing is prefetched yet (a slow connection on a cold
+    // iPad). The tapped card dims and shows its spinner until the next screen's shell arrives.
+    await hold(page, (u) => isRsc(u), 6_000);
+    await page.goto(hubPath);
+    await expect(page.getByRole("heading", { name: "What do you need?" })).toBeVisible({ timeout: 60_000 });
+    await tapEl(page.getByRole("link", { name: /Training/ }));
+    await page.waitForTimeout(400);
+    await shot("01-station-card-pending");
+    await expect(page.getByRole("button", { name: "Continue" })).toBeVisible({ timeout: 60_000 });
     await page.unrouteAll();
 
     // Ask Larder: Thinking (answer held 4 s)
     await page.goto(hubPath);
     await expect(page.getByRole("heading", { name: "What do you need?" })).toBeVisible({ timeout: 60_000 });
     await hold(page, (u) => u.pathname === "/api/staff/ask-larder", 4_000);
-    await page.getByRole("button", { name: "Ask Larder" }).click({ force: true });
+    await page.getByRole("button", { name: "Ask Larder" }).click({ force: true }); // opens on pointer up, not click
     await page.getByPlaceholder("Type your question").fill("Where is the fryer oil kept?");
-    await page.getByRole("button", { name: "Ask", exact: true }).click({ force: true });
+    await tapEl(page.getByRole("button", { name: "Ask", exact: true }));
     await page.waitForTimeout(400);
     await shot("03-ask-larder-thinking");
     await expect(page.locator('[data-testid="ask-larder-answer"], .border-preserve-red').first()).toBeVisible({ timeout: 90_000 });
@@ -273,33 +306,30 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     await expect(page.getByRole("heading", { name: "Temperature log" })).toBeVisible({ timeout: 60_000 });
     await hold(page, (u, m) => u.pathname === "/api/staff/compliance/b2" && m === "POST", 4_000);
     await page.getByLabel("Reading (°C)").nth(1).fill("-18");
-    await page.getByRole("button", { name: /Save/ }).click({ force: true });
+    await tapEl(page.getByRole("button", { name: "Done", exact: true })); // close the keypad so the Save bar shows
+    await page.waitForTimeout(300);
+    await tapEl(page.getByRole("button", { name: /Save/ }));
     await page.waitForTimeout(400);
     await shot("04-temperature-saving");
     await page.unrouteAll();
 
     // Staff nav drawer item pending (mobile and iPad have the hamburger; same drawer on desktop)
+    await hold(page, (u) => isRsc(u), 6_000); // from page load, so the drawer links are not prefetched yet
     await page.goto(`/${fx.slug}/home`);
     await expect(page.getByText("modules complete")).toBeVisible({ timeout: 60_000 });
-    await hold(page, (u) => isRsc(u), 4_000);
-    await page.getByRole("button", { name: /menu/i }).first().click({ force: true });
+    await tapEl(page.getByRole("button", { name: /menu/i }).first());
     await page.waitForTimeout(400);
-    await page.getByRole("link", { name: "Certificates", exact: true }).click({ force: true });
+    await tapEl(page.getByRole("link", { name: "Certificates", exact: true }));
     await page.waitForTimeout(350);
     await shot("05-staff-nav-item-pending");
     await page.unrouteAll();
 
     // Owner: module Approve busy (POST held 4 s), on this viewport's own pending module
-    await page.context().clearCookies();
-    await page.goto(`/${fx.slug}/owner/login`);
-    await page.locator('input[type="email"]').fill(fx.ownerEmail);
-    await page.locator('input[type="password"]').fill(fixtureOwnerPassword());
-    await nativeClick(page, "Log in");
-    await page.waitForURL(/\/owner\/dashboard/, { timeout: 120_000 });
+    await ownerLogin(page);
     await page.goto(`/${fx.slug}/owner/modules`);
     await hold(page, (u, m) => u.pathname === `/api/owner/modules/${pendingModuleIds[i + 1]}/approve` && m === "POST", 4_000);
     const row = page.locator("li, div").filter({ hasText: `Closing checklist ${i + 2}` }).filter({ has: page.getByRole("button", { name: "Approve", exact: true }) }).last();
-    await row.getByRole("button", { name: "Approve", exact: true }).click({ force: true });
+    await tapEl(row.getByRole("button", { name: "Approve", exact: true }));
     await page.waitForTimeout(400);
     await shot("06-owner-approve-busy");
     await page.unrouteAll();
