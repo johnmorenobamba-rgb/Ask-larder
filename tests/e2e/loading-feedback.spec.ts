@@ -45,14 +45,14 @@ test.beforeAll(async () => {
   stationId = st!.id;
   hubPath = `/${fx.slug}/station/${st!.qr_code_slug}`;
   await admin.from("stations").update({ primary_module_id: mod!.id }).eq("id", stationId).throwOnError();
-  await admin.from("station_faqs").insert({ station_id: stationId, venue_id: fx.venueId, question: "Where is the fryer oil kept?", answer: "In the dry store, bottom shelf.", provenance: "owner_sourced", status: "approved" }).throwOnError();
-  await admin.from("station_troubleshooting_issues").insert({ station_id: stationId, venue_id: fx.venueId, issue_title: "Oil is smoking", diagnosis_steps: "Check the thermostat dial.", resolution_text: "Turn it down to 180 degrees.", escalation_required: true, provenance: "owner_sourced", status: "approved" }).throwOnError();
+  await admin.from("station_faqs").insert({ station_id: stationId, question: "Where is the fryer oil kept?", answer: "In the dry store, bottom shelf.", provenance: "owner_sourced", status: "approved" }).throwOnError();
+  await admin.from("station_troubleshooting_issues").insert({ station_id: stationId, issue_title: "Oil is smoking", diagnosis_steps: "Check the thermostat dial.", resolution_text: "Turn it down to 180 degrees.", escalation_required: true, provenance: "owner_sourced", status: "approved" }).throwOnError();
   for (let i = 1; i <= 4; i++) {
     const { data: pm } = await admin.from("modules").insert({ venue_id: fx.venueId, title: `Closing checklist ${i}`, status: "pending_approval", version: 1 }).select("id").single().throwOnError();
     await admin.from("module_sections").insert({ module_id: pm!.id, section_order: 1, content: "Lock the back door." }).throwOnError();
     await admin.from("check_questions").insert({ module_id: pm!.id, section_order: 1, question: "What do you lock?", options: ["The back door", "Nothing"], correct_option_index: 0, expected_answer_context: "The back door." }).throwOnError();
     pendingModuleIds.push(pm!.id);
-    const { data: pf } = await admin.from("station_faqs").insert({ station_id: stationId, venue_id: fx.venueId, question: `Pending question ${i}`, answer: "Pending answer.", provenance: "owner_sourced", status: "pending_approval" }).select("id").single().throwOnError();
+    const { data: pf } = await admin.from("station_faqs").insert({ station_id: stationId, question: `Pending question ${i}`, answer: "Pending answer.", provenance: "owner_sourced", status: "pending_approval" }).select("id").single().throwOnError();
     pendingFaqIds.push(pf!.id);
   }
   fs.mkdirSync(SHOTS, { recursive: true });
