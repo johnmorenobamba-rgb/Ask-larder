@@ -4,6 +4,9 @@ import { ReviewAndActivateStep } from "@/components/onboarding/ReviewAndActivate
 import { WizardBackLink } from "@/components/onboarding/WizardBackLink";
 import { getPreviousStep, type VenueTypeFlags } from "@/lib/onboarding/steps";
 import { logQueryError } from "@/lib/supabase/logQueryError";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { countFormsOn } from "@/lib/compliance/engine/activationGroups";
+import { loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
 
 export default async function ReviewPage({ params }: { params: Promise<{ venueSlug: string }> }) {
   const { venueSlug } = await params;
@@ -20,6 +23,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
     menuItemCount,
     contactCount,
     keyRoleRows,
+    activation,
+    activationRows,
   ] = await Promise.all([
     supabase.from("venues").select("name").eq("id", staff!.venue_id!).maybeSingle(),
     supabase.from("wizard_sessions").select("venue_type_flags").eq("venue_id", staff!.venue_id!).maybeSingle(),
@@ -30,6 +35,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
     supabase.from("menu_items").select("id", { count: "exact", head: true }).eq("venue_id", staff!.venue_id!),
     supabase.from("venue_contacts").select("id", { count: "exact", head: true }).eq("venue_id", staff!.venue_id!),
     supabase.from("venue_key_roles").select("role_type, name, app_user_id").eq("venue_id", staff!.venue_id!),
+    loadActivationContext(supabase, createAdminClient(), staff!.venue_id!),
+    loadActivationRows(supabase, staff!.venue_id!),
   ]);
 
   // This page's summary directly informs an owner's decision to activate
@@ -69,6 +76,12 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
       outstandingItems.push(`${label} ${role.name} doesn't have a Larder login yet. Invite them under Staff and link it.`);
     }
   }
+  if (flags.compliance_forms_reviewed !== true) {
+    outstandingItems.push("Compliance forms haven't been reviewed yet. Check which forms are on under Compliance forms.");
+  }
+  if (activation.degraded || activationRows.degraded) {
+    outstandingItems.push("Couldn't load the compliance form settings, so the forms count may be wrong. Reload to check.");
+  }
   if (flags.licensed && flags.capacity_sourced_from_document !== true) {
     outstandingItems.push("Licensed capacity and trading hours are unconfirmed against the actual licence document. Verify before relying on them.");
   }
@@ -88,6 +101,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ venueSl
           certificateTypeCount: certTypes.length,
           menuItemCount: menuItemCount.count ?? 0,
           contactCount: contactCount.count ?? 0,
+          formsOnCount: countFormsOn(activationRows.rows, activation.ctx),
         }}
         outstandingItems={outstandingItems}
       />

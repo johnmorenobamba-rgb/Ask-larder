@@ -18,6 +18,8 @@ type Summary = {
   certificateTypeCount: number;
   menuItemCount: number;
   contactCount: number;
+  /** Generic compliance forms switched on (the temperature log is always on and not counted). */
+  formsOnCount: number;
 };
 
 const ESCALATION_LABELS: Record<string, string> = {
@@ -94,6 +96,7 @@ export function ReviewAndActivateStep({
             <Stat label="Certificate types" value={summary.certificateTypeCount} />
             <Stat label="Menu items" value={summary.menuItemCount} />
             <Stat label="Contacts" value={summary.contactCount} />
+            <Stat label="Compliance forms on" value={summary.formsOnCount} />
           </div>
 
           {escalations.length > 0 && (

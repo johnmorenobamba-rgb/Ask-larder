@@ -20,6 +20,11 @@ export type VenueTypeFlags = {
   // anything, so it's persisted here (matching every other non-schema
   // branching/outstanding-item flag) and surfaced on Review & activate.
   capacity_sourced_from_document?: boolean;
+  // Set when the owner confirms the compliance forms step (the forms review). The defaults themselves are not
+  // written anywhere: they stay derived from the answers above, so a later change to food service or venue type
+  // still moves them. Only the owner's own switches are stored (venue_compliance_forms). Review & activate lists
+  // the forms review as outstanding until this is true.
+  compliance_forms_reviewed?: boolean;
 };
 
 export const WIZARD_STEP_SLUGS = [
@@ -38,6 +43,7 @@ export const WIZARD_STEP_SLUGS = [
   "staff-invite",
   "content-intake",
   "certificate-types",
+  "compliance-forms",
   "review",
 ] as const;
 
@@ -59,6 +65,7 @@ export const WIZARD_STEPS: { slug: WizardStepSlug; label: string }[] = [
   { slug: "staff-invite", label: "Invite staff" },
   { slug: "content-intake", label: "SOPs & training content" },
   { slug: "certificate-types", label: "Certificate types" },
+  { slug: "compliance-forms", label: "Compliance forms" },
   { slug: "review", label: "Review & activate" },
 ];
 
@@ -117,6 +124,8 @@ export function getNextStep(slug: WizardStepSlug, flags: VenueTypeFlags): Wizard
     case "content-intake":
       return "certificate-types";
     case "certificate-types":
+      return "compliance-forms";
+    case "compliance-forms":
       return "review";
     case "review":
       return "review";
@@ -164,8 +173,10 @@ export function getPreviousStep(slug: WizardStepSlug, flags: VenueTypeFlags): Wi
       return "staff-invite";
     case "certificate-types":
       return "content-intake";
-    case "review":
+    case "compliance-forms":
       return "certificate-types";
+    case "review":
+      return "compliance-forms";
   }
 }
 
