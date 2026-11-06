@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
@@ -19,7 +21,9 @@ export function PinLoginForm({
   const router = useRouter();
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Busy from the tap until the next screen has rendered (router.push runs
+  // in a transition), with a ref lock so a double tap sends one login.
+  const { busy: loading, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
   // Block U -- set by a 428 from login-pin (PIN never set, or just cleared
   // by an owner's "Reset PIN"). The staff member sets their own new PIN
@@ -29,25 +33,33 @@ export function PinLoginForm({
 
   async function submitPin() {
     if (!selectedStaffId || pin.length < 4) return;
-    setLoading(true);
+    if (!begin()) return;
     setError(null);
 
-    const res = await fetch("/api/auth/staff/login-pin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ venueSlug, staffUserId: selectedStaffId, pin }),
-    });
-    const body = await res.json();
+    let res: Response;
+    let body;
+    try {
+      res = await fetch("/api/auth/staff/login-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueSlug, staffUserId: selectedStaffId, pin }),
+      });
+      body = await res.json().catch(() => ({}));
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+      fail();
+      return;
+    }
 
     if (!res.ok) {
       if (res.status === 428) {
         setNeedsPinSetup(true);
-        setLoading(false);
+        fail();
         setPin("");
         return;
       }
       setError(body.error ?? "Couldn't log in. Check your connection and try again.");
-      setLoading(false);
+      fail();
       setPin("");
       return;
     }
@@ -57,24 +69,32 @@ export function PinLoginForm({
       access_token: body.access_token,
       refresh_token: body.refresh_token,
     });
-    router.push(redirectTo);
+    navigate(() => router.push(redirectTo));
   }
 
   async function submitNewPin() {
     if (!selectedStaffId || pin.length < 4 || pin !== confirmPin) return;
-    setLoading(true);
+    if (!begin()) return;
     setError(null);
 
-    const res = await fetch("/api/auth/staff/set-own-pin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ venueSlug, staffUserId: selectedStaffId, pin }),
-    });
-    const body = await res.json().catch(() => null);
+    let res: Response;
+    let body;
+    try {
+      res = await fetch("/api/auth/staff/set-own-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueSlug, staffUserId: selectedStaffId, pin }),
+      });
+      body = await res.json().catch(() => null);
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+      fail();
+      return;
+    }
 
     if (!res.ok) {
       setError(body?.error ?? "Couldn't set your PIN. Try again.");
-      setLoading(false);
+      fail();
       setPin("");
       setConfirmPin("");
       return;
@@ -83,6 +103,8 @@ export function PinLoginForm({
     // Now log in for real with the PIN just set, same flow as normal login.
     setNeedsPinSetup(false);
     setConfirmPin("");
+    // Release this lock; the login below takes its own straight away.
+    fail();
     await submitPin();
   }
 
@@ -162,9 +184,10 @@ export function PinLoginForm({
             type="button"
             onClick={submitNewPin}
             disabled={loading || pin.length < 4 || pin !== confirmPin}
+            aria-busy={loading}
             className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Saving…" : "Set PIN and log in"}
+            <BusyLabel busy={loading} idle="Set PIN and log in" busyText="Saving" />
           </button>
         </div>
       </ElevatedCell>
@@ -192,9 +215,10 @@ export function PinLoginForm({
           type="button"
           onClick={submitPin}
           disabled={loading || pin.length < 4}
+          aria-busy={loading}
           className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
         >
-          {loading ? "Checking…" : "Log in"}
+          <BusyLabel busy={loading} idle="Log in" busyText="Logging in" />
         </button>
       </div>
     </ElevatedCell>

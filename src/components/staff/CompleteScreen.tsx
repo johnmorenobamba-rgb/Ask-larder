@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { Stamp } from "./Stamp";
 
@@ -27,6 +28,7 @@ export function CompleteScreen({
   hasSeenIntro: boolean;
 }) {
   const router = useRouter();
+  const [leaving, startLeaving] = useTransition();
 
   useEffect(() => {
     if (hasSeenIntro) return;
@@ -54,10 +56,12 @@ export function CompleteScreen({
         {hasSeenIntro && (
           <button
             type="button"
-            onClick={() => router.push(`/${venueSlug}/modules`)}
-            className="block mx-auto rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+            onClick={() => startLeaving(() => router.push(`/${venueSlug}/modules`))}
+            disabled={leaving}
+            aria-busy={leaving}
+            className="block mx-auto rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
           >
-            Back to modules
+            <BusyLabel busy={leaving} idle="Back to modules" busyText="Back to modules" />
           </button>
         )}
       </div>

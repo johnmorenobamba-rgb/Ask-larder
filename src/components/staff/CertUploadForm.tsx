@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { formatCalendarDate } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -36,7 +38,10 @@ export function CertUploadForm({
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [issuedDate, setIssuedDate] = useState(existingIssuedDate ?? "");
-  const [loading, setLoading] = useState(false);
+  // Upload request: a ref locked busy flag so a double tap sends one upload.
+  const { busy: loading, begin, end } = useBusyNavigation();
+  // Back to certificates: busy until the list has rendered.
+  const back = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -45,7 +50,7 @@ export function CertUploadForm({
 
   async function submit() {
     if (!issuedDate || (!file && !existingPhotoRef)) return;
-    setLoading(true);
+    if (!begin()) return;
     setError(null);
 
     try {
@@ -71,10 +76,10 @@ export function CertUploadForm({
       if (!res.ok) throw new Error(resBody.error ?? "Couldn't save this certificate.");
 
       setDone(true);
+      end();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save this certificate.");
-    } finally {
-      setLoading(false);
+      end();
     }
   }
 
@@ -85,10 +90,15 @@ export function CertUploadForm({
           <Stamp label={`${certTypeName} uploaded`} />
           <button
             type="button"
-            onClick={() => router.push(`/${venueSlug}/certs`)}
-            className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+            onClick={() => {
+              if (!back.begin()) return;
+              back.navigate(() => router.push(`/${venueSlug}/certs`));
+            }}
+            disabled={back.busy}
+            aria-busy={back.busy}
+            className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
           >
-            Back to certificates
+            <BusyLabel busy={back.busy} idle="Back to certificates" busyText="Back to certificates" />
           </button>
         </div>
       </main>
@@ -144,10 +154,11 @@ export function CertUploadForm({
             type="button"
             onClick={submit}
             disabled={loading || !issuedDate || (!file && !existingPhotoRef)}
+            aria-busy={loading}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
             {loading && <SyncingIndicator />}
-            {loading ? "Verifying…" : "Save certificate"}
+            {loading ? "Saving" : "Save certificate"}
           </button>
         </div>
       </PassSlide>

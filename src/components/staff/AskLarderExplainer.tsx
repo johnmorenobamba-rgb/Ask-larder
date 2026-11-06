@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useReducer, useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { AskLarderTriggerIcon, type AskLarderIconState } from "@/components/staff/AskLarderTriggerIcon";
 import { LARDER_MARK_PATH } from "@/components/shared/LarderMark";
@@ -148,9 +150,15 @@ export function AskLarderExplainer({
     return () => clearTimeout(timer);
   }, [beat]);
 
+  // Busy from the tap until home has rendered; one request per tap.
+  const { busy: finishing, begin, navigate } = useBusyNavigation();
+
   async function finish() {
-    await fetch("/api/staff/mark-intro-seen", { method: "POST" });
-    router.push(redirectTo ?? `/${venueSlug}/home`);
+    if (!begin()) return;
+    // A failed mark is not fatal (the intro just shows again next time),
+    // so navigate either way, as before.
+    await fetch("/api/staff/mark-intro-seen", { method: "POST" }).catch(() => null);
+    navigate(() => router.push(redirectTo ?? `/${venueSlug}/home`));
   }
 
   return (
@@ -183,9 +191,11 @@ export function AskLarderExplainer({
           <button
             type="button"
             onClick={finish}
-            className="block mx-auto rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+            disabled={finishing}
+            aria-busy={finishing}
+            className="block mx-auto rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
           >
-            Got it
+            <BusyLabel busy={finishing} idle="Got it" busyText="Got it" />
           </button>
         )}
       </div>

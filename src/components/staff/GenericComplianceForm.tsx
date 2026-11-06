@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
 import { NumPadInput } from "@/components/staff/NumPadInput";
@@ -94,7 +96,8 @@ export function GenericComplianceForm(props: FormViewProps) {
   const [correcting, setCorrecting] = useState<string | null>(null);
   const [cosignId, setCosignId] = useState("");
   const [cosignPin, setCosignPin] = useState("");
-  const [saving, setSaving] = useState(false);
+  // Busy until the refreshed record list has rendered, not just the POST.
+  const { busy: saving, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ failed: boolean; reasons: string[]; stageLabel: string | null } | null>(null);
   const requestId = useRef(newId());
@@ -161,7 +164,7 @@ export function GenericComplianceForm(props: FormViewProps) {
 
   async function save() {
     if (!canSave) return;
-    setSaving(true);
+    if (!begin()) return;
     setError(null);
     setResult(null);
     const body = {
@@ -182,7 +185,7 @@ export function GenericComplianceForm(props: FormViewProps) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Couldn't save the record. Try again.");
-        setSaving(false);
+        fail();
         return;
       }
       setResult({ failed: !!data.failed, reasons: Array.isArray(data.failReasons) ? data.failReasons : [], stageLabel: props.stageLabel });
@@ -191,11 +194,10 @@ export function GenericComplianceForm(props: FormViewProps) {
       setNote("");
       setCorrecting(null);
       setCosignPin("");
-      setSaving(false);
-      router.refresh();
+      navigate(() => router.refresh());
     } catch {
       setError("Couldn't reach the server. Your answers are still here. Try again.");
-      setSaving(false);
+      fail();
     }
   }
 
@@ -394,9 +396,14 @@ export function GenericComplianceForm(props: FormViewProps) {
               type="button"
               onClick={save}
               disabled={!canSave}
+              aria-busy={saving}
               className="min-h-14 w-full rounded-full bg-preserve-red px-8 font-sans text-lg font-medium text-parchment disabled:bg-clay-brown disabled:text-parchment sm:w-auto"
             >
-              {saving ? "Saving…" : correcting ? "Save correction" : props.isRegister ? "Save entry" : "Save record"}
+              <BusyLabel
+                busy={saving}
+                busyText="Saving"
+                idle={correcting ? "Save correction" : props.isRegister ? "Save entry" : "Save record"}
+              />
             </button>
           </div>
         </StickyBar>

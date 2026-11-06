@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { StickyBar } from "@/components/staff/StickyBar";
 import { NumPadInput } from "@/components/staff/NumPadInput";
@@ -59,7 +61,8 @@ export function TemperatureLogForm({
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<Record<string, RowState>>({});
-  const [saving, setSaving] = useState(false);
+  // Busy until the refreshed readings have rendered, not just until the POST returns.
+  const { busy: saving, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ saved: number; flagged: number } | null>(null);
   // A retry with unchanged input reuses its request id, so a double tap or a flaky
@@ -102,7 +105,7 @@ export function TemperatureLogForm({
 
   async function save() {
     if (!canSave) return;
-    setSaving(true);
+    if (!begin()) return;
     setError(null);
     setResult(null);
     try {
@@ -131,17 +134,17 @@ export function TemperatureLogForm({
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         setError(data?.error ?? "Couldn't save the readings. Your readings are still here, try again.");
+        fail();
         return;
       }
       const saved = Array.isArray(data?.saved) ? data.saved : [];
       setResult({ saved: saved.length, flagged: saved.filter((s: { outOfRange: boolean }) => s.outOfRange).length });
       requestIds.current.clear();
       setRows({});
-      router.refresh();
+      navigate(() => router.refresh());
     } catch {
       setError("Couldn't reach the server. Your readings are still here, try again.");
-    } finally {
-      setSaving(false);
+      fail();
     }
   }
 
@@ -388,9 +391,14 @@ export function TemperatureLogForm({
               type="button"
               onClick={save}
               disabled={!canSave}
+              aria-busy={saving}
               className="min-h-14 w-full rounded-full bg-preserve-red px-8 font-sans text-lg font-medium text-parchment disabled:bg-clay-brown disabled:text-parchment sm:w-auto"
             >
-              {saving ? "Saving…" : entries.length > 1 ? `Save ${entries.length} readings` : "Save reading"}
+              <BusyLabel
+                busy={saving}
+                busyText="Saving"
+                idle={entries.length > 1 ? `Save ${entries.length} readings` : "Save reading"}
+              />
             </button>
           </div>
         </StickyBar>

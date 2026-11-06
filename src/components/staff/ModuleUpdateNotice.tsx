@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { PassSlide } from "./PassSlide";
 import type { OutstandingAcknowledgement } from "@/lib/staff/outstandingAcknowledgements";
@@ -19,11 +21,12 @@ export function ModuleUpdateNotice({
   outstanding: OutstandingAcknowledgement[];
 }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  // Busy until the modules list has rendered; one acknowledgement per tap.
+  const { busy: loading, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
 
   async function acknowledge() {
-    setLoading(true);
+    if (!begin()) return;
     setError(null);
 
     const res = await fetch("/api/staff/acknowledge-module-version", {
@@ -32,15 +35,15 @@ export function ModuleUpdateNotice({
       body: JSON.stringify({
         moduleVersionIds: outstanding.map((o) => o.moduleVersionId),
       }),
-    });
+    }).catch(() => null);
 
-    if (!res.ok) {
+    if (!res || !res.ok) {
       setError("Couldn't save that. Check your connection and try again.");
-      setLoading(false);
+      fail();
       return;
     }
 
-    router.push(`/${venueSlug}/modules`);
+    navigate(() => router.push(`/${venueSlug}/modules`));
   }
 
   return (
@@ -71,9 +74,10 @@ export function ModuleUpdateNotice({
             type="button"
             onClick={acknowledge}
             disabled={loading}
+            aria-busy={loading}
             className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Saving…" : "Acknowledge and continue"}
+            <BusyLabel busy={loading} idle="Acknowledge and continue" busyText="Acknowledging" />
           </button>
         </div>
       </PassSlide>

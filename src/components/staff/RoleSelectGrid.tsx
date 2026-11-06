@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { InlineSpinner } from "@/components/shared/InlineSpinner";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { SPRING_PRESS } from "@/lib/motion/springPress";
@@ -12,6 +13,8 @@ const CONFIRM_DELAY_MS = 250;
 export function RoleSelectGrid({ roles, modulesHref }: { roles: Role[]; modulesHref: string }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Lets the role save and the push to the checklist run as one transition.
+  const [, startTransition] = useTransition();
 
   function selectRole(roleId: string) {
     if (selectedId) return;
@@ -24,7 +27,7 @@ export function RoleSelectGrid({ roles, modulesHref }: { roles: Role[]; modulesH
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roleId }),
       });
-      router.push(modulesHref);
+      startTransition(() => router.push(modulesHref));
     }, CONFIRM_DELAY_MS);
   }
 
@@ -35,6 +38,7 @@ export function RoleSelectGrid({ roles, modulesHref }: { roles: Role[]; modulesH
           key={role.id}
           type="button"
           disabled={selectedId !== null}
+          aria-busy={selectedId === role.id}
           onClick={() => selectRole(role.id)}
           whileHover={selectedId === null ? { scale: 1.03 } : undefined}
           whileTap={selectedId === null ? { scale: 0.97 } : undefined}
@@ -49,7 +53,12 @@ export function RoleSelectGrid({ roles, modulesHref }: { roles: Role[]; modulesH
               {role.department}
             </span>
           )}
-          <span className="font-display text-lg text-ink">{role.name}</span>
+          <span className="flex items-center gap-2 font-display text-lg text-ink">
+            {role.name}
+            {/* Chosen role stays marked as working until the checklist renders
+                (selectedId is never cleared: this screen is left behind). */}
+            {selectedId === role.id && <InlineSpinner className="text-clay-brown" />}
+          </span>
         </motion.button>
       ))}
     </div>

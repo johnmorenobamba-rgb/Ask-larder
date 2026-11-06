@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { formatDate, formatTimeOfDay } from "@/lib/format/date";
 import { useRouter } from "next/navigation";
 import { PassSlide } from "./PassSlide";
@@ -9,7 +11,8 @@ import { useHasMounted } from "@/lib/hooks/useHasMounted";
 export function SignatureForm({ venueSlug }: { venueSlug: string }) {
   const router = useRouter();
   const [typedName, setTypedName] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Busy until the completion screen has rendered; one signature per tap.
+  const { busy: loading, begin, navigate, fail } = useBusyNavigation();
   const [error, setError] = useState<string | null>(null);
 
   // Both the timestamp and device label depend on the client's clock/UA,
@@ -26,23 +29,30 @@ export function SignatureForm({ venueSlug }: { venueSlug: string }) {
 
   async function submit() {
     if (typedName.trim().length < 2) return;
-    setLoading(true);
+    if (!begin()) return;
     setError(null);
 
-    const res = await fetch("/api/staff/complete-signature", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ typedName: typedName.trim() }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/staff/complete-signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ typedName: typedName.trim() }),
+      });
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+      fail();
+      return;
+    }
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       setError(body.error ?? "Couldn't record your signature. Check your connection and try again.");
-      setLoading(false);
+      fail();
       return;
     }
 
-    router.push(`/${venueSlug}/complete`);
+    navigate(() => router.push(`/${venueSlug}/complete`));
   }
 
   return (
@@ -67,9 +77,10 @@ export function SignatureForm({ venueSlug }: { venueSlug: string }) {
             type="button"
             onClick={submit}
             disabled={loading || typedName.trim().length < 2}
+            aria-busy={loading}
             className="w-full rounded-full bg-preserve-red px-6 py-3 font-sans font-medium text-parchment disabled:opacity-50"
           >
-            {loading ? "Signing…" : "Confirm and sign"}
+            <BusyLabel busy={loading} idle="Confirm and sign" busyText="Signing" />
           </button>
         </div>
       </PassSlide>

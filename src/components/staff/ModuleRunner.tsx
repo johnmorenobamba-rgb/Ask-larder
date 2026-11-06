@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useBusyNavigation } from "@/lib/hooks/useBusyNavigation";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 import { useRouter } from "next/navigation";
 import { CheckQuestion } from "./CheckQuestion";
 import { ModuleContentBlock } from "./ModuleContentBlock";
@@ -57,6 +59,11 @@ export function ModuleRunner({
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
+  // Last Continue posts the completion: locked and labelled while it runs,
+  // so a double tap can't record it twice and the tap visibly registers.
+  const completing = useBusyNavigation();
+  // Completion screen's back button: busy until the next screen renders.
+  const back = useBusyNavigation();
   const resolvedBackHref = backHref ?? `/${venueSlug}/modules`;
 
   const steps = useMemo<Step[]>(() => {
@@ -76,15 +83,23 @@ export function ModuleRunner({
   }, [sections, questions]);
 
   async function finish() {
+    if (!completing.begin()) return;
+    // Same as before: the Stamp screen follows whether or not the request
+    // succeeded (it never checked res.ok); a network throw no longer
+    // leaves the button stuck.
     await fetch("/api/staff/complete-module", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ moduleId }),
-    });
+    }).catch(() => null);
+    completing.end();
     setDone(true);
   }
 
+  const isLastStep = step + 1 >= steps.length;
+
   function advance() {
+    if (completing.busy) return;
     if (step + 1 >= steps.length) {
       finish();
     } else {
@@ -110,12 +125,17 @@ export function ModuleRunner({
               // router.refresh() forces that re-fetch regardless of whether
               // the pathname actually changed; push() still does the real
               // navigation for the modules-list case where the two differ.
-              router.push(resolvedBackHref);
-              router.refresh();
+              if (!back.begin()) return;
+              back.navigate(() => {
+                router.push(resolvedBackHref);
+                router.refresh();
+              });
             }}
-            className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+            disabled={back.busy}
+            aria-busy={back.busy}
+            className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
           >
-            {backLabel}
+            <BusyLabel busy={back.busy} idle={backLabel} busyText={backLabel} />
           </button>
         </div>
       </main>
@@ -155,9 +175,11 @@ export function ModuleRunner({
               <button
                 type="button"
                 onClick={advance}
-                className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+                disabled={completing.busy}
+                aria-busy={completing.busy}
+                className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
               >
-                Continue
+                <BusyLabel busy={completing.busy && isLastStep} idle="Continue" busyText="Completing module" />
               </button>
             </div>
           ) : current?.type === "question" ? (
@@ -168,6 +190,7 @@ export function ModuleRunner({
               correctOptionIndex={current.question.correct_option_index ?? 0}
               correctiveText={current.question.correctiveText}
               onContinue={advance}
+              busy={completing.busy && isLastStep}
             />
           ) : null}
         </PassSlide>

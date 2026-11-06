@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { SPRING_PRESS } from "@/lib/motion/springPress";
+import { BusyLabel } from "@/components/shared/BusyLabel";
 
 export function CheckQuestion({
   question,
@@ -10,12 +11,15 @@ export function CheckQuestion({
   correctOptionIndex,
   correctiveText,
   onContinue,
+  busy = false,
 }: {
   question: string;
   options: string[];
   correctOptionIndex: number;
   correctiveText: string | null;
   onContinue: () => void;
+  /** Last question of a module: Continue is posting the completion. */
+  busy?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -75,9 +79,11 @@ export function CheckQuestion({
         <button
           type="button"
           onClick={onContinue}
-          className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment"
+          disabled={busy}
+          aria-busy={busy}
+          className="rounded-full bg-preserve-red px-8 py-3 font-sans font-medium text-parchment disabled:opacity-60"
         >
-          Continue
+          <BusyLabel busy={busy} idle="Continue" busyText="Completing module" />
         </button>
       )}
     </div>
