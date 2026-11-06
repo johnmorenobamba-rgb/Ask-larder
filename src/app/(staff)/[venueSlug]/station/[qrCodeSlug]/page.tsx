@@ -1,6 +1,7 @@
 import { requireStationContext } from "@/lib/stations/requireStationContext";
 import { createClient } from "@/lib/supabase/server";
 import { PressableLink } from "@/components/shared/PressableLink";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { SessionActions } from "@/components/staff/SessionActions";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
@@ -54,9 +55,9 @@ export default async function StationPage({
         {ipadMode && (
           <div className="flex items-center justify-between gap-4">
             {staff.isDevice ? (
-              <a href={`/${venueSlug}/device`} className="font-mono text-xs text-clay-brown underline">
+              <PendingLink href={`/${venueSlug}/device`} indicator="inline" className="font-mono text-xs text-clay-brown underline">
                 Back to venue iPad home
-              </a>
+              </PendingLink>
             ) : (
               <span className="font-mono text-xs text-clay-brown">{staff.name}</span>
             )}

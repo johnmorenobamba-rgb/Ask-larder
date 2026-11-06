@@ -4,6 +4,7 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { PressableLink } from "@/components/shared/PressableLink";
+import { LinkPendingIndicator } from "@/components/shared/LinkPendingIndicator";
 import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export default async function CertsPage({
@@ -62,11 +63,13 @@ export default async function CertsPage({
                   <li key={certType.id}>
                     <PressableLink
                       href={`/${venueSlug}/certs/${certType.id}`}
+                      indicator="none"
                       className="flex items-center justify-between gap-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-4 hover:border-preserve-red"
                     >
                       <span className="font-sans text-ink">{certType.name}</span>
-                      <span className="font-mono text-xs text-clay-brown">
+                      <span className="inline-flex items-center font-mono text-xs text-clay-brown">
                         {expiry ? `Expires ${formatCalendarDate(expiry)}` : "Not uploaded"}
+                        <LinkPendingIndicator placement="inline" />
                       </span>
                     </PressableLink>
                   </li>

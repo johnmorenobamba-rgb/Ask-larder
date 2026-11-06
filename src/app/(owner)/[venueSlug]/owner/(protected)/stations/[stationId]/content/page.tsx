@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { createClient } from "@/lib/supabase/server";
 import { ProvenanceBadge, type Provenance } from "@/components/owner/ProvenanceBadge";
 import { ApproveFaqButton } from "@/components/owner/ApproveFaqButton";
@@ -42,9 +42,9 @@ export default async function StationContentPage({
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-8">
         <div>
-          <Link href={`/${venueSlug}/owner/stations`} className="font-mono text-xs uppercase tracking-wide text-clay-brown">
+          <PendingLink indicator="inline" href={`/${venueSlug}/owner/stations`} className="font-mono text-xs uppercase tracking-wide text-clay-brown">
             Back to stations
-          </Link>
+          </PendingLink>
           <h1 className="mt-2 font-display text-3xl font-bold text-ink">{station.name} content</h1>
           <p className="font-sans text-sm text-clay-brown">FAQs and troubleshooting entries staff will see when they scan this station.</p>
         </div>

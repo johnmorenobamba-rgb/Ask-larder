@@ -14,3 +14,9 @@ export default function Link({
     </a>
   );
 }
+
+// LinkPendingIndicator (inside PressableLink / PendingLink) reads
+// useLinkStatus; nothing navigates during a render, so never pending.
+export function useLinkStatus() {
+  return { pending: false };
+}

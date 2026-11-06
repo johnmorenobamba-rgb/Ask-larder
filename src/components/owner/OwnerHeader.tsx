@@ -18,6 +18,15 @@ export function OwnerHeader({ venueSlug, venueName }: { venueSlug: string; venue
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // The drawer stays open after a nav tap so the tapped item can show its
+  // pending spinner; it closes here, the moment that navigation commits
+  // (state adjusted during render, React's documented alternative to a
+  // setState in an effect).
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  if (pathname !== drawerPath) {
+    setDrawerPath(pathname);
+    setOpen(false);
+  }
   const segment = pathname?.split("/")[3] ?? "";
 
   useEffect(() => {

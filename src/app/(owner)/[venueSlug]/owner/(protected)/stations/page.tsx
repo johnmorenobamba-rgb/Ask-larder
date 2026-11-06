@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { stationScanUrl } from "@/lib/site";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
@@ -81,18 +81,18 @@ export default async function OwnerStationsPage({
                 <StationModuleSelect stationId={s.id} currentModuleId={s.primary_module_id} modules={modules ?? []} />
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   <StationPhotoUpload venueId={staff!.venue_id!} stationId={s.id} />
-                  <Link
+                  <PendingLink indicator="inline"
                     href={`/${venueSlug}/owner/stations/${s.id}/label`}
                     className="font-mono text-xs uppercase tracking-wide text-preserve-red underline"
                   >
                     View / print QR label
-                  </Link>
-                  <Link
+                  </PendingLink>
+                  <PendingLink indicator="inline"
                     href={`/${venueSlug}/owner/stations/${s.id}/content`}
                     className="font-mono text-xs uppercase tracking-wide text-clay-brown underline"
                   >
                     FAQs & troubleshooting
-                  </Link>
+                  </PendingLink>
                   <DeleteStationButton stationId={s.id} />
                 </div>
                 {/*

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { createClient } from "@/lib/supabase/server";
 import { ModuleStatusActions } from "@/components/owner/ModuleStatusActions";
 import { ScrollStackList } from "@/components/shared/ScrollStackList";
@@ -129,19 +129,19 @@ export default async function OwnerModulesPage({
                   )}
                 </div>
               )}
-              <Link
+              <PendingLink indicator="inline"
                 href={`/${venueSlug}/owner/sops/${m.id}`}
                 className="mt-2 inline-block font-mono text-xs text-clay-brown underline"
               >
                 View
-              </Link>
+              </PendingLink>
               {m.status === "live" && (
-                <Link
+                <PendingLink indicator="inline"
                   href={`/${venueSlug}/owner/modules/${m.id}/versions`}
                   className="mt-2 ml-3 inline-block font-mono text-xs text-clay-brown underline"
                 >
                   Versions
-                </Link>
+                </PendingLink>
               )}
             </div>
           ))}

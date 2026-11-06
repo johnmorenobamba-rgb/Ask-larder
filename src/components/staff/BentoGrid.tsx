@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { openAskLarderOverlay } from "@/lib/askLarderBus";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
@@ -10,6 +10,8 @@ import { ProgressRing } from "@/components/shared/ProgressRing";
 import { ParallaxPermissionPrompt } from "@/components/shared/ParallaxPermissionPrompt";
 import { useViewportParallax } from "@/lib/hooks/useViewportParallax";
 import { StationsGallery } from "@/components/staff/StationsGallery";
+import { PendingLink } from "@/components/shared/PendingLink";
+import { InlineSpinner } from "@/components/shared/InlineSpinner";
 
 type CertRow = { id: string; name: string; status: string; label: string; color: string; days: number | null };
 type ContinueModule = { id: string; title: string; status: string };
@@ -181,6 +183,9 @@ export function BentoGrid({
   remotionFrame?: number;
 }) {
   const router = useRouter();
+  // Continue is a button (router.push), not a Link, so it carries its own
+  // pending state: same dim and spinner as PendingLink, from the transition.
+  const [continuePending, startContinue] = useTransition();
   const [ringAnimated, setRingAnimated] = useState(false);
   const { needsIOSPermission, requestIOSPermission } = useViewportParallax();
 
@@ -255,11 +260,24 @@ export function BentoGrid({
             stack; every conditional branch (no module / no photo) unchanged. */}
         <button
           type="button"
-          onClick={() => continueModule && router.push(`/${venueSlug}/modules/${continueModule.id}`)}
+          onClick={() => {
+            if (!continueModule || continuePending) return;
+            startContinue(() => router.push(`/${venueSlug}/modules/${continueModule.id}`));
+          }}
           disabled={!continueModule}
+          aria-busy={continuePending}
           className={cellClassName("col-span-4 block w-full text-left disabled:opacity-60 sm:col-span-2", remotionFrame)}
           style={cellEntranceStyle(remotionFrame, 140)}
         >
+          {/* Dim and spinner live on this inner wrapper, not the button: the
+              button carries the bento entrance animation, and the pending
+              dim (also an animation) would replace it. */}
+          <span className="pending-link relative block h-full">
+          {continuePending && (
+            <span data-link-pending="" aria-hidden="true" className="link-pending-in pointer-events-none absolute right-4 top-4 z-10 inline-flex text-clay-brown">
+              <InlineSpinner />
+            </span>
+          )}
           <ElevatedCell
             glowColor="var(--color-clay-brown)"
             floatDurationS={5.6}
@@ -299,6 +317,7 @@ export function BentoGrid({
               </div>
             )}
           </ElevatedCell>
+          </span>
         </button>
 
         {/* Ask Larder — Ink cell, Block J3's traveling-glow chit mark */}
@@ -339,11 +358,11 @@ export function BentoGrid({
             {certRows.length === 0 ? (
               <p className="font-sans text-sm text-clay-brown">None required</p>
             ) : allCertsValid ? (
-              <a href={`/${venueSlug}/certs`} className="block font-sans text-sm text-bay-green">
+              <PendingLink href={`/${venueSlug}/certs`} indicator="inline" className="block font-sans text-sm text-bay-green">
                 All certificates valid
-              </a>
+              </PendingLink>
             ) : (
-              <a href={`/${venueSlug}/certs/${frontCert.id}`} className="block">
+              <PendingLink href={`/${venueSlug}/certs/${frontCert.id}`} className="block">
                 <div className="rounded-xl border-2 bg-parchment px-3 py-2" style={{ borderColor: frontCert.color }}>
                   <p className="truncate font-sans text-sm text-ink">{frontCert.name}</p>
                   <p className="font-mono text-xs" style={{ color: frontCert.color }}>
@@ -365,7 +384,7 @@ export function BentoGrid({
                     +{certRows.length - 1} more
                   </span>
                 )}
-              </a>
+              </PendingLink>
             )}
           </ElevatedCell>
         </div>
@@ -378,7 +397,7 @@ export function BentoGrid({
             is genuinely close to expiring. */}
         {nextCertExpiring && (
           <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 380)}>
-            <a href={`/${venueSlug}/certs/${nextCertExpiring.id}`} className="block h-full">
+            <PendingLink href={`/${venueSlug}/certs/${nextCertExpiring.id}`} className="block h-full">
               <ElevatedCell
                 glowColor="var(--color-saffron)"
                 floatDurationS={5.7}
@@ -396,7 +415,7 @@ export function BentoGrid({
                   Expires in <AnimatedNumber value={nextCertExpiring.days ?? 0} animate={ringAnimated} />d
                 </p>
               </ElevatedCell>
-            </a>
+            </PendingLink>
           </div>
         )}
 
@@ -406,7 +425,7 @@ export function BentoGrid({
             parchment card with a different glyph (matches the owner
             dashboard's own Contacts tile treatment). */}
         <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 400)}>
-          <a href={`/${venueSlug}/contacts`} className="block h-full">
+          <PendingLink href={`/${venueSlug}/contacts`} indicatorClassName="text-parchment" className="block h-full">
             <ElevatedCell
               glowColor="var(--color-clay-brown)"
               floatDurationS={6.3}
@@ -421,7 +440,7 @@ export function BentoGrid({
               </div>
               <p className="font-sans text-sm text-parchment">Suppliers, tradies, and who to call</p>
             </ElevatedCell>
-          </a>
+          </PendingLink>
         </div>
 
         {/* Temperature log (B2) -- BOH and BAR staff and manager tier only. Ink by default, Preserve
@@ -429,7 +448,7 @@ export function BentoGrid({
             the one thing that is loud. No Stamp: a routine log is not a trust moment. */}
         {temperature && (
           <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 420)}>
-            <a href={`/${venueSlug}/temperature`} className="block h-full">
+            <PendingLink href={`/${venueSlug}/temperature`} indicatorClassName="text-parchment" className="block h-full">
               <ElevatedCell
                 glowColor={temperature.openFlags > 0 ? "var(--color-preserve-red)" : "var(--color-saffron)"}
                 floatDurationS={6.1}
@@ -460,14 +479,14 @@ export function BentoGrid({
                   </div>
                 )}
               </ElevatedCell>
-            </a>
+            </PendingLink>
           </div>
         )}
 
         {/* Compliance forms hub -- every staff member. Overdue is on screen only. */}
         {forms && (
           <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 440)}>
-            <a href={`/${venueSlug}/forms`} className="block h-full">
+            <PendingLink href={`/${venueSlug}/forms`} indicatorClassName="text-parchment" className="block h-full">
               <ElevatedCell
                 glowColor={forms.overdue > 0 ? "var(--color-preserve-red)" : "var(--color-saffron)"}
                 floatDurationS={6.4}
@@ -496,7 +515,7 @@ export function BentoGrid({
                   </div>
                 )}
               </ElevatedCell>
-            </a>
+            </PendingLink>
           </div>
         )}
 
@@ -508,7 +527,7 @@ export function BentoGrid({
             them. */}
         {suggestions && (
           <div className={cellClassName("col-span-4 sm:col-span-1", remotionFrame)} style={cellEntranceStyle(remotionFrame, 460)}>
-            <a href={`/${venueSlug}/owner/suggestions`} className="block h-full">
+            <PendingLink href={`/${venueSlug}/owner/suggestions`} indicatorClassName="text-parchment" className="block h-full">
               <ElevatedCell
                 glowColor="var(--color-saffron)"
                 floatDurationS={6.0}
@@ -533,7 +552,7 @@ export function BentoGrid({
                   <p className="font-sans text-sm text-parchment/70">Nothing to suggest right now</p>
                 )}
               </ElevatedCell>
-            </a>
+            </PendingLink>
           </div>
         )}
 

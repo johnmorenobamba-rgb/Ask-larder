@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { LinkPendingIndicator } from "@/components/shared/LinkPendingIndicator";
 import { LarderMark } from "@/components/shared/LarderMark";
 import { SPRING_PRESS } from "@/lib/motion/springPress";
 import { SessionActions } from "@/components/staff/SessionActions";
@@ -81,6 +83,7 @@ export function NavDrawer({
   /** Venue iPad mode: shows Log out and Switch user at the bottom of the drawer. */
   ipadMode?: boolean;
 }) {
+  const pathname = usePathname();
   const items: readonly { segment: string; label: string }[] = showTemperature
     ? [...ITEMS.slice(0, 3), FORMS_ITEM, TEMPERATURE_ITEM, ...ITEMS.slice(3)]
     : [...ITEMS.slice(0, 3), FORMS_ITEM, ...ITEMS.slice(3)];
@@ -107,10 +110,15 @@ export function NavDrawer({
             <MotionLink
               key={item.segment}
               href={href}
-              onClick={onClose}
+              // Tapping the current page closes at once; anything else keeps
+              // the drawer open with this item's spinner until the new
+              // screen commits (StaffHeader closes it on the path change).
+              onClick={() => {
+                if (href === pathname) onClose();
+              }}
               whileTap={{ scale: 0.97 }}
               transition={SPRING_PRESS}
-              className="flex items-center gap-3 rounded-xl px-3 py-3"
+              className="pending-link flex items-center gap-3 rounded-xl px-3 py-3"
             >
               {item.segment === "home" && <LarderMark size={22} color={color} />}
               {item.segment === "modules" && <ModulesIcon color={color} />}
@@ -123,6 +131,7 @@ export function NavDrawer({
               >
                 {item.label}
               </span>
+              <LinkPendingIndicator placement="inline" className="ml-auto text-clay-brown" />
             </MotionLink>
           );
         })}

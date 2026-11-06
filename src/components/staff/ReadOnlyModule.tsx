@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { ModuleContentBlock } from "@/components/staff/ModuleContentBlock";
 
 type Section = { id: string; section_order: number; content: string | null };
@@ -20,9 +20,9 @@ export function ReadOnlyModule({
   return (
     <main className="min-h-screen bg-parchment px-6 pb-16 pt-24">
       <div className="mx-auto w-full max-w-lg space-y-6">
-        <Link href={backHref} className="font-mono text-xs text-clay-brown underline">
+        <PendingLink href={backHref} indicator="inline" className="font-mono text-xs text-clay-brown underline">
           {backLabel}
-        </Link>
+        </PendingLink>
         <h1 className="font-display text-3xl font-bold text-ink">{title}</h1>
         <p className="font-sans text-sm text-ink/70">
           You are reading on the venue iPad. Log in with your PIN to complete this module.

@@ -1,5 +1,6 @@
 "use client";
 
+import { PendingLink } from "@/components/shared/PendingLink";
 export type FocusedStation = {
   id: string;
   name: string;
@@ -72,12 +73,13 @@ export function StationFocusOverlay({
             </p>
           </div>
           {station.href && (
-            <a
+            <PendingLink
               href={station.href}
+              indicator="inline"
               className="mt-4 block rounded-full bg-ink px-5 py-3 text-center font-sans text-sm font-medium text-parchment"
             >
               Open station content
-            </a>
+            </PendingLink>
           )}
         </div>
       </div>

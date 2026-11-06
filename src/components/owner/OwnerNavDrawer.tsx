@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { LinkPendingIndicator } from "@/components/shared/LinkPendingIndicator";
 import { SPRING_PRESS } from "@/lib/motion/springPress";
 
 const MotionLink = motion.create(Link);
@@ -46,6 +48,7 @@ export function OwnerNavDrawer({
   onClose: () => void;
   onSignOut: () => void;
 }) {
+  const pathname = usePathname();
   return (
     <div
       className={`fixed inset-0 z-50 flex justify-end transition-opacity duration-240 ${
@@ -63,14 +66,20 @@ export function OwnerNavDrawer({
       >
         {SECTIONS.map((s) => {
           const active = activeSegment === s.href;
+          const href = `/${venueSlug}/owner/${s.href}`;
           return (
             <MotionLink
               key={s.href}
-              href={`/${venueSlug}/owner/${s.href}`}
-              onClick={onClose}
+              href={href}
+              // Tapping the current page closes at once; anything else keeps
+              // the drawer open with this item's spinner until the new
+              // screen commits (OwnerHeader closes it on the path change).
+              onClick={() => {
+                if (href === pathname) onClose();
+              }}
               whileTap={{ scale: 0.97 }}
               transition={SPRING_PRESS}
-              className="rounded-xl px-3 py-3"
+              className="pending-link flex items-center rounded-xl px-3 py-3"
             >
               <span
                 className={`font-mono text-xs uppercase tracking-wide ${
@@ -79,6 +88,7 @@ export function OwnerNavDrawer({
               >
                 {s.label}
               </span>
+              <LinkPendingIndicator placement="inline" className="ml-auto text-clay-brown" />
             </MotionLink>
           );
         })}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { ElevatedCell } from "@/components/shared/ElevatedCell";
 import { ChitMark } from "@/components/shared/ChitMark";
 import { AnimatedNumber } from "@/components/shared/AnimatedNumber";
@@ -278,7 +279,7 @@ function NearMissCell({
   }, []);
 
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-preserve-red)"
         floatDurationS={5.9}
@@ -300,7 +301,7 @@ function NearMissCell({
           </p>
         </div>
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -327,7 +328,7 @@ function EscalationsCell({
   }, []);
 
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor={color}
         floatDurationS={5.7}
@@ -350,7 +351,7 @@ function EscalationsCell({
           <p className="font-sans text-sm text-bay-green">Nothing unresolved</p>
         )}
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -374,7 +375,7 @@ function TemperatureCell({
   }, []);
 
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor={color}
         floatDurationS={5.9}
@@ -409,7 +410,7 @@ function TemperatureCell({
           </div>
         )}
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -437,7 +438,7 @@ function WeeklyReportCell({
   }, []);
 
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} indicatorClassName="text-parchment" className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-saffron)"
         floatDurationS={6.1}
@@ -465,7 +466,7 @@ function WeeklyReportCell({
           )}
         </div>
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -475,7 +476,7 @@ function WeeklyReportCell({
 // than another parchment card with a different glyph.
 function ContactsCell({ href }: { href: string }) {
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} indicatorClassName="text-parchment" className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-clay-brown)"
         floatDurationS={6.3}
@@ -489,7 +490,7 @@ function ContactsCell({ href }: { href: string }) {
         </div>
         <p className="font-sans text-sm text-parchment">Suppliers, tradies, and who to call</p>
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -503,7 +504,7 @@ function ContactsCell({ href }: { href: string }) {
 // trace, distinguishing it from Weekly report's plain Ink cell.
 function SuggestionsCell({ count, preview, href }: { count: number; preview: string | null; href: string }) {
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} indicatorClassName="text-parchment" className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-saffron)"
         floatDurationS={6.0}
@@ -529,7 +530,7 @@ function SuggestionsCell({ count, preview, href }: { count: number; preview: str
           <p className="font-sans text-sm text-parchment/70">Nothing to suggest right now</p>
         )}
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 
@@ -595,7 +596,7 @@ function StaffCompletionSummaryCell({ staff, href }: { staff: StaffCompletionRow
   }, []);
 
   return (
-    <Link href={href} className="block h-full w-full">
+    <PendingLink href={href} className="block h-full w-full">
       <ElevatedCell
         glowColor="var(--color-bay-green)"
         floatDurationS={5.7}
@@ -612,7 +613,7 @@ function StaffCompletionSummaryCell({ staff, href }: { staff: StaffCompletionRow
           </p>
         </div>
       </ElevatedCell>
-    </Link>
+    </PendingLink>
   );
 }
 

@@ -433,6 +433,94 @@ body {
   }
 }
 
+/* Per item tap feedback for client navigations (PendingLink, PressableLink,
+   LinkPendingIndicator). The tapped link dims and shows a small spinner,
+   both only after a 100ms hold so a prefetched navigation that lands
+   instantly never flashes. Animations, not transitions, so these never
+   override a Tailwind `transition-*` utility already on the same link
+   (unlayered CSS beats the utilities layer). `both` fill keeps the start
+   frame through the delay. */
+@keyframes link-pending-dim {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+@keyframes link-pending-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes inline-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pending-link:has([data-link-pending]) {
+  animation: link-pending-dim 150ms ease-out 100ms both;
+}
+
+.link-pending-in {
+  animation: link-pending-in 120ms ease-out 100ms both;
+}
+
+.inline-spinner {
+  animation: inline-spin 0.8s linear infinite;
+}
+
+/* A busy button (request in flight or its navigation still pending) keeps
+   its disabled look AND says it is working: progress cursor on desktop,
+   the label itself changes to the verb in progress ("Saving"). */
+[aria-busy="true"] {
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending-link:has([data-link-pending]),
+  .link-pending-in {
+    animation: none;
+  }
+  .pending-link:has([data-link-pending]) {
+    opacity: 0.6;
+  }
+  /* The arc stops rotating but stays drawn, so the state still reads. */
+  .inline-spinner {
+    animation: none;
+  }
+}
+
+/* Touch pressed state. The venue iPad has no hover, so every tappable
+   thing needs to visibly react the instant a finger lands, before any
+   navigation or request has even started. `:where()` keeps specificity at
+   zero, so any element with its own active/pressed styling (Tailwind
+   `active:` utilities, framer-motion whileTap) still wins. The `scale`
+   property (not `transform`) composes with Tailwind v4's translate/scale
+   utilities and framer-motion's inline transforms instead of replacing
+   them. Reduced motion keeps the opacity change and drops the scale. */
+:where(a[href], button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary):active {
+  opacity: 0.78;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(a[href], button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary):active {
+    scale: 0.98;
+  }
+}
+
+/* iOS Safari paints its own grey tap flash on top of the pressed state
+   above; one consistent pressed look instead of two. */
+:where(a, button, [role="button"], summary) {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Block L4 -- frosted-glass surface, to the stated bar of a real 1px inner
    border + inset highlight for actual edge-refraction, not backdrop-blur
    alone (a blur with no border/highlight just looks like a blurry flat

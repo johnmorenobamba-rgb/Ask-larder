@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { requireStationContext } from "@/lib/stations/requireStationContext";
 import { createClient } from "@/lib/supabase/server";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
@@ -27,9 +27,9 @@ export default async function StationTroubleshootingPage({
     <main className="min-h-screen bg-parchment px-6 py-10">
       <div className="mx-auto w-full max-w-lg space-y-8">
         <div>
-          <Link href={hubPath} className="mb-3 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wide text-clay-brown hover:text-ink">
+          <PendingLink href={hubPath} indicator="inline" className="mb-3 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wide text-clay-brown hover:text-ink">
             ← Back to station
-          </Link>
+          </PendingLink>
           <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">{station.name}</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-ink">Troubleshooting</h1>
         </div>

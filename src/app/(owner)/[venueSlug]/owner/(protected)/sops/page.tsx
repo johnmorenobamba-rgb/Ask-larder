@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { GenerateSopButton } from "@/components/owner/GenerateSopButton";
@@ -29,12 +29,12 @@ export default async function SopsPage({ params }: { params: Promise<{ venueSlug
               {withDoc} of {rows.length} modules have a curated SOP document.
             </p>
           </div>
-          <Link
+          <PendingLink indicator="inline"
             href={`/${venueSlug}/owner/sops/print-all`}
             className="rounded-full border-2 border-clay-brown px-5 py-2 font-sans text-sm font-medium text-ink"
           >
             Print all
-          </Link>
+          </PendingLink>
         </div>
 
         <div className="space-y-2">
@@ -52,12 +52,12 @@ export default async function SopsPage({ params }: { params: Promise<{ venueSlug
                   </p>
                 </div>
                 {hasDoc ? (
-                  <Link
+                  <PendingLink indicator="inline"
                     href={`/${venueSlug}/owner/sops/${m.id}`}
                     className="rounded-full bg-preserve-red px-5 py-2 font-sans text-sm font-medium text-parchment"
                   >
                     View
-                  </Link>
+                  </PendingLink>
                 ) : (
                   <GenerateSopButton moduleId={m.id} hasExisting={false} />
                 )}

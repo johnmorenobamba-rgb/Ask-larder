@@ -1,5 +1,6 @@
 import { requireStationContext } from "@/lib/stations/requireStationContext";
 import { createClient } from "@/lib/supabase/server";
+import { PendingLink } from "@/components/shared/PendingLink";
 import { ReadOnlyModule } from "@/components/staff/ReadOnlyModule";
 import { ModuleRunner } from "@/components/staff/ModuleRunner";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
@@ -70,7 +71,7 @@ export default async function StationTrainingPage({
           <p className="font-mono text-xs uppercase tracking-wide text-clay-brown">{station.name}</p>
           <h1 className="mt-2 font-display text-2xl font-bold text-ink">Log in to see this training</h1>
           <p className="mt-3 max-w-sm font-sans text-ink/70">This training is for specific roles. Log in with your PIN.</p>
-          <a href={hubPath} className="mt-4 font-mono text-xs text-clay-brown underline">Back to station</a>
+          <PendingLink href={hubPath} indicator="inline" className="mt-4 font-mono text-xs text-clay-brown underline">Back to station</PendingLink>
         </main>
       );
     }

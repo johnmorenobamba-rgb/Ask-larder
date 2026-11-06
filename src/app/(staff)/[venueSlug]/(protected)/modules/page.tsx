@@ -72,6 +72,8 @@ export default async function ModulesPage({
                 <li key={module.id}>
                   <PressableLink
                     href={`/${venueSlug}/modules/${module.id}`}
+                    indicator="inline"
+                    indicatorClassName="ml-auto"
                     className="flex items-center gap-3 rounded-2xl border-2 border-clay-brown/20 px-4 py-4 hover:border-preserve-red"
                   >
                     {!staff.isDevice && (
