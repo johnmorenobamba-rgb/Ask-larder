@@ -19,7 +19,16 @@ export type ActivationItem = {
 
 // Owner switches for the compliance forms. A switch saves straight away (manager tier only, enforced by
 // the database), then the page refreshes. The reason line says why a form is on or off.
-export function FormActivationList({ groups }: { groups: { heading: string; items: ActivationItem[] }[] }) {
+// headingLevel: the cadence group headings sit under the page title on Owner, Forms (h2, the default) and under
+// the step title inside the onboarding wizard (h3).
+export function FormActivationList({
+  groups,
+  headingLevel = 2,
+}: {
+  groups: { heading: string; items: ActivationItem[] }[];
+  headingLevel?: 2 | 3;
+}) {
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,9 +65,9 @@ export function FormActivationList({ groups }: { groups: { heading: string; item
       )}
       {groups.map((g) => (
         <section key={g.heading} aria-labelledby={`g-${g.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="space-y-3">
-          <h2 id={`g-${g.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="font-display text-xl font-bold text-ink">
+          <Heading id={`g-${g.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="font-display text-xl font-bold text-ink">
             {g.heading}
-          </h2>
+          </Heading>
           <ul className="space-y-3">
             {g.items.map((item) => {
               const on = state[item.id] ?? item.on;
@@ -85,7 +94,7 @@ export function FormActivationList({ groups }: { groups: { heading: string; item
                       on ? "border-bay-green bg-bay-green text-parchment" : "border-clay-brown bg-parchment text-ink hover:border-ink"
                     }`}
                   >
-                    {busy === item.id ? "Saving…" : on ? "On" : "Off"}
+                    {busy === item.id ? "Saving" : on ? "On" : "Off"}
                   </button>
                 </li>
               );

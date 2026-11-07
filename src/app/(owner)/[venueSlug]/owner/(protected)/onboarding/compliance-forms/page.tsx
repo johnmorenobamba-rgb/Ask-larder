@@ -37,7 +37,7 @@ export default async function ComplianceFormsPage({ params }: { params: Promise<
         activeUnitCount={units.count ?? 0}
         missing={missingActivationAnswers(ctx)}
         linked={LINKED_FEATURES.map((f) => ({ id: f.id, title: f.title, note: f.note }))}
-        held={HELD_FORMS.map((f) => ({ id: f.id, title: f.title, note: f.reason }))}
+        held={HELD_FORMS.map((f) => ({ id: f.id, title: f.title, note: f.ownerNote }))}
         degraded={degraded || rowsDegraded || !!units.error}
       />
     </>

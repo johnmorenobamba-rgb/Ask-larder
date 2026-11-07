@@ -102,8 +102,10 @@ export function ComplianceFormsStep({
       </div>
 
       {missing.length > 0 && (
-        <div className="space-y-3 rounded-2xl border-2 border-saffron px-4 py-5 md:px-6">
-          <p className={labelClass}>Check these answers</p>
+        <section aria-labelledby="check-answers" className="space-y-3 rounded-2xl border-2 border-saffron px-4 py-5 md:px-6">
+          <p id="check-answers" className={labelClass}>
+            Check these answers
+          </p>
           <ul className="space-y-2">
             {missing.map((m) => (
               <li key={m.message} className="font-sans text-sm text-ink">
@@ -114,10 +116,10 @@ export function ComplianceFormsStep({
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
-      <FormActivationList groups={groups} />
+      <FormActivationList groups={groups} headingLevel={3} />
 
       <section aria-labelledby="linked-forms" className="space-y-3">
         <h3 id="linked-forms" className="font-display text-xl font-bold text-ink">
