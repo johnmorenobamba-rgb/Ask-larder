@@ -2,12 +2,10 @@ import Link from "next/link";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { FormActivationList, type ActivationItem } from "@/components/owner/FormActivationList";
+import { FormActivationList } from "@/components/owner/FormActivationList";
 import { TradingDayControl } from "@/components/owner/TradingDayControl";
-import { FORMS } from "@/lib/compliance/engine/forms";
-import { activationReason, isFormOn } from "@/lib/compliance/engine/activation";
+import { buildActivationGroups } from "@/lib/compliance/engine/activationGroups";
 import { DEFAULT_CUTOFF_HOUR, loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
-import { CADENCE_HEADINGS, CADENCE_ORDER, FORM_TAG_LABELS } from "@/lib/compliance/engine/types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,22 +20,7 @@ export default async function OwnerFormsPage({ params }: { params: Promise<{ ven
     loadActivationRows(supabase, staff!.venue_id!),
   ]);
 
-  const groups = CADENCE_ORDER.map((cadence) => ({
-    heading: CADENCE_HEADINGS[cadence],
-    items: FORMS.filter((f) => f.cadence === cadence).map<ActivationItem>((f) => ({
-      id: f.id,
-      title: f.title,
-      summary: f.summary,
-      cadenceLabel: f.cadenceNote,
-      tagLabel: FORM_TAG_LABELS[f.tag],
-      tagVerified: f.tagVerified,
-      tagNote: f.tagNote,
-      defaultList: !!f.defaultList,
-      on: isFormOn(f, rows.get(f.id), ctx),
-      reason: activationReason(f, rows.get(f.id), ctx),
-      audience: [...f.departments].map((d) => (d === "BOH" ? "back of house" : d === "BAR" ? "bar" : "front of house")).join(" and ") + " staff and managers",
-    })),
-  })).filter((g) => g.items.length > 0);
+  const groups = buildActivationGroups(rows, ctx);
 
   return (
     <main className="min-h-screen bg-parchment px-4 py-10 md:px-6">

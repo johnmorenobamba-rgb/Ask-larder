@@ -1075,17 +1075,18 @@ export const LINKED_FEATURES = [
   { id: "B15", title: "Food handler training register", note: "Read only list of completed training modules.", kind: "training" as const },
 ];
 
-/** Forms deliberately not built in Stage 0, with the reason (shown in the report). */
+/** Forms deliberately not built in Stage 0. `reason` is the recorded internal reason (shown in the report); `ownerNote` is the
+ * plain wording an owner sees on the onboarding wizard's compliance forms step. */
 export const HELD_FORMS = [
-  { id: "B16", title: "Staff illness and exclusion log", reason: "Holds health information about named staff. Needs a privacy decision first." },
-  { id: "F4", title: "Incident and accident report", reason: "Notifiable incidents go to WorkSafe and need a reviewed legal flow." },
-  { id: "F5", title: "Register of Injuries", reason: "A legal register with its own retention rules. Needs a reviewed legal flow." },
-  { id: "F6T", title: "First aid treatment log", reason: "Holds health information about named people. Needs a privacy decision first." },
-  { id: "F12", title: "Barring order record", reason: "Holds names and dates of birth and must be destroyed on a legal schedule. Needs a reviewed legal flow." },
-  { id: "F11", title: "Liquor incident register", reason: "Required only by licence condition or accord. Needs the venue's actual condition." },
-  { id: "B21", title: "Food Safety Program activity records", reason: "Per activity records from the FoodSmart numbered sheets, which could not be read." },
-  { id: "RES", title: "Residents' register", reason: "Needs a legal review of what must be kept. Out of Stage 0 scope." },
-  { id: "RSG", title: "Gaming and responsible service of gaming", reason: "Gaming compliance is out of scope by decision (29 Sep)." },
+  { id: "B16", title: "Staff illness and exclusion log", reason: "Holds health information about named staff. Needs a privacy decision first.", ownerNote: "Holds health information about named staff. Waiting on a privacy decision." },
+  { id: "F4", title: "Incident and accident report", reason: "Notifiable incidents go to WorkSafe and need a reviewed legal flow.", ownerNote: "Notifiable incidents go to your state's workplace safety regulator. Needs a reviewed legal process first." },
+  { id: "F5", title: "Register of Injuries", reason: "A legal register with its own retention rules. Needs a reviewed legal flow.", ownerNote: "A legal register with its own retention rules. Needs a reviewed legal process first." },
+  { id: "F6T", title: "First aid treatment log", reason: "Holds health information about named people. Needs a privacy decision first.", ownerNote: "Holds health information about named people. Waiting on a privacy decision." },
+  { id: "F12", title: "Barring order record", reason: "Holds names and dates of birth and must be destroyed on a legal schedule. Needs a reviewed legal flow.", ownerNote: "Holds names and dates of birth that must be destroyed on a legal schedule. Needs a reviewed legal process first." },
+  { id: "F11", title: "Liquor incident register", reason: "Required only by licence condition or accord. Needs the venue's actual condition.", ownerNote: "Only needed when your licence conditions or a liquor accord require it. Keep it the way your licence says." },
+  { id: "B21", title: "Food Safety Program activity records", reason: "Per activity records from the FoodSmart numbered sheets, which could not be read.", ownerNote: "Your Food Safety Program sets its own record sheets. Keep using those." },
+  { id: "RES", title: "Residents' register", reason: "Needs a legal review of what must be kept. Out of Stage 0 scope.", ownerNote: "For venues with accommodation. Needs a legal review of what must be kept." },
+  { id: "RSG", title: "Gaming and responsible service of gaming", reason: "Gaming compliance is out of scope by decision (29 Sep).", ownerNote: "Larder doesn't cover gaming. Keep your current gaming records." },
 ];
 
 export function formsByGroup() {
