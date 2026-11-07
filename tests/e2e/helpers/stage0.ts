@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import { pickerName } from "./pickerName";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import type { Database } from "../../../src/lib/supabase/types";
 
 // Disposable fixture venue for the Stage 0 compliance forms specs and the staff UI guide screenshots.
@@ -64,7 +64,9 @@ export async function createFixture(prefix = "s0"): Promise<Fixture> {
 
   await admin.from("venue_licence_profile").upsert({ venue_id: venueId, state: "VIC", licence_type: "general" }, { onConflict: "venue_id" });
   await admin.from("venue_compliance_settings").upsert({ venue_id: venueId, trade_waste_agreement: "yes", offers_accommodation: false, high_risk_activities: [] }, { onConflict: "venue_id" });
-  await admin.from("wizard_sessions").insert({ venue_id: venueId, status: "complete", venue_type_flags: { food_service_level: "full_kitchen" } });
+  // status must be one of in_progress, completed, abandoned (check constraint). Until 8 Nov 2026 this said "complete", the
+  // insert failed silently and fixture venues had no wizard session (so food service read as unset).
+  await admin.from("wizard_sessions").insert({ venue_id: venueId, status: "completed", venue_type_flags: { food_service_level: "full_kitchen" } }).throwOnError();
 
   const stationNames = ["Pizza oven", "Fryer", "Grill", "Bar and glass wash"];
   for (const [i, name] of stationNames.entries()) {
@@ -169,8 +171,14 @@ export async function nativeClick(page: Page, text: string, tag = "button") {
 export async function loginStaff(page: Page, fx: Fixture, name: string) {
   await page.context().clearCookies();
   await page.goto(`/${fx.slug}/login`);
-  await nativeClick(page, pickerName(name));
-  await page.locator('input[type="password"]').fill(PIN);
+  // The roster can be tapped before React hydrates it (then the tap does nothing); tap again until the PIN field shows.
+  // Same retry as loading-feedback.spec.ts staffLogin.
+  const pinField = page.locator('input[type="password"]');
+  await expect(async () => {
+    if (!(await pinField.isVisible())) await nativeClick(page, pickerName(name));
+    await expect(pinField).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 60_000 });
+  await pinField.fill(PIN);
   await nativeClick(page, "Log in");
   await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 60_000 });
 }

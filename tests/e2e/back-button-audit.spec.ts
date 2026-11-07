@@ -525,8 +525,13 @@ test.describe.serial("back-button audit: staff pages (17 pages)", () => {
 
   async function loginStaff(page: Page, name: string) {
     await page.goto(`/${SLUG}/login`);
-    await nativeClick(page, pickerName(name));
-    await page.locator('input[type="password"]').fill(PIN);
+    // Tap again until the PIN field shows: the roster can be tapped before React hydrates it (loading-feedback.spec.ts).
+    const pinField = page.locator('input[type="password"]');
+    await expect(async () => {
+      if (!(await pinField.isVisible())) await nativeClick(page, pickerName(name));
+      await expect(pinField).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 60_000 });
+    await pinField.fill(PIN);
     await nativeClick(page, "Log in");
     await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 15000 });
   }
