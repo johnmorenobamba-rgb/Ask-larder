@@ -45,8 +45,9 @@ Also expected: station FAQs and troubleshooting (approved) for each station with
 ## 2. How a venue is built (the real path)
 
 1. **Wizard pages** under `/[venueSlug]/owner/onboarding/*`: venue basics, licensing gate, licence detail, crowd control, RSA, food
-   service level, menu, equipment, promotions, contacts, staff roles, staff invite, certificate types, compliance setup, content
-   intake, review. The page by page spec is `docs/block-q/q2-wizard-flow-and-schema.md`; the flags vocabulary is in the same file.
+   service level, menu, equipment, compliance setup, promotions, contacts, staff roles, staff invite, content intake, certificate
+   types, compliance forms, review. The compliance forms step shows every form's default with its reason, lets the owner switch
+   forms, and sets `wizard_sessions.venue_type_flags.compliance_forms_reviewed` when confirmed. The page by page spec is `docs/block-q/q2-wizard-flow-and-schema.md`; the flags vocabulary is in the same file.
    Structured compliance fields write straight to their schema tables (section 1).
 2. **Content intake** (gap detection loop): draft section content, automatic self consistency check, immediate embedding via
    `ingestModule()`, test question spot check, loop until every applicable topic is answerable. Transcripts and grading are in
@@ -85,6 +86,8 @@ Tick every line for a new venue. "Verify" is how Claude Code checks it without t
 - [ ] The Anthropic API key is valid in Vercel Production (a 401 `invalid x-api-key` in runtime errors means it is not).
 
 **Compliance forms**
+- [ ] The owner confirmed the wizard's Compliance forms step (`venue_type_flags.compliance_forms_reviewed = true`), and its
+      "Check these answers" panel is empty or each item is explained (venue type set, food service level set, trade waste known).
 - [ ] Defaults match the venue: food level, licence type, venue type, accommodation, trade waste, high risk activities.
 - [ ] Any form the owner switched off was a deliberate choice. Check `venue_compliance_forms` for `enabled=false` rows nobody
       remembers (the reference had bar forms switched off by mistake until 29 Oct 2026).
@@ -162,7 +165,6 @@ select u.name from app_users u left join staff_roles r on r.id = u.staff_role_id
 ## 6. Known gaps (the wizard does not yet do these; check by hand)
 
 - Venue iPad mode has no wizard step or owner facing switch. It is a database setting plus the pairing card in Settings.
-- Compliance form activation is not asked during the wizard beyond compliance setup; review the Owner, Forms page at handover.
 - Station photos and equipment manuals are loaded by scripts (`scripts/one-off/upload-coachmans-arms-station-photos.mjs`,
   `scripts/run-equipment-content-pipeline.mjs`), not the wizard.
 - There is no automatic parity report. Section 5 is the manual version. A script that runs section 5 plus the Ask Larder test set and
