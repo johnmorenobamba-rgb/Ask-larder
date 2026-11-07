@@ -247,7 +247,25 @@ test.describe.serial("onboarding wizard walkthrough (Block Q)", () => {
     await expect(page.getByText("Already added.").first()).toBeVisible();
     await page.getByRole("button", { name: "Add First Aid" }).click();
     await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL(/\/compliance-forms$/);
+
+    // --- Page 13b: compliance forms review (8 Nov 2026) ---
+    // Every form is listed with its on or off state; a switch saves straight away (PATCH /api/owner/compliance/forms).
+    // Switch one form off and back on, then confirm, which records compliance_forms_reviewed and moves on to review.
+    await expect(page.getByRole("heading", { name: "Compliance forms", exact: true })).toBeVisible();
+    const lostProperty = page.getByRole("switch", { name: "Lost property log" });
+    await expect(lostProperty).toHaveAttribute("aria-checked", "true");
+    await lostProperty.click();
+    await expect(lostProperty).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByText("Switched off by the owner")).toBeVisible({ timeout: 15_000 });
+    await lostProperty.click();
+    await expect(lostProperty).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByText("Switched on by the owner")).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: "Confirm forms and continue" }).click();
     await page.waitForURL(/\/review$/);
+    await expect(page.getByText("Compliance forms haven't been reviewed yet", { exact: false })).toHaveCount(0);
+    const { data: reviewed } = await admin.from("wizard_sessions").select("venue_type_flags").eq("venue_id", venueId!).maybeSingle();
+    expect((reviewed?.venue_type_flags as { compliance_forms_reviewed?: boolean } | null)?.compliance_forms_reviewed).toBe(true);
 
     // --- Page 14: review & activate ---
     await expect(page.getByRole("heading", { name: "Onboarding Wizard Smoke Venue" }).first()).toBeVisible();
