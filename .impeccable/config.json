@@ -10,6 +10,18 @@
           "remotion/promo4/ui.tsx"
         ],
         "createdAt": "2026-10-15T10:10:04.106Z"
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-04T15:02:11.250Z",
+        "reason": "Brand system: CLAUDE.md Branding Kit sets Inter as the body face for legibility on kitchen iPads"
+      },
+      {
+        "rule": "overused-font",
+        "value": "space grotesk",
+        "createdAt": "2026-11-04T15:02:11.345Z",
+        "reason": "Brand system: CLAUDE.md Branding Kit sets Space Grotesk as the display face (Decision Log 31 Aug 2026, Block L2)"
       }
     ]
   }

@@ -1,3 +1,4 @@
+import { startTimer } from "@/lib/perf/timing";
 import Link from "next/link";
 import { resolveNow } from "@/lib/compliance/engine/testClock";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
@@ -15,10 +16,12 @@ export const dynamic = "force-dynamic";
 export default async function OwnerCompliancePage({ params, searchParams }: { params: Promise<{ venueSlug: string }>; searchParams: Promise<{ asof?: string }> }) {
   const { venueSlug } = await params;
   const sp = await searchParams;
-  const staff = await requireOwnerPageStaff(venueSlug);
+  const t = startTimer(`owner-compliance ${venueSlug}`);
+  const staff = await t.step("requireOwnerPageStaff", requireOwnerPageStaff(venueSlug));
   const supabase = await createClient();
   const now = resolveNow(sp.asof);
-  const hub = await loadHub(supabase, createAdminClient(), staff!.venue_id!, { isManagerTier: true, department: null }, now);
+  const hub = await t.step("hub", loadHub(supabase, createAdminClient(), staff!.venue_id!, { isManagerTier: true, department: null }, now));
+  t.end();
   const on = hub.forms.filter((f) => f.on);
   const groups = groupHubByCadence(on);
 

@@ -2,9 +2,9 @@
 // grid check and the A/V audit all import this file. No React, no CSS. Every cue is a frame computed from
 // bars and beats on the 112.5 BPM grid (beat 16 f, 16th 4 f, bar 64 f at 30 fps).
 // The explicit .ts extensions let node run this file directly; the bundler accepts them too.
-// @ts-ignore TS5097 (allowImportingTsExtensions is not enabled for this repo)
+// @ts-expect-error TS5097 (allowImportingTsExtensions is not enabled for this repo)
 import { BAR, BEAT, FPS, b } from "./grid.ts";
-// @ts-ignore TS5097
+// @ts-expect-error TS5097
 import { ASK, CONTACT, FORMS, Q } from "./data.ts";
 
 export { BAR, BEAT, FPS, b };

@@ -1,3 +1,4 @@
+import { startTimer } from "@/lib/perf/timing";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwnerPageStaff } from "@/lib/auth/ownerPage";
 import { getNeedsAttention } from "@/lib/owner/needsAttention";
@@ -23,7 +24,8 @@ export default async function OwnerDashboardPage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await requireOwnerPageStaff(venueSlug);
+  const t = startTimer(`owner-dashboard ${venueSlug}`);
+  const staff = await t.step("requireOwnerPageStaff", requireOwnerPageStaff(venueSlug));
   const supabase = await createClient();
   const venueId = staff!.venue_id!;
 
@@ -39,7 +41,7 @@ export default async function OwnerDashboardPage({
     { data: escalationRows, error: escalationRowsError },
     weeklyDigest,
     { data: suggestionRows, error: suggestionRowsError },
-  ] = await Promise.all([
+  ] = await t.step("promiseAll", Promise.all([
       getNeedsAttention(supabase, venueId),
       supabase.from("modules").select("id").eq("status", "live"),
       // Excludes the owner's own account -- the unfiltered query was listing
@@ -75,7 +77,7 @@ export default async function OwnerDashboardPage({
         .select("id, signal_type, headline, created_at")
         .eq("venue_id", venueId)
         .eq("status", "pending"),
-    ]);
+    ]));
   logQueryError(`[${venueSlug}] dashboard liveModules`, liveModulesError);
   logQueryError(`[${venueSlug}] dashboard staffList`, staffListError);
   logQueryError(`[${venueSlug}] dashboard progress`, progressError);
@@ -116,7 +118,8 @@ export default async function OwnerDashboardPage({
   // read as Saffron (same urgency tier as "expiring soon"), not Red.
   // Temperature log (B2): an open out of range flag is a real "needs attention" item, so the
   // hero card never says "nothing needs attention" next to a unit that is out of range.
-  const b2 = await loadB2Overview(supabase, venueId);
+  const b2 = await t.step("b2Overview", loadB2Overview(supabase, venueId));
+  t.end();
   const openTemperatureUnits = b2.statuses.filter((s) => s.openFlag).map((s) => s.unit.name);
 
   const flags: FlagItem[] = [

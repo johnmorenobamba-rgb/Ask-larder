@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./types";
+import { perfEnabled, perfFetch } from "@/lib/perf/timing";
 
 /**
  * Server client — anon/publishable key, cookie-bound to the current
@@ -15,6 +16,7 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      ...(perfEnabled() ? { global: { fetch: perfFetch } } : {}),
       cookies: {
         getAll() {
           return cookieStore.getAll();
