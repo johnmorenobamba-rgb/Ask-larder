@@ -61,7 +61,7 @@ instances start and fetch the token signing key once. They settle within a few r
 - **Phase 3:** content area skeletons replace the full screen overlay in both `(protected)/loading.tsx` files, so the header,
   nav drawer and floating buttons stay on screen. Screenshots at mobile, iPad and desktop: `docs/screenshots/loading-skeletons/`.
   Nav links were already `next/link` with default prefetch, which now prefetches the skeleton, so a tap shows it at once.
-- **Phase 4:** 59 foreign key indexes (applied). The RLS rewrite is waiting for your approval (below).
+- **Phase 4:** 59 foreign key indexes, then (after John's approval) the RLS rewrite below. Both applied to larder-dev.
 - **Phase 5:** the speed check fails over 750 ms (`PERF_REPORT_ONLY=1` to only report). The region rule and how to run the check
   are in `docs/venue-build-manual.md` section 7. `PERF_TIMING` is not set in any Vercel environment.
 
@@ -95,10 +95,15 @@ None of the measured pages or nav clicks. Not measured and worth a look later: t
 waits two avoidable sequential trips; it was left untouched because it is the approval gate. The station QR screens keep their
 full screen loading overlay (outside the dashboards).
 
-## Waiting on your approval: the RLS rewrite (hard stop)
+## The RLS rewrite (approved and applied on 9 Nov 2026)
 
-`supabase/pending/20261109020000_rls_initplan_and_policy_merge.sql`, with `supabase/pending/20261109020000_rollback.sql`.
-Not applied anywhere. It clears the remaining 7 `auth_rls_initplan` and 11 `multiple_permissive_policies` advisor findings.
+John approved it after the report; it was applied to larder-dev as
+`supabase/migrations/20261109020000_rls_initplan_and_policy_merge.sql` and `npm run test:isolation` passed 48/48 straight after
+(the acknowledgements RLS test 4/4 too). The performance advisor then showed no `auth_rls_initplan` and no
+`multiple_permissive_policies` findings, and each of `check_questions`, `module_sections` and `photo_library` has exactly one
+SELECT policy. The rollback stays at `supabase/pending/20261109020000_rollback.sql`. The section below is what was reviewed.
+
+It cleared the remaining 7 `auth_rls_initplan` and 11 `multiple_permissive_policies` advisor findings.
 
 - Seven policies get `auth.uid()` wrapped as `(select auth.uid())`: same value, evaluated once per query instead of once per row.
 - `check_questions`, `module_sections` and `photo_library` each had a FOR ALL write policy that also counted as a second SELECT
@@ -173,9 +178,9 @@ Test Files  1 passed (1)
 
 ## Advisors now
 
-- Performance: unindexed foreign keys 59 to 0. Remaining: 7 `auth_rls_initplan` and 11 `multiple_permissive_policies` (the
-  pending migration above), and 30 "unused index" notices, which are the new indexes not yet used; on tables this small Postgres
-  may keep preferring a plain scan, which is fine.
+- Performance: unindexed foreign keys 59 to 0, `auth_rls_initplan` 7 to 0, `multiple_permissive_policies` 11 to 0. Only "unused
+  index" notices remain (27), which are mostly the new indexes not yet used; on tables this small Postgres may keep preferring a
+  plain scan, which is fine.
 - Security (all were already there; nothing new from this work): three tables with RLS on and no policy (service role only by
   design), `private.compliance_submission_immutable` without a fixed search_path, SECURITY DEFINER functions callable by signed in
   users (`venue_roster` also by anon; `match_knowledge_chunks` is the Ask Larder retrieval lock and was not touched), and leaked
@@ -227,8 +232,9 @@ Branch commits: `f71dd65` brand fonts config, `6c432ff` Phase 0, `4553f83` lint 
 `7a2a461` seven more pages, `40a9456` temperature log test fixes, `ee38811` skeletons, `fc7836a` owner forms refresh,
 `355a0bc` Phase 4 indexes and pending RLS, `19bb149` Phase 5, `78b90d1` perf spec nav timer fix, plus this report.
 
-Database changes applied to larder-dev: `20261109000000_outstanding_acknowledgements_fn` (new function) and
-`20261109010000_index_foreign_keys` (59 indexes). No policy, table or data changes.
+Database changes applied to larder-dev: `20261109000000_outstanding_acknowledgements_fn` (new function),
+`20261109010000_index_foreign_keys` (59 indexes) and, after approval, `20261109020000_rls_initplan_and_policy_merge` (policy
+rewrite, no change to who can read or write what). No table or data changes.
 
 ## Test accounts
 

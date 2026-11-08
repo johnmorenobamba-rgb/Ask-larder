@@ -1,8 +1,5 @@
--- PENDING JOHN'S APPROVAL. Not applied anywhere. Lives in supabase/pending/
--- (not supabase/migrations/) so nothing can push it by accident. To apply
--- after approval: move it to supabase/migrations/, apply it to larder-dev,
--- run `npm run test:isolation`, then re-run the Supabase performance and
--- security advisors. Rollback: supabase/pending/20261109020000_rollback.sql.
+-- Approved by John on 9 Nov 2026 and applied to larder-dev the same day, followed by
+-- `npm run test:isolation`. Rollback: supabase/pending/20261109020000_rollback.sql.
 --
 -- Dashboard speed plan, Phase 4, part 2. Two kinds of change, neither meant
 -- to change who can see or write what:

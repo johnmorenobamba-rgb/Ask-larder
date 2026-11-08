@@ -195,7 +195,7 @@ database decides how fast it feels. Two rules, both set in November 2026 (result
   `PERF_TIMING` in Vercel.
 
 Migrations added on 9 Nov 2026 that every environment needs: `20261109000000_outstanding_acknowledgements_fn.sql` (the staff
-layout calls it on every request), `20261109010000_index_foreign_keys.sql`.
+layout calls it on every request), `20261109010000_index_foreign_keys.sql`, `20261109020000_rls_initplan_and_policy_merge.sql`.
 
 ## 8. Keeping this manual true
 
