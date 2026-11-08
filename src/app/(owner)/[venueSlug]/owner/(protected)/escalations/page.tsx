@@ -14,15 +14,14 @@ export default async function OwnerEscalationsPage({
   const { venueSlug } = await params;
   const { station } = await searchParams;
   const supabase = await createClient();
-  const tz = await getVenueTimeZone(supabase);
-
   let query = supabase
     .from("chat_messages")
     .select("id, message, created_at, escalation_status, app_users(name), stations(name)")
     .eq("is_escalation", true)
     .order("created_at", { ascending: false });
   if (station) query = query.eq("station_id", station);
-  const { data: escalations, error: escalationsError } = await query;
+  // The time zone lookup and the list are independent: one round, not two.
+  const [tz, { data: escalations, error: escalationsError }] = await Promise.all([getVenueTimeZone(supabase), query]);
   logQueryError(`[${venueSlug}] escalations`, escalationsError);
 
   return (

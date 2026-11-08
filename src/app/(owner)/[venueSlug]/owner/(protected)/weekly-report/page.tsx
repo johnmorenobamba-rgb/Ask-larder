@@ -7,12 +7,11 @@ export default async function WeeklyReportPage({ params }: { params: Promise<{ v
   const { venueSlug } = await params;
   const staff = await requireOwnerPageStaff(venueSlug);
   const supabase = await createClient();
-  const tz = await getVenueTimeZone(supabase, staff.venue_id);
-
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
-  const digest = await getWeeklyDigest(supabase, staff!.venue_id!, since.toISOString());
+  // Independent: one round, not two.
+  const [tz, digest] = await Promise.all([getVenueTimeZone(supabase, staff.venue_id), getWeeklyDigest(supabase, staff!.venue_id!, since.toISOString())]);
 
   return (
     <main className="min-h-screen bg-parchment px-6 py-10">
