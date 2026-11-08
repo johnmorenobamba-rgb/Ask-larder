@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
@@ -14,17 +15,17 @@ export default async function ModulesPage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const t = startTimer(`staff-modules ${venueSlug}`);
+  const staff = await t.step("getCurrentStaff", getCurrentStaff());
   if (!staff) redirect(`/${venueSlug}/login`);
   if (!staff.staff_role_id && !staff.isDevice) redirect(`/${venueSlug}/roles`);
 
   const supabase = await createClient();
 
-  const { data: modules, error: modulesError } = await supabase
-    .from("modules")
-    .select("id, title, status, module_roles(role_id)")
-    .eq("venue_id", staff.venue_id!)
-    .in("status", ["approved", "live"]);
+  const { data: modules, error: modulesError } = await t.step(
+    "modules",
+    supabase.from("modules").select("id, title, status, module_roles(role_id)").eq("venue_id", staff.venue_id!).in("status", ["approved", "live"]),
+  );
   logQueryError(`[${venueSlug}] staff modules list`, modulesError);
 
   // A module with zero module_roles rows is unrestricted (visible to every
@@ -38,13 +39,11 @@ export default async function ModulesPage({
   const moduleIds = visibleModules.map((m) => m.id);
   const { data: progress, error: progressError } =
     moduleIds.length > 0
-      ? await supabase
-          .from("staff_module_progress")
-          .select("module_id, status")
-          .eq("user_id", staff.id)
-          .in("module_id", moduleIds)
+      ? await t.step("progress", supabase.from("staff_module_progress").select("module_id, status").eq("user_id", staff.id).in("module_id", moduleIds))
       : { data: [], error: null };
   logQueryError(`[${venueSlug}] staff modules progress`, progressError);
+
+  t.end();
 
   const progressByModule = new Map((progress ?? []).map((p) => [p.module_id, p.status]));
 

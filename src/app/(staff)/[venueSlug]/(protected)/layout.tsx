@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
@@ -25,14 +26,15 @@ export default async function ProtectedStaffLayout({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const t = startTimer(`staff-layout ${venueSlug}`);
+  const staff = await t.step("getCurrentStaff", getCurrentStaff());
 
   if (!staff) {
     redirect(`/${venueSlug}/login`);
   }
 
   // The shared venue iPad account has nothing to acknowledge and no role, so it skips that check.
-  const outstanding = staff.isDevice ? [] : await getOutstandingAcknowledgements(staff.id);
+  const outstanding = staff.isDevice ? [] : await t.step("outstandingAcks", getOutstandingAcknowledgements(staff.id));
   if (outstanding.length > 0) {
     redirect(`/${venueSlug}/module-updates`);
   }
@@ -43,17 +45,18 @@ export default async function ProtectedStaffLayout({
   let showTemperature = false;
   if (staff.venue_id) {
     const supabase = await createClient();
-    const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+    const dept = await t.step("department", getStaffDepartment(supabase, staff.staff_role_id));
     showTemperature = canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department });
-    const { data: venue, error: venueError } = await supabase
-      .from("venues")
-      .select("name, ipad_mode_enabled")
-      .eq("id", staff.venue_id)
-      .maybeSingle();
+    const { data: venue, error: venueError } = await t.step(
+      "venue",
+      supabase.from("venues").select("name, ipad_mode_enabled").eq("id", staff.venue_id).maybeSingle(),
+    );
     logQueryError(`[${venueSlug}] staff protected layout venues`, venueError);
     venueName = venue?.name ?? "";
     ipadMode = !!venue?.ipad_mode_enabled;
   }
+
+  t.end();
 
   // Venue iPad mode: the device account is only valid while the venue has the setting on.
   if (staff.isDevice) {

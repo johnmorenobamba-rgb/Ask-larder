@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "larder-dev-perf",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set PERF_TIMING=1&& npm run dev -- --port 3100"],
+      "port": 3100
     }
   ]
 }

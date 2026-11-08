@@ -32,3 +32,6 @@ remotion/public-v2/
 
 # video-v2 branch: recorded clips are never committed
 remotion/public-promo3/clips/
+
+# Perf spec output (tests/e2e/perf.spec.ts); the baseline is recorded in docs/perf/
+perf-results/

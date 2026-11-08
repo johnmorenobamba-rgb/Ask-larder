@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
@@ -35,7 +36,8 @@ export default async function StaffHomePage({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const t = startTimer(`staff-home ${venueSlug}`);
+  const staff = await t.step("getCurrentStaff", getCurrentStaff());
   // Personal pages are never shown on the shared venue iPad account.
   if (staff?.isDevice) redirect(`/${venueSlug}/device`);
   if (!staff) redirect(`/${venueSlug}/login`);
@@ -57,7 +59,7 @@ export default async function StaffHomePage({
     stationsWithQr,
     { count: fallbackCount, error: fallbackCountError },
     suggestionRows,
-  ] = await Promise.all([
+  ] = await t.step("promiseAll", Promise.all([
     supabase.from("venues").select("name, cert_nudge_cadence").eq("id", staff.venue_id!).single(),
     supabase
       .from("modules")
@@ -89,7 +91,7 @@ export default async function StaffHomePage({
     staff.isManagerTier
       ? supabase.from("content_suggestions").select("id, signal_type, headline, created_at").eq("venue_id", staff.venue_id!).eq("status", "pending")
       : Promise.resolve({ data: null, error: null }),
-  ]);
+  ]));
   logQueryError(`[${venueSlug}] home venue`, venueError);
   logQueryError(`[${venueSlug}] home modules`, modulesError);
   logQueryError(`[${venueSlug}] home progress`, progressError);
@@ -118,10 +120,10 @@ export default async function StaffHomePage({
   let continueSectionsTotal = 0;
   let continueSectionsDone = 0;
   if (continueModule) {
-    const { count, error: sectionsCountError } = await supabase
-      .from("module_sections")
-      .select("id", { count: "exact", head: true })
-      .eq("module_id", continueModule.id);
+    const { count, error: sectionsCountError } = await t.step(
+      "sectionsCount",
+      supabase.from("module_sections").select("id", { count: "exact", head: true }).eq("module_id", continueModule.id),
+    );
     logQueryError(`[${venueSlug}] home continueSectionsTotal`, sectionsCountError);
     continueSectionsTotal = count ?? 0;
     continueSectionsDone = continueStatus === "In progress" ? Math.ceil(continueSectionsTotal / 2) : 0;
@@ -134,16 +136,13 @@ export default async function StaffHomePage({
   // replace once the venue's photo library has module-tagged photos.
   let continuePhotoUrl: string | null = null;
   if (continueModule) {
-    const { data: taggedPhoto, error: taggedPhotoError } = await supabase
-      .from("photo_library")
-      .select("storage_path")
-      .eq("module_id", continueModule.id)
-      .eq("tag", "module")
-      .limit(1)
-      .maybeSingle();
+    const { data: taggedPhoto, error: taggedPhotoError } = await t.step(
+      "continuePhoto",
+      supabase.from("photo_library").select("storage_path").eq("module_id", continueModule.id).eq("tag", "module").limit(1).maybeSingle(),
+    );
     logQueryError(`[${venueSlug}] home taggedPhoto`, taggedPhotoError);
     continuePhotoUrl = taggedPhoto
-      ? await getPhotoLibraryUrl(taggedPhoto.storage_path)
+      ? await t.step("continuePhotoUrl", getPhotoLibraryUrl(taggedPhoto.storage_path))
       : "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=640&h=480&fit=crop";
   }
 
@@ -151,17 +150,20 @@ export default async function StaffHomePage({
   // as Continue above, but not tied to a specific module, so it prefers a
   // "general" photo then falls back to "hero". Same accepted, flagged
   // stock-photo fallback until a venue has real photos uploaded.
-  const { data: activityTaggedPhoto, error: activityTaggedPhotoError } = await supabase
-    .from("photo_library")
-    .select("storage_path")
-    .eq("venue_id", staff.venue_id!)
-    .in("tag", ["general", "hero"])
-    .order("tag") // "general" sorts before "hero" -- gives it priority when both exist
-    .limit(1)
-    .maybeSingle();
+  const { data: activityTaggedPhoto, error: activityTaggedPhotoError } = await t.step(
+    "activityPhoto",
+    supabase
+      .from("photo_library")
+      .select("storage_path")
+      .eq("venue_id", staff.venue_id!)
+      .in("tag", ["general", "hero"])
+      .order("tag") // "general" sorts before "hero" -- gives it priority when both exist
+      .limit(1)
+      .maybeSingle(),
+  );
   logQueryError(`[${venueSlug}] home activityTaggedPhoto`, activityTaggedPhotoError);
   const activityPhotoUrl =
-    (activityTaggedPhoto ? await getPhotoLibraryUrl(activityTaggedPhoto.storage_path) : null) ??
+    (activityTaggedPhoto ? await t.step("activityPhotoUrl", getPhotoLibraryUrl(activityTaggedPhoto.storage_path)) : null) ??
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=480&fit=crop";
 
   const cadence = (venue?.cert_nudge_cadence ?? [30, 14, 7]).slice().sort((a, b) => a - b);
@@ -208,9 +210,9 @@ export default async function StaffHomePage({
   // else (the overview is never fetched for them).
   let temperature: { done: number; total: number; openFlags: number; degraded: boolean } | undefined;
   {
-    const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+    const dept = await t.step("department", getStaffDepartment(supabase, staff.staff_role_id));
     if (canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department })) {
-      const overview = await loadB2Overview(supabase, staff.venue_id!, now);
+      const overview = await t.step("b2Overview", loadB2Overview(supabase, staff.venue_id!, now));
       temperature = {
         done: overview.summary.doneToday,
         total: overview.summary.total,
@@ -224,8 +226,11 @@ export default async function StaffHomePage({
   let forms: { todo: number; overdue: number; degraded: boolean } | undefined;
   {
     try {
-      const dept = await getStaffDepartment(supabase, staff.staff_role_id);
-      const hub = await loadHub(supabase, createAdminClient(), staff.venue_id!, { isManagerTier: staff.isManagerTier, department: dept.department }, now);
+      const dept = await t.step("department2", getStaffDepartment(supabase, staff.staff_role_id));
+      const hub = await t.step(
+        "hub",
+        loadHub(supabase, createAdminClient(), staff.venue_id!, { isManagerTier: staff.isManagerTier, department: dept.department }, now),
+      );
       const mine = hub.forms.filter((f) => f.on && f.canFill);
       forms = {
         todo: mine.filter((f) => f.status.status === "not_started" || f.status.status === "overdue").length,
@@ -236,6 +241,8 @@ export default async function StaffHomePage({
       forms = { todo: 0, overdue: 0, degraded: true };
     }
   }
+
+  t.end();
 
   const hour = now.getHours();
   const timeGreeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";

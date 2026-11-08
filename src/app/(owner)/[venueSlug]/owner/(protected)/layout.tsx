@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { OwnerHeader } from "@/components/owner/OwnerHeader";
@@ -19,18 +20,15 @@ export default async function OwnerProtectedLayout({
   params: Promise<{ venueSlug: string }>;
 }) {
   const { venueSlug } = await params;
-  const staff = await getCurrentStaff();
+  const t = startTimer(`owner-layout ${venueSlug}`);
+  const staff = await t.step("getCurrentStaff", getCurrentStaff());
 
   if (!staff || !staff.isManagerTier) {
     redirect(`/${venueSlug}/owner/login`);
   }
 
   const supabase = await createClient();
-  const { data: venue, error: venueError } = await supabase
-    .from("venues")
-    .select("id, slug, name")
-    .eq("id", staff.venue_id!)
-    .maybeSingle();
+  const { data: venue, error: venueError } = await t.step("venue", supabase.from("venues").select("id, slug, name").eq("id", staff.venue_id!).maybeSingle());
   // A real query failure here used to redirect to login exactly like "not
   // the right owner" -- indistinguishable from a wrong credential, the
   // exact confusion that cost real debugging time this session. Can't
@@ -41,6 +39,8 @@ export default async function OwnerProtectedLayout({
   if (!venue || venue.slug !== venueSlug) {
     redirect(`/${venueSlug}/owner/login`);
   }
+
+  t.end();
 
   return (
     <>
