@@ -55,8 +55,14 @@ async function nativeClick(page: Page, text: string, tag = "button") {
 
 async function loginStaff(page: Page, name: string) {
   await page.goto(`/${SLUG}/login`);
-  await nativeClick(page, pickerName(name));
-  await page.locator('input[type="password"]').fill(PIN);
+  // The roster can be tapped before React hydrates it (then the tap does nothing): tap again until the PIN field
+  // shows. Same retry as helpers/stage0.ts loginStaff.
+  const pinField = page.locator('input[type="password"]');
+  await expect(async () => {
+    if (!(await pinField.isVisible())) await nativeClick(page, pickerName(name));
+    await expect(pinField).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 60_000 });
+  await pinField.fill(PIN);
   await nativeClick(page, "Log in");
   await page.waitForURL(/\/(welcome|roles|modules|home)$/, { waitUntil: "commit", timeout: 20_000 });
 }
@@ -142,6 +148,15 @@ test.afterAll(async () => {
 });
 
 test.describe.serial("B2 temperature log", () => {
+  // The once a day splash replays on every full page load until it has finished once, and this spec uses page.goto
+  // between steps, so it would cover the buttons. Same suppression as compliance-forms-step.spec.ts.
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      try {
+        window.localStorage.setItem("larder-splash-shown-date", new Date().toISOString().slice(0, 10));
+      } catch {}
+    });
+  });
   // The dev server compiles routes on first hit and the walkthrough and screenshot tests make many
   // navigations: the 30s default fails on a slow or busy machine, not because anything is broken.
   test.describe.configure({ timeout: 240_000 });
@@ -175,7 +190,7 @@ test.describe.serial("B2 temperature log", () => {
     expect(rows![0].submitted_by).toBe(staffIds.kit); // the session, not the forged id
     expect(rows![0].submitted_by_name).toBe("Kit Hand");
     expect(rows![0].venue_id).toBe(venueId);
-    expect(rows![0].visible_to_roles).toEqual(["BOH", "BAR"]); // from the catalog, not the body
+    expect([...(rows![0].visible_to_roles ?? [])].sort()).toEqual(["BAR", "BOH"]); // from the catalog, not the body (submit_compliance_form stores it sorted)
     expect(new Date(rows![0].submitted_at).getFullYear()).toBeGreaterThan(2025); // server time
 
     // an out of range reading cannot be passed off as in range, and needs a note
