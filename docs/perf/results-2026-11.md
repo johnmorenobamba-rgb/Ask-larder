@@ -103,6 +103,11 @@ John approved it after the report; it was applied to larder-dev as
 `multiple_permissive_policies` findings, and each of `check_questions`, `module_sections` and `photo_library` has exactly one
 SELECT policy. The rollback stays at `supabase/pending/20261109020000_rollback.sql`. The section below is what was reviewed.
 
+In production afterwards: the smoke spec and the deactivation proof pass, no runtime errors, and the enforced speed check passes on
+the settled deployment (5 runs each): staff home 552, staff modules 483, owner dashboard 445, owner compliance 467, navs 404 to
+448 ms. A run started while the deployment was still rolling out showed 1 to 3 s on a few pages from cold instances; the rerun
+after READY did not.
+
 It cleared the remaining 7 `auth_rls_initplan` and 11 `multiple_permissive_policies` advisor findings.
 
 - Seven policies get `auth.uid()` wrapped as `(select auth.uid())`: same value, evaluated once per query instead of once per row.
