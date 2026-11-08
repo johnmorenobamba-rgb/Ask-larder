@@ -171,12 +171,15 @@ test.describe.serial("owner dashboard walkthrough (Block E, E0-E8)", () => {
     await page.goto(`/${SLUG}/owner/modules`);
     await expect(page.getByText("Pending Smoke Module")).toBeVisible();
     await page.getByRole("button", { name: "Approve" }).click();
-    await expect(page.getByText("Pending approval")).not.toBeVisible();
+    // The approve call re-renders the list; on a dev server that can take longer than the 5s default.
+    await expect(page.getByText("Pending approval")).not.toBeVisible({ timeout: 30_000 });
 
     await page.goto(`/${SLUG}/owner/modules/${liveModuleId}/versions`);
     await page.getByPlaceholder("What changed?").fill("Smoke test changelog");
     await page.getByRole("button", { name: "Publish update" }).click();
-    await expect(page.getByText("Published.")).toBeVisible();
+    // Publishing waits for the Ask Larder re-ingest (real embedding calls), often longer than the 5s default. If the test
+    // gave up first, its cleanup deleted the venue under the still running ingest (a knowledge_chunks venue_id FK error).
+    await expect(page.getByText("Published.")).toBeVisible({ timeout: 60_000 });
   });
 
   test("E5: escalation digest shows and resolves the seeded escalation", async ({ page }) => {

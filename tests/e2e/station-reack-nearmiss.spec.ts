@@ -13,8 +13,14 @@ let moduleId = "";
 let versionId = "";
 
 async function pinLogin(page: import("@playwright/test").Page, name: string) {
-  await nativeClick(page, pickerName(name));
-  await page.locator('input[type="password"]').fill(PIN);
+  // The roster may not be on screen yet (the URL changes before the page renders, and a tap before hydration does
+  // nothing): tap again until the PIN field shows. Same retry as helpers/stage0.ts loginStaff.
+  const pinField = page.locator('input[type="password"]');
+  await expect(async () => {
+    if (!(await pinField.isVisible())) await nativeClick(page, pickerName(name));
+    await expect(pinField).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 60_000 });
+  await pinField.fill(PIN);
   await nativeClick(page, "Log in");
 }
 
@@ -48,6 +54,10 @@ test("C9: a published update is shown before anything else, acknowledged once, a
   // another protected page sends the person back to the update until it is acknowledged
   await page.goto(`/${fx.slug}/modules`);
   await expect(page).toHaveURL(/\/module-updates$/, { timeout: 60_000 });
+  // A native click before the page hydrates does nothing, and a retry could acknowledge twice: wait for the page to
+  // finish loading (and its button to render) first.
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("button", { name: "Acknowledge and continue" })).toBeVisible({ timeout: 60_000 });
   await nativeClick(page, "Acknowledge and continue");
   await expect(page).toHaveURL(/\/modules$/, { timeout: 60_000 });
   const { data: acks } = await adminClient().from("staff_module_acknowledgements").select("module_version_id").eq("user_id", fx.staff.waiter.id);
