@@ -189,7 +189,8 @@ database decides how fast it feels. Two rules, both set in November 2026 (result
   It signs in a throwaway staff member and manager on `coachmans-arms-wizard` (removed afterwards), loads staff home, staff modules,
   the owner dashboard and the owner compliance overview, taps three menu items per role, and fails if any median is over 750 ms
   (`PERF_REPORT_ONLY=1` reports without failing). `tests/e2e/prod-smoke.spec.ts` is the matching post deploy check for Ask Larder,
-  Resend and the cron route.
+  Resend and the cron route. Run it only once the new deployment shows READY in Vercel: a run during the rollout hits fresh,
+  cold server instances and reports 1 to 3 s that a settled deployment does not have.
 - To see where a slow page spends its time, run the app with `PERF_TIMING=1` (the `larder-dev-perf` and `larder-prod-local`
   entries in `.claude/launch.json`): each layout and page logs its awaited steps and every Supabase request. Never set
   `PERF_TIMING` in Vercel.
