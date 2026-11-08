@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { TemperatureLogForm, type UnitGroup } from "@/components/staff/TemperatureLogForm";
 import { COMPLIANCE_FORMS, STATUS_TAG_LABELS, canSubmitForm } from "@/lib/compliance/catalog";
-import { getStaffDepartment, loadB2Overview } from "@/lib/compliance/b2Data";
+import { loadB2Overview } from "@/lib/compliance/b2Data";
 import {
   UNIT_TYPE_HEADINGS,
   UNIT_TYPE_ORDER,
@@ -30,7 +30,7 @@ export default async function TemperaturePage({ params, searchParams }: { params
 
   const supabase = await createClient();
   const form = COMPLIANCE_FORMS.B2;
-  const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+  const dept = { department: staff.department, ok: true }; // the session lookup embeds the department (getCurrentStaff)
   // a failed role lookup must not look like "your role can't log this"
   if (dept.ok && !canSubmitForm(form, { isManagerTier: staff.isManagerTier, department: dept.department })) redirect(`/${venueSlug}/home`);
 

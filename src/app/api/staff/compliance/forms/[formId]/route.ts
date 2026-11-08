@@ -5,7 +5,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { isEligibleCosigner } from "@/lib/compliance/engine/cosigners";
 import { PinAuthError, verifyStaffPin } from "@/lib/auth/staffPin";
-import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { cleanNote } from "@/lib/compliance/b2";
 import { getGenericForm } from "@/lib/compliance/engine/forms";
 import { canFillStage, gateRoles, isFormOn, visibleRoles } from "@/lib/compliance/engine/activation";
@@ -93,7 +92,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ for
   if (def.stages && !stage) return NextResponse.json({ error: "That step doesn't exist." }, { status: 400 });
 
   const supabase = await createClient();
-  const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+  const dept = { department: staff.department, ok: true }; // the session lookup embeds the department (getCurrentStaff)
   if (!dept.ok) return NextResponse.json({ error: "Couldn't check your role. Try again." }, { status: 500 });
   if (!canFillStage(def, stage, { isManagerTier: staff.isManagerTier, department: dept.department })) {
     return NextResponse.json({ error: "Your role can't log this form." }, { status: 403 });

@@ -22,9 +22,14 @@ export default async function ModulesPage({
 
   const supabase = await createClient();
 
-  const { data: modules, error: modulesError } = await t.step(
-    "modules",
-    supabase.from("modules").select("id, title, status, module_roles(role_id)").eq("venue_id", staff.venue_id!).in("status", ["approved", "live"]),
+  // The person's own progress rows are fetched alongside the module list (by user, then matched to the visible
+  // modules in memory) instead of waiting for the list: one round, not two.
+  const [{ data: modules, error: modulesError }, { data: progress, error: progressError }] = await t.step(
+    "modulesAndProgress",
+    Promise.all([
+      supabase.from("modules").select("id, title, status, module_roles(role_id)").eq("venue_id", staff.venue_id!).in("status", ["approved", "live"]),
+      supabase.from("staff_module_progress").select("module_id, status").eq("user_id", staff.id),
+    ]),
   );
   logQueryError(`[${venueSlug}] staff modules list`, modulesError);
 
@@ -36,11 +41,6 @@ export default async function ModulesPage({
       m.module_roles.some((mr) => mr.role_id === staff.staff_role_id),
   );
 
-  const moduleIds = visibleModules.map((m) => m.id);
-  const { data: progress, error: progressError } =
-    moduleIds.length > 0
-      ? await t.step("progress", supabase.from("staff_module_progress").select("module_id, status").eq("user_id", staff.id).in("module_id", moduleIds))
-      : { data: [], error: null };
   logQueryError(`[${venueSlug}] staff modules progress`, progressError);
 
   t.end();

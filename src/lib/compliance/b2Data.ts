@@ -45,8 +45,15 @@ export type B2Overview = {
 };
 
 export async function loadB2Overview(supabase: Client, venueId: string, now: Date = new Date()): Promise<B2Overview> {
-  const [{ data: profile, error: profileError }, { data: units, error: unitsError }, { data: latest, error: latestError }] =
-    await Promise.all([
+  // Today's readings (effective ones only): recent rows, drop any that a later row corrects. The query only depends on
+  // `now`, so it runs in the same round as the rest (the venue's time zone is applied afterwards, in memory).
+  const since = new Date(now.getTime() - 40 * 60 * 60 * 1000).toISOString();
+  const [
+    { data: profile, error: profileError },
+    { data: units, error: unitsError },
+    { data: latest, error: latestError },
+    { data: rows, error: rowsError },
+  ] = await Promise.all([
       supabase.from("venue_licence_profile").select("state").eq("venue_id", venueId).maybeSingle(),
       supabase
         .from("venue_refrigeration_units")
@@ -58,6 +65,14 @@ export async function loadB2Overview(supabase: Client, venueId: string, now: Dat
         .from("compliance_b2_latest_readings")
         .select("id, unit_id, out_of_range, corrective_action, submitted_at, submitted_by_name, payload")
         .eq("venue_id", venueId),
+      supabase
+        .from("compliance_form_submissions")
+        .select("id, out_of_range, corrective_action, submitted_at, submitted_by_name, payload, corrects_submission_id")
+        .eq("venue_id", venueId)
+        .eq("form_id", "B2")
+        .gte("submitted_at", since)
+        .order("submitted_at", { ascending: false })
+        .limit(400),
     ]);
   logQueryError("b2 overview profile", profileError);
   logQueryError("b2 overview units", unitsError);
@@ -87,16 +102,6 @@ export async function loadB2Overview(supabase: Client, venueId: string, now: Dat
   const statuses = buildUnitStatuses(unitList, latestList, now, timeZone);
   const summary = summarise(statuses);
 
-  // Today's readings (effective ones only): recent rows, drop any that a later row corrects.
-  const since = new Date(now.getTime() - 40 * 60 * 60 * 1000).toISOString();
-  const { data: rows, error: rowsError } = await supabase
-    .from("compliance_form_submissions")
-    .select("id, out_of_range, corrective_action, submitted_at, submitted_by_name, payload, corrects_submission_id")
-    .eq("venue_id", venueId)
-    .eq("form_id", "B2")
-    .gte("submitted_at", since)
-    .order("submitted_at", { ascending: false })
-    .limit(400);
   logQueryError("b2 overview today", rowsError);
 
   const corrected = new Set((rows ?? []).map((r) => r.corrects_submission_id).filter((x): x is string => !!x));

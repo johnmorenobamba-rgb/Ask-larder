@@ -73,3 +73,26 @@ export async function getPhotoLibraryUrl(storagePath: string): Promise<string | 
   }
   return data.signedUrl;
 }
+
+/**
+ * Signs many photo-library paths in ONE storage call (createSignedUrls), for
+ * pages that show several photos at once. Returns path -> URL; a path that
+ * failed to sign is simply missing from the map (and logged), so callers fall
+ * back the same way they do for a null from getPhotoLibraryUrl.
+ */
+export async function getPhotoLibraryUrls(storagePaths: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const unique = [...new Set(storagePaths)];
+  if (unique.length === 0) return out;
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage.from("photo-library").createSignedUrls(unique, SIGNED_URL_TTL_SECONDS);
+  if (error || !data) {
+    if (error) console.error(`[signed urls failed] photo-library (${unique.length} paths):`, error.message);
+    return out;
+  }
+  for (const item of data) {
+    if (item.signedUrl && item.path) out.set(item.path, item.signedUrl);
+    else if (item.error) console.error(`[signed url failed] photo-library/${item.path}:`, item.error);
+  }
+  return out;
+}

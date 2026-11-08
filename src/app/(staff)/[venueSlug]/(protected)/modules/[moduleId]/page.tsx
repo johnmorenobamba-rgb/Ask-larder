@@ -23,6 +23,27 @@ export default async function ModulePage({
 
   const supabase = await createClient();
 
+  // A staff member's module page needs five independent reads. They all start
+  // now and are awaited together further down, so the page waits one round
+  // instead of five. The shared iPad account takes its own read only branch
+  // below, unchanged, so none of these start for it.
+  const staffReads = staff.isDevice
+    ? null
+    : Promise.all([
+        // Same role-visibility filter as the checklist (modules/page.tsx) — needed
+        // here only to compute this module's "X of Y" position, per the New-Hire
+        // Flow spec's global-chrome progress chit.
+        supabase.from("modules").select("id, module_roles(role_id)").eq("venue_id", staff.venue_id!).in("status", ["approved", "live"]),
+        supabase.from("module_sections").select("id, section_order, content").eq("module_id", moduleId).order("section_order"),
+        supabase
+          .from("check_questions")
+          .select("id, question, options, correct_option_index, expected_answer_context, section_order")
+          .eq("module_id", moduleId),
+        getModuleStationPhoto(supabase, moduleId),
+      ]);
+  // If the page bails out early (notFound), a failure in these reads must not surface as an unhandled rejection.
+  staffReads?.catch(() => {});
+
   const { data: module, error: moduleError } = await supabase
     .from("modules")
     .select("id, title")
@@ -50,15 +71,15 @@ export default async function ModulePage({
     return <ReadOnlyModule title={mod.title} sections={secs ?? []} backHref={`/${venueSlug}/modules`} backLabel="Back to training" />;
   }
 
-  // Same role-visibility filter as the checklist (modules/page.tsx) — needed
-  // here only to compute this module's "X of Y" position, per the New-Hire
-  // Flow spec's global-chrome progress chit.
-  const { data: allModules, error: allModulesError } = await supabase
-    .from("modules")
-    .select("id, module_roles(role_id)")
-    .eq("venue_id", staff.venue_id!)
-    .in("status", ["approved", "live"]);
+  const [
+    { data: allModules, error: allModulesError },
+    { data: sections, error: sectionsError },
+    { data: questions, error: questionsError },
+    stationPhoto,
+  ] = await staffReads!;
   logQueryError(`[${venueSlug}] module ${moduleId} allModules`, allModulesError);
+  logQueryError(`[${venueSlug}] module ${moduleId} sections`, sectionsError);
+  logQueryError(`[${venueSlug}] module ${moduleId} questions`, questionsError);
   const visibleModuleIds = (allModules ?? [])
     .filter(
       (m) =>
@@ -67,20 +88,6 @@ export default async function ModulePage({
     .map((m) => m.id);
   const moduleIndex = visibleModuleIds.indexOf(moduleId);
 
-  const { data: sections, error: sectionsError } = await supabase
-    .from("module_sections")
-    .select("id, section_order, content")
-    .eq("module_id", moduleId)
-    .order("section_order");
-  logQueryError(`[${venueSlug}] module ${moduleId} sections`, sectionsError);
-
-  const { data: questions, error: questionsError } = await supabase
-    .from("check_questions")
-    .select("id, question, options, correct_option_index, expected_answer_context, section_order")
-    .eq("module_id", moduleId);
-  logQueryError(`[${venueSlug}] module ${moduleId} questions`, questionsError);
-
-  const stationPhoto = await getModuleStationPhoto(supabase, moduleId);
 
   return (
     <ModuleRunner

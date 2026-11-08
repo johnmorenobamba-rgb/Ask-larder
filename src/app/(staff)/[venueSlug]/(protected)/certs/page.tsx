@@ -21,12 +21,13 @@ export default async function CertsPage({
 
   const supabase = await createClient();
 
-  const { data: certTypes, error: certTypesError } = await supabase
-    .from("certificate_types")
-    .select("id, name, certificate_type_roles(role_id)")
-    .eq("venue_id", staff.venue_id!)
-    .order("name");
+  // Independent: one round, not two.
+  const [{ data: certTypes, error: certTypesError }, { data: certs, error: certsError }] = await Promise.all([
+    supabase.from("certificate_types").select("id, name, certificate_type_roles(role_id)").eq("venue_id", staff.venue_id!).order("name"),
+    supabase.from("staff_certificates").select("certificate_type_id, expiry_date").eq("user_id", staff.id),
+  ]);
   logQueryError(`[${venueSlug}] staff certs certTypes`, certTypesError);
+  logQueryError(`[${venueSlug}] staff certs certs`, certsError);
 
   // Same "zero rows = unrestricted" convention as module_roles (see
   // modules/page.tsx) — a cert type with no certificate_type_roles rows
@@ -36,12 +37,6 @@ export default async function CertsPage({
       ct.certificate_type_roles.length === 0 ||
       ct.certificate_type_roles.some((r) => r.role_id === staff.staff_role_id),
   );
-
-  const { data: certs, error: certsError } = await supabase
-    .from("staff_certificates")
-    .select("certificate_type_id, expiry_date")
-    .eq("user_id", staff.id);
-  logQueryError(`[${venueSlug}] staff certs certs`, certsError);
 
   const certByType = new Map((certs ?? []).map((c) => [c.certificate_type_id, c.expiry_date]));
 

@@ -97,11 +97,15 @@ const WINDOW_CAP = 1000;
 export const CHAIN_WINDOW_MS = 3 * 24 * 3600 * 1000;
 
 export async function loadHub(supabase: Client, admin: Client, venueId: string, who: Who, now: Date = new Date()): Promise<HubData> {
-  const [{ ctx, state, settingsCreatedAt, cutoffHour, degraded: ctxDegraded }, { rows, degraded: rowsDegraded }, b2] = await Promise.all([
-    loadActivationContext(supabase, admin, venueId),
-    loadActivationRows(supabase, venueId),
-    loadB2Overview(supabase, venueId, now),
-  ]);
+  // Round one: everything that needs only the venue id. The latest-by-subject view does not depend on the venue's time
+  // zone or cutoff, so it is fetched here too rather than after the record windows.
+  const [{ ctx, state, settingsCreatedAt, cutoffHour, degraded: ctxDegraded }, { rows, degraded: rowsDegraded }, b2, { data: latest, error: latestErr }] =
+    await Promise.all([
+      loadActivationContext(supabase, admin, venueId),
+      loadActivationRows(supabase, venueId),
+      loadB2Overview(supabase, venueId, now),
+      supabase.from("compliance_latest_by_subject").select("form_id, out_of_range, submitted_at").eq("venue_id", venueId).limit(WINDOW_CAP),
+    ]);
   const timeZone = venueTimeZone(state);
 
   // one window per cadence: the start of the PREVIOUS period (event forms: the last 7 days)
@@ -137,12 +141,7 @@ export async function loadHub(supabase: Client, admin: Client, venueId: string, 
   const byForm = new Map<string, Rec[]>();
   for (const list of results) for (const r of list) (byForm.get(r.form_id) ?? byForm.set(r.form_id, []).get(r.form_id)!).push(r);
 
-  // latest effective row per subject: open flags, and the last time an event form was logged
-  const { data: latest, error: latestErr } = await supabase
-    .from("compliance_latest_by_subject")
-    .select("form_id, out_of_range, submitted_at")
-    .eq("venue_id", venueId)
-    .limit(WINDOW_CAP);
+  // latest effective row per subject (fetched in round one): open flags, and the last time an event form was logged
   logQueryError("hub latest by subject", latestErr);
   if ((latest ?? []).length >= WINDOW_CAP) windowDegraded = true;
   const flagCount = new Map<string, number>();

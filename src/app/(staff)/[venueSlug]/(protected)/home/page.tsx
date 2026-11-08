@@ -2,11 +2,10 @@ import { redirect } from "next/navigation";
 import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
+import { getPhotoLibraryUrls } from "@/lib/owner/photoLibraryUrl";
 import { getStationsWithDisplay } from "@/lib/stations/getStationsWithDisplay";
 import { BentoGrid } from "@/components/staff/BentoGrid";
 import { COMPLIANCE_FORMS, canSubmitForm } from "@/lib/compliance/catalog";
-import { getStaffDepartment, loadB2Overview } from "@/lib/compliance/b2Data";
 import { loadHub } from "@/lib/compliance/engine/hubData";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logQueryError } from "@/lib/supabase/logQueryError";
@@ -49,9 +48,15 @@ export default async function StaffHomePage({
   // separate Date.now()/new Date() calls (the latter inline in a Server
   // Component body trips eslint's react-hooks/purity rule).
   const now = new Date();
+  const venueId = staff.venue_id!;
 
+  // Everything below needs only the staff row, so it all goes out in ONE
+  // round (performance plan, Phase 2). The venue name and cert cadence come
+  // with getCurrentStaff, the section count is embedded in the modules query,
+  // the photos are looked up by venue instead of waiting for the module list,
+  // and the compliance hub (which already loads the B2 temperature overview)
+  // runs alongside instead of after.
   const [
-    { data: venue, error: venueError },
     { data: modules, error: modulesError },
     { data: progress, error: progressError },
     { data: certTypes, error: certTypesError },
@@ -59,21 +64,23 @@ export default async function StaffHomePage({
     stationsWithQr,
     { count: fallbackCount, error: fallbackCountError },
     suggestionRows,
+    { data: modulePhotos, error: modulePhotosError },
+    { data: activityTaggedPhoto, error: activityTaggedPhotoError },
+    hubResult,
   ] = await t.step("promiseAll", Promise.all([
-    supabase.from("venues").select("name, cert_nudge_cadence").eq("id", staff.venue_id!).single(),
     supabase
       .from("modules")
-      .select("id, title, module_roles(role_id)")
-      .eq("venue_id", staff.venue_id!)
+      .select("id, title, module_roles(role_id), module_sections(count)")
+      .eq("venue_id", venueId)
       .in("status", ["approved", "live"]),
     supabase.from("staff_module_progress").select("module_id, status").eq("user_id", staff.id),
     supabase
       .from("certificate_types")
       .select("id, name, certificate_type_roles(role_id)")
-      .eq("venue_id", staff.venue_id!)
+      .eq("venue_id", venueId)
       .order("name"),
     supabase.from("staff_certificates").select("certificate_type_id, expiry_date").eq("user_id", staff.id),
-    getStationsWithDisplay(supabase, staff.venue_id!, venueSlug),
+    getStationsWithDisplay(supabase, venueId, venueSlug),
     // "My Ask Larder activity" (Bento variety pass, Personal Dashboard spec)
     // -- this staff member's OWN fallback-triggered questions only, never
     // the owner's venue-wide escalations digest. 30 days mirrors the
@@ -89,15 +96,36 @@ export default async function StaffHomePage({
     // 2IC). Never fetched for a frontline account, not just hidden client
     // side, matching how this app treats every other owner-only surface.
     staff.isManagerTier
-      ? supabase.from("content_suggestions").select("id, signal_type, headline, created_at").eq("venue_id", staff.venue_id!).eq("status", "pending")
+      ? supabase.from("content_suggestions").select("id, signal_type, headline, created_at").eq("venue_id", venueId).eq("status", "pending")
       : Promise.resolve({ data: null, error: null }),
+    // Module-tagged photos for the Continue cell, by venue, so this does not
+    // wait for the module list; the one for the continue module is picked below.
+    supabase.from("photo_library").select("module_id, storage_path").eq("venue_id", venueId).eq("tag", "module").not("module_id", "is", null),
+    // "My Ask Larder activity" cell backdrop -- same tagged-library sourcing
+    // as Continue, but not tied to a specific module, so it prefers a
+    // "general" photo then falls back to "hero". Same accepted, flagged
+    // stock-photo fallback until a venue has real photos uploaded.
+    supabase
+      .from("photo_library")
+      .select("storage_path")
+      .eq("venue_id", venueId)
+      .in("tag", ["general", "hero"])
+      .order("tag") // "general" sorts before "hero" -- gives it priority when both exist
+      .limit(1)
+      .maybeSingle(),
+    // Compliance forms and temperature tiles. A failure shows a quiet message, never a clean zero.
+    loadHub(supabase, createAdminClient(), venueId, { isManagerTier: staff.isManagerTier, department: staff.department }, now).then(
+      (hub) => ({ hub, failed: false as const }),
+      () => ({ hub: null, failed: true as const }),
+    ),
   ]));
-  logQueryError(`[${venueSlug}] home venue`, venueError);
   logQueryError(`[${venueSlug}] home modules`, modulesError);
   logQueryError(`[${venueSlug}] home progress`, progressError);
   logQueryError(`[${venueSlug}] home certTypes`, certTypesError);
   logQueryError(`[${venueSlug}] home certs`, certsError);
   logQueryError(`[${venueSlug}] home fallbackCount`, fallbackCountError);
+  logQueryError(`[${venueSlug}] home taggedPhoto`, modulePhotosError);
+  logQueryError(`[${venueSlug}] home activityTaggedPhoto`, activityTaggedPhotoError);
 
   const visibleModules = (modules ?? []).filter(
     (m) => m.module_roles.length === 0 || m.module_roles.some((mr) => mr.role_id === staff.staff_role_id),
@@ -117,56 +145,31 @@ export default async function StaffHomePage({
   // client-side, same limitation already accepted for the checklist's
   // in-progress ring). "in_progress" renders as roughly half-filled ticks,
   // a representative approximation, not a literal count.
-  let continueSectionsTotal = 0;
-  let continueSectionsDone = 0;
-  if (continueModule) {
-    const { count, error: sectionsCountError } = await t.step(
-      "sectionsCount",
-      supabase.from("module_sections").select("id", { count: "exact", head: true }).eq("module_id", continueModule.id),
-    );
-    logQueryError(`[${venueSlug}] home continueSectionsTotal`, sectionsCountError);
-    continueSectionsTotal = count ?? 0;
-    continueSectionsDone = continueStatus === "In progress" ? Math.ceil(continueSectionsTotal / 2) : 0;
-  }
+  const continueSectionsTotal = continueModule ? (continueModule.module_sections[0]?.count ?? 0) : 0;
+  const continueSectionsDone = continueStatus === "In progress" ? Math.ceil(continueSectionsTotal / 2) : 0;
 
   // Real venue photography (tagged "module" in the photo library, matching
   // this module) is preferred when available. TEMPORARY fallback: stock
   // photography, explicitly acknowledged as a Branding Kit anti-pattern
   // violation, accepted knowingly until a venue has real photos uploaded —
   // replace once the venue's photo library has module-tagged photos.
-  let continuePhotoUrl: string | null = null;
-  if (continueModule) {
-    const { data: taggedPhoto, error: taggedPhotoError } = await t.step(
-      "continuePhoto",
-      supabase.from("photo_library").select("storage_path").eq("module_id", continueModule.id).eq("tag", "module").limit(1).maybeSingle(),
-    );
-    logQueryError(`[${venueSlug}] home taggedPhoto`, taggedPhotoError);
-    continuePhotoUrl = taggedPhoto
-      ? await t.step("continuePhotoUrl", getPhotoLibraryUrl(taggedPhoto.storage_path))
-      : "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=640&h=480&fit=crop";
-  }
-
-  // "My Ask Larder activity" cell backdrop -- same tagged-library sourcing
-  // as Continue above, but not tied to a specific module, so it prefers a
-  // "general" photo then falls back to "hero". Same accepted, flagged
-  // stock-photo fallback until a venue has real photos uploaded.
-  const { data: activityTaggedPhoto, error: activityTaggedPhotoError } = await t.step(
-    "activityPhoto",
-    supabase
-      .from("photo_library")
-      .select("storage_path")
-      .eq("venue_id", staff.venue_id!)
-      .in("tag", ["general", "hero"])
-      .order("tag") // "general" sorts before "hero" -- gives it priority when both exist
-      .limit(1)
-      .maybeSingle(),
+  const continuePhotoPath = continueModule ? ((modulePhotos ?? []).find((p) => p.module_id === continueModule.id)?.storage_path ?? null) : null;
+  const activityPhotoPath = activityTaggedPhoto?.storage_path ?? null;
+  // Both photos signed in one storage call.
+  const signed = await t.step(
+    "signedUrls",
+    getPhotoLibraryUrls([continuePhotoPath, activityPhotoPath].filter((p): p is string => !!p)),
   );
-  logQueryError(`[${venueSlug}] home activityTaggedPhoto`, activityTaggedPhotoError);
+  const continuePhotoUrl: string | null = continueModule
+    ? continuePhotoPath
+      ? (signed.get(continuePhotoPath) ?? null)
+      : "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=640&h=480&fit=crop"
+    : null;
   const activityPhotoUrl =
-    (activityTaggedPhoto ? await t.step("activityPhotoUrl", getPhotoLibraryUrl(activityTaggedPhoto.storage_path)) : null) ??
+    (activityPhotoPath ? signed.get(activityPhotoPath) : undefined) ??
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=480&fit=crop";
 
-  const cadence = (venue?.cert_nudge_cadence ?? [30, 14, 7]).slice().sort((a, b) => a - b);
+  const cadence = (staff.venue?.certNudgeCadence ?? [30, 14, 7]).slice().sort((a, b) => a - b);
   const soonestThreshold = cadence[cadence.length - 1];
   const certByType = new Map((certs ?? []).map((c) => [c.certificate_type_id, c.expiry_date]));
   const visibleCertTypes = (certTypes ?? []).filter(
@@ -206,40 +209,29 @@ export default async function StaffHomePage({
   const expiringRows = certRows.filter((c) => c.status === "expiring" && c.days !== null);
   const nextCertExpiring = expiringRows.length > 0 ? expiringRows.slice().sort((a, b) => a.days! - b.days!)[0] : null;
 
-  // Temperature log tile: BOH staff and manager tier only. Absent entirely for everyone
-  // else (the overview is never fetched for them).
-  let temperature: { done: number; total: number; openFlags: number; degraded: boolean } | undefined;
-  {
-    const dept = await t.step("department", getStaffDepartment(supabase, staff.staff_role_id));
-    if (canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department })) {
-      const overview = await t.step("b2Overview", loadB2Overview(supabase, staff.venue_id!, now));
-      temperature = {
-        done: overview.summary.doneToday,
-        total: overview.summary.total,
-        openFlags: overview.summary.openFlags,
-        degraded: overview.degraded,
-      };
-    }
-  }
+  // Temperature log tile: BOH staff and manager tier only. Absent entirely for everyone else. The numbers are the
+  // hub's own B2 overview (the same loadB2Overview call the page used to make a second time).
+  const hub = hubResult.hub;
+  const temperature: { done: number; total: number; openFlags: number; degraded: boolean } | undefined = canSubmitForm(COMPLIANCE_FORMS.B2, {
+    isManagerTier: staff.isManagerTier,
+    department: staff.department,
+  })
+    ? hub
+      ? { done: hub.b2.doneToday, total: hub.b2.total, openFlags: hub.b2.openFlags, degraded: hub.b2.degraded }
+      : { done: 0, total: 0, openFlags: 0, degraded: true }
+    : undefined;
 
   // Compliance forms tile: every staff member. Counts come from the hub loader; a failure shows a quiet message, never a clean zero.
-  let forms: { todo: number; overdue: number; degraded: boolean } | undefined;
-  {
-    try {
-      const dept = await t.step("department2", getStaffDepartment(supabase, staff.staff_role_id));
-      const hub = await t.step(
-        "hub",
-        loadHub(supabase, createAdminClient(), staff.venue_id!, { isManagerTier: staff.isManagerTier, department: dept.department }, now),
-      );
-      const mine = hub.forms.filter((f) => f.on && f.canFill);
-      forms = {
-        todo: mine.filter((f) => f.status.status === "not_started" || f.status.status === "overdue").length,
-        overdue: mine.filter((f) => f.status.status === "overdue").length,
-        degraded: hub.degraded || !dept.ok,
-      };
-    } catch {
-      forms = { todo: 0, overdue: 0, degraded: true };
-    }
+  let forms: { todo: number; overdue: number; degraded: boolean };
+  if (hub) {
+    const mine = hub.forms.filter((f) => f.on && f.canFill);
+    forms = {
+      todo: mine.filter((f) => f.status.status === "not_started" || f.status.status === "overdue").length,
+      overdue: mine.filter((f) => f.status.status === "overdue").length,
+      degraded: hub.degraded,
+    };
+  } else {
+    forms = { todo: 0, overdue: 0, degraded: true };
   }
 
   t.end();
@@ -263,7 +255,7 @@ export default async function StaffHomePage({
     <BentoGrid
       venueSlug={venueSlug}
       staffName={staff.name}
-      venueName={venue?.name ?? ""}
+      venueName={staff.venue?.name ?? ""}
       timeGreeting={timeGreeting}
       completedCount={completedCount}
       totalCount={visibleModules.length}

@@ -16,14 +16,13 @@ export default async function OwnerNearMissesPage({
   const { venueSlug } = await params;
   const { status } = await searchParams;
   const supabase = await createClient();
-  const tz = await getVenueTimeZone(supabase);
-
   let query = supabase
     .from("near_miss_reports")
     .select("id, description, photo_ref, status, created_at, is_anonymous, app_users(name), stations(name)")
     .order("created_at", { ascending: false });
   if (status === "unresolved") query = query.eq("status", "open");
-  const { data: reports, error: reportsError } = await query;
+  // The time zone lookup and the list are independent: one round, not two.
+  const [tz, { data: reports, error: reportsError }] = await Promise.all([getVenueTimeZone(supabase), query]);
   logQueryError(`[${venueSlug}] near-misses`, reportsError);
 
   const withPhotoUrls = await Promise.all(
