@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
-import { createClient } from "@/lib/supabase/server";
 import { OwnerHeader } from "@/components/owner/OwnerHeader";
-import { logQueryError } from "@/lib/supabase/logQueryError";
 
 // Mirrors (staff)/[venueSlug]/(protected)/layout.tsx's per-page session gate
 // -- no middleware, it was removed project-wide and stays removed. Checks
@@ -27,16 +25,13 @@ export default async function OwnerProtectedLayout({
     redirect(`/${venueSlug}/owner/login`);
   }
 
-  const supabase = await createClient();
-  const { data: venue, error: venueError } = await t.step("venue", supabase.from("venues").select("id, slug, name").eq("id", staff.venue_id!).maybeSingle());
-  // A real query failure here used to redirect to login exactly like "not
-  // the right owner" -- indistinguishable from a wrong credential, the
-  // exact confusion that cost real debugging time this session. Can't
-  // show a distinct message from a layout without a bigger redesign, but
-  // it must never be silent: logged clearly so a real failure is at least
-  // diagnosable from the server logs instead of leaving zero trace.
-  if (venueError) logQueryError(`[${venueSlug}] owner protected layout venues`, venueError);
-  if (!venue || venue.slug !== venueSlug) {
+  // The venue comes embedded in the session lookup (getCurrentStaff), so no
+  // second venues query. A failure of that lookup is logged there
+  // (logQueryError "getCurrentStaff app_users"), so a real query failure
+  // still leaves a trace in the server logs instead of looking exactly like
+  // a wrong credential.
+  const venue = staff.venue;
+  if (!staff.venue_id || !venue || venue.slug !== venueSlug) {
     redirect(`/${venueSlug}/owner/login`);
   }
 

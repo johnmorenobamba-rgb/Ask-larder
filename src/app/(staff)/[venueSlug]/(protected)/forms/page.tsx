@@ -5,7 +5,6 @@ import { getCurrentStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PassSlide } from "@/components/staff/PassSlide";
-import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { groupHubByCadence, loadHub, type HubForm } from "@/lib/compliance/engine/hubData";
 import { CADENCE_HEADINGS, FORM_TAG_LABELS } from "@/lib/compliance/engine/types";
 import { b2Progress } from "@/lib/compliance/b2";
@@ -26,7 +25,7 @@ export default async function FormsHubPage({ params, searchParams }: { params: P
   if (!staff.staff_role_id && !staff.isManagerTier) redirect(`/${venueSlug}/roles`);
 
   const supabase = await createClient();
-  const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+  const dept = { department: staff.department, ok: true }; // the session lookup embeds the department (getCurrentStaff)
   const who = { isManagerTier: staff.isManagerTier, department: dept.department };
   const now = resolveNow(sp.asof);
   const hub = await loadHub(supabase, createAdminClient(), staff.venue_id!, who, now);

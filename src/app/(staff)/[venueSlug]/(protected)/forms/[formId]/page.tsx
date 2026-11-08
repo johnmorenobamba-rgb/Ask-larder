@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PassSlide } from "@/components/staff/PassSlide";
 import { GenericComplianceForm } from "@/components/staff/GenericComplianceForm";
-import { getStaffDepartment } from "@/lib/compliance/b2Data";
 import { getGenericForm } from "@/lib/compliance/engine/forms";
 import { canFillStage, canOpenForm, isFormOn } from "@/lib/compliance/engine/activation";
 import { loadActivationContext, loadActivationRows } from "@/lib/compliance/engine/hubData";
@@ -37,7 +36,7 @@ export default async function ComplianceFormPage({
 
   const supabase = await createClient();
   const admin = createAdminClient();
-  const dept = await getStaffDepartment(supabase, staff.staff_role_id);
+  const dept = { department: staff.department, ok: true }; // the session lookup embeds the department (getCurrentStaff)
   const who = { isManagerTier: staff.isManagerTier, department: dept.department };
   if (dept.ok && !canOpenForm(def, who)) redirect(`/${venueSlug}/forms`);
 

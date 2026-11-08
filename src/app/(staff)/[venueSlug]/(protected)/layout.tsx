@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { startTimer } from "@/lib/perf/timing";
 import { getCurrentStaff } from "@/lib/auth/session";
-import { createClient } from "@/lib/supabase/server";
 import { getOutstandingAcknowledgements } from "@/lib/staff/outstandingAcknowledgements";
 import { NearMissReportButton } from "@/components/staff/NearMissReportButton";
 import { AskLarderChat } from "@/components/staff/AskLarderChat";
@@ -9,9 +8,7 @@ import { StaffTopBar } from "@/components/staff/StaffTopBar";
 import { StaffHeader } from "@/components/staff/StaffHeader";
 import { DeviceHeader } from "@/components/staff/DeviceHeader";
 import { IdleSignOut } from "@/components/staff/IdleSignOut";
-import { logQueryError } from "@/lib/supabase/logQueryError";
 import { COMPLIANCE_FORMS, canSubmitForm } from "@/lib/compliance/catalog";
-import { getStaffDepartment } from "@/lib/compliance/b2Data";
 
 // Gates every route under [venueSlug]/(protected)/* behind an active staff
 // session. `login` is a sibling of (protected), not nested inside it, so it
@@ -39,22 +36,12 @@ export default async function ProtectedStaffLayout({
     redirect(`/${venueSlug}/module-updates`);
   }
 
-  let venueName = "";
-  let ipadMode = false;
+  // Venue name, iPad mode and the person's department come with the session lookup itself (getCurrentStaff embeds
+  // them), so no separate venues or staff_roles query here.
+  const venueName = (staff.venue_id && staff.venue?.name) || "";
+  const ipadMode = !!(staff.venue_id && staff.venue?.ipadModeEnabled);
   // Temperature log nav item: BOH staff plus manager tier and owners (catalog audience).
-  let showTemperature = false;
-  if (staff.venue_id) {
-    const supabase = await createClient();
-    const dept = await t.step("department", getStaffDepartment(supabase, staff.staff_role_id));
-    showTemperature = canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: dept.department });
-    const { data: venue, error: venueError } = await t.step(
-      "venue",
-      supabase.from("venues").select("name, ipad_mode_enabled").eq("id", staff.venue_id).maybeSingle(),
-    );
-    logQueryError(`[${venueSlug}] staff protected layout venues`, venueError);
-    venueName = venue?.name ?? "";
-    ipadMode = !!venue?.ipad_mode_enabled;
-  }
+  const showTemperature = !!staff.venue_id && canSubmitForm(COMPLIANCE_FORMS.B2, { isManagerTier: staff.isManagerTier, department: staff.department });
 
   t.end();
 
