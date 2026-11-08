@@ -55,6 +55,10 @@ async function timeNav(page: Page, linkName: string | RegExp, heading: RegExp) {
   await page.getByRole("button", { name: "Open menu" }).click();
   const link = page.getByRole("link", typeof linkName === "string" ? { name: linkName, exact: true } : { name: linkName }).filter({ visible: true }).first();
   await link.waitFor({ state: "visible" });
+  // The drawer slides in over 240ms. A trial click waits until the link has stopped moving (Playwright actionability)
+  // without clicking, so the timer starts where a person would tap, not partway through the slide. Before 9 Nov 2026
+  // the slide was inside every nav number (about 200ms of each one in the baseline and Phases 1 and 2).
+  await link.click({ trial: true });
   const t0 = Date.now();
   await link.click();
   await waitForHeading(page, heading);
