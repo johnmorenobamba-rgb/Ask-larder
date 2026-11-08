@@ -197,6 +197,15 @@ Test Files  1 passed (1)
   can act as a merge gate.
 - A local Turbopack `next build` fails on this Windows machine inside next/font Google fonts; Vercel's Turbopack build is fine and a
   local `next build --webpack` passes. Local builds used webpack.
+- An unknown station QR code answers HTTP 200 with the not found screen, not 404, since the station loading boundary was added
+  (commit `1a7540e`): Next.js has already sent the loading shell with 200 when the page calls `notFound()`. The screen is clean;
+  only the status code differs. `tests/e2e/station-reack-nearmiss.spec.ts` "a QR code that belongs to no station" still asserts
+  404 and fails for that reason. Left as a finding, not changed.
+- After the RLS rewrite, these flows were re-run and pass: new hire walkthrough, onboarding wizard, compliance forms step (including
+  the venue iPad device account being refused), owner dashboard smoke (approve, publish with a real Ask Larder re-ingest, resolve
+  an escalation and a near miss, create and delete a station), station update acknowledgement, QR login, near miss reports, role
+  changes and deactivation. Test only fixes made on the way: longer waits for approve and publish in the owner dashboard smoke
+  spec, and the hydration waits in the station spec's login and acknowledge steps.
 - `tests/e2e/temperature-log.spec.ts`: three test bugs fixed (login before hydration, the stored audience order, the splash). Its
   staff walkthrough test still times out on main and on this branch alike: its plus or minus button sits in an animated cell that
   Playwright never sees as stable (the known floating cell gotcha).
