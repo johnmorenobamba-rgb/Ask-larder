@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { logQueryError } from "@/lib/supabase/logQueryError";
 
 export type OutstandingAcknowledgement = {
   moduleId: string;
@@ -16,72 +17,21 @@ export type OutstandingAcknowledgement = {
  * to re-acknowledge if the content has never been versioned since it was
  * built, and a version published before their original completion was
  * already current when they signed off, so it doesn't require a separate ack.
+ *
+ * One round trip: the rule lives in the security invoker SQL function
+ * public.outstanding_acknowledgements (migration 20261109000000), which runs
+ * under the caller's RLS exactly like the three queries it replaced.
  */
 export async function getOutstandingAcknowledgements(
   staffId: string,
 ): Promise<OutstandingAcknowledgement[]> {
   const supabase = await createClient();
-
-  const { data: progress } = await supabase
-    .from("staff_module_progress")
-    .select("module_id, completed_at")
-    .eq("user_id", staffId)
-    .eq("status", "completed");
-
-  const completedModuleIds = (progress ?? [])
-    .filter((p) => p.module_id)
-    .map((p) => p.module_id as string);
-  if (completedModuleIds.length === 0) return [];
-
-  const { data: versions } = await supabase
-    .from("module_versions")
-    .select("id, module_id, published_at, changelog, modules(title)")
-    .in("module_id", completedModuleIds);
-
-  const latestByModule = new Map<
-    string,
-    { id: string; published_at: string | null; changelog: string | null; title: string }
-  >();
-  for (const v of versions ?? []) {
-    if (!v.module_id) continue;
-    const existing = latestByModule.get(v.module_id);
-    if (!existing || (v.published_at ?? "") > (existing.published_at ?? "")) {
-      latestByModule.set(v.module_id, {
-        id: v.id,
-        published_at: v.published_at,
-        changelog: v.changelog,
-        title: (v.modules as { title: string } | null)?.title ?? "",
-      });
-    }
-  }
-  if (latestByModule.size === 0) return [];
-
-  const latestVersionIds = Array.from(latestByModule.values()).map((v) => v.id);
-  const { data: acks } = await supabase
-    .from("staff_module_acknowledgements")
-    .select("module_version_id")
-    .eq("user_id", staffId)
-    .in("module_version_id", latestVersionIds);
-
-  const acknowledgedVersionIds = new Set((acks ?? []).map((a) => a.module_version_id));
-  const completedAtByModule = new Map(
-    (progress ?? []).map((p) => [p.module_id, p.completed_at]),
-  );
-
-  const outstanding: OutstandingAcknowledgement[] = [];
-  for (const [moduleId, latest] of latestByModule) {
-    const completedAt = completedAtByModule.get(moduleId);
-    const isNewerThanCompletion =
-      !completedAt || (latest.published_at ?? "") > completedAt;
-    if (isNewerThanCompletion && !acknowledgedVersionIds.has(latest.id)) {
-      outstanding.push({
-        moduleId,
-        moduleTitle: latest.title,
-        moduleVersionId: latest.id,
-        changelog: latest.changelog,
-      });
-    }
-  }
-
-  return outstanding;
+  const { data, error } = await supabase.rpc("outstanding_acknowledgements", { p_user_id: staffId });
+  logQueryError("outstanding acknowledgements", error);
+  return (data ?? []).map((r) => ({
+    moduleId: r.module_id,
+    moduleTitle: r.module_title,
+    moduleVersionId: r.module_version_id,
+    changelog: r.changelog,
+  }));
 }

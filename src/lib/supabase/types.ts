@@ -2419,6 +2419,15 @@ export type Database = {
           similarity: number
         }[]
       }
+      outstanding_acknowledgements: {
+        Args: { p_user_id: string }
+        Returns: {
+          changelog: string | null
+          module_id: string
+          module_title: string
+          module_version_id: string
+        }[]
+      }
       publish_module_version: {
         Args: { p_changelog?: string; p_module_id: string }
         Returns: string
