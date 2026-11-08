@@ -12,15 +12,16 @@ import { DEMO_VENUE_SLUG as VENUE_SLUG, demoRoleId, demoVenueId, makeDemoAccount
 // Run against a deployment, never the dev server (dev compiles on demand, so its numbers mean nothing):
 //   PLAYWRIGHT_BASE_URL=https://asklarder.com.au npx playwright test tests/e2e/perf.spec.ts
 // Optional: PERF_LABEL=baseline names the saved results file (perf-results/perf-<label>.json, kept out of test-results
-// because Playwright empties that folder on every run), PERF_RUNS=5 changes the sample count, PERF_ENFORCE=1 fails the
-// run when any median is over budget (report only by default).
+// because Playwright empties that folder on every run), PERF_RUNS=5 changes the sample count. The run FAILS when any
+// median is over the 750 ms budget (since Phase 5, 9 Nov 2026); PERF_REPORT_ONLY=1 prints the table without failing.
+// Region rule and when to run it: docs/venue-build-manual.md section 7.
 //
 // Accounts: a throwaway Kitchen Hand (back of house frontline, so the home page loads its heaviest tile set) and a
 // throwaway manager, both created in the demo venue for this run and deleted afterwards (helpers/demoSession.ts).
 
 const BUDGET_MS = 750;
 const RUNS = Number(process.env.PERF_RUNS ?? 3);
-const ENFORCE = process.env.PERF_ENFORCE === "1";
+const ENFORCE = process.env.PERF_REPORT_ONLY !== "1";
 const LABEL = process.env.PERF_LABEL ?? "run";
 
 type Row = { role: string; kind: "load" | "nav"; name: string; coldMs: number | null; medianMs: number; samples: number[]; ttfbMs: number | null };
