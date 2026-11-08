@@ -120,7 +120,7 @@ export const SceneStation: React.FC<{ enter?: "fade" | "wipe" }> = ({ enter = "f
         <Headline lines={["Scan the", "sticker."]} delay={10} />
         <div style={{ position: "relative", height: 110, marginTop: 28 }}>
           <div style={{ ...sub, opacity: subA }}>Printed from the owner screen. Stuck where it is needed.</div>
-          <div style={{ ...sub, opacity: subB }}>Opens that station's training, answers and fixes.</div>
+          <div style={{ ...sub, opacity: subB }}>Opens that station&apos;s training, answers and fixes.</div>
         </div>
       </div>
       <div style={{ opacity: photoOut }}>
@@ -285,7 +285,7 @@ const SignContent: React.FC = () => {
     <div style={{ position: "absolute", inset: 0, background: C.parchment }}>
       <div style={{ position: "absolute", inset: 0, opacity: 1 - doneO }}>
         <div style={{ position: "absolute", left: 175, top: 130, fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 54, color: C.ink }}>Sign to confirm</div>
-        <div style={{ position: "absolute", left: 175, top: 212, width: 650, fontFamily: FONT_BODY, fontSize: 26, lineHeight: "36px", color: C.ink }}>Type your full name to confirm you've completed onboarding.</div>
+        <div style={{ position: "absolute", left: 175, top: 212, width: 650, fontFamily: FONT_BODY, fontSize: 26, lineHeight: "36px", color: C.ink }}>Type your full name to confirm you&apos;ve completed onboarding.</div>
         <div style={{ position: "absolute", left: 175, top: 320, width: 650, height: 100, borderRadius: 28, border: `3px solid ${focused ? C.red : "rgba(122,92,67,0.4)"}`, display: "flex", alignItems: "center", padding: "0 30px", fontFamily: FONT_DISPLAY, fontSize: 46, color: C.ink }}>
           {typed === 0 ? <span style={{ color: "rgba(122,92,67,0.5)", fontFamily: FONT_BODY, fontSize: 30 }}>Full name</span> : SIGN_NAME.slice(0, typed)}
           {focused ? <Caret height={48} color={C.ink} typing={typing} sinceType={typing ? 0 : frame - (TRAIN.nameTimes[SIGN_NAME.length - 1] ?? 0)} width={3} /> : null}
@@ -294,7 +294,7 @@ const SignContent: React.FC = () => {
         <div style={{ position: "absolute", left: 175, top: 510, width: 650, height: 72, borderRadius: 36, background: C.red, color: C.parchment, fontFamily: FONT_BODY, fontWeight: 500, fontSize: 26, display: "flex", alignItems: "center", justifyContent: "center", opacity: typed >= SIGN_NAME.length ? 1 : 0.5 }}>Confirm and sign</div>
       </div>
       <div style={{ position: "absolute", inset: 0, opacity: doneO }}>
-        <div style={{ position: "absolute", left: 0, right: 0, top: 96, textAlign: "center", fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 58, color: C.ink }}>You're set up.</div>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 96, textAlign: "center", fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 58, color: C.ink }}>You&apos;re set up.</div>
         <div style={{ position: "absolute", left: 0, right: 0, top: 210, display: "flex", justifyContent: "center" }}>
           {sf >= 0 ? <Stamp frame={sf} word="SIGNED" size={230} /> : <div style={{ width: 230, height: 230 }} />}
         </div>

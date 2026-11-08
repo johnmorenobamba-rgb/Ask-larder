@@ -18,6 +18,9 @@ const eslintConfig = defineConfig([
     // drowns the real lint signal in the vendor's own script warnings.
     ".claude/skills/**",
     ".agents/skills/**",
+    // Local only working folders, never committed (scratch is gitignored, video holds render output).
+    "scratch/**",
+    "video/**",
   ]),
 ]);
 

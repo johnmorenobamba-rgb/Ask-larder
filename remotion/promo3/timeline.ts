@@ -1,7 +1,7 @@
 // Promo v3 timeline. Pure data, so the composition and scripts/make-promo2-sfx.mjs read the same frame numbers.
 // Hook, home and Ask scenes are reused unchanged from promo2, so their local timings come from there.
 // The explicit .ts extension lets node run this file from scripts/make-promo2-sfx.mjs; the bundler accepts it too.
-// @ts-ignore TS5097 (allowImportingTsExtensions is not enabled for this repo)
+// @ts-expect-error TS5097 (allowImportingTsExtensions is not enabled for this repo)
 import { ASK, HOME, HOOK_LINES, HOOK_TIMES, Q1, Q2, charTimes } from "../promo2/timeline.ts";
 
 export { charTimes };

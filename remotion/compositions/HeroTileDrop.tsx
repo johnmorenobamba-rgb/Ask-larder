@@ -74,6 +74,28 @@ function StationCompactTile() {
   );
 }
 
+// Each station renders as one complete card (photo + glyph + label
+// together), crossfading the whole unit as one -- not just the photo
+// with the label switching early, which would caption one station's
+// photo with a different station's name mid-transition.
+function Card({ index, opacity }: { index: number; opacity: number }) {
+  const station = PREVIEW_STATIONS[index];
+  const visuals = getStationVisuals(station.name, index);
+  return (
+    <div className="absolute inset-0" style={{ opacity }}>
+      <Img src={station.photoUrl} className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/5 to-transparent" />
+      <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-ink/50">
+        <StationGlyph color="var(--color-parchment)" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 p-4">
+        <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">{visuals.department}</p>
+        <p className="font-display text-xl leading-tight text-parchment">{station.name}</p>
+      </div>
+    </div>
+  );
+}
+
 /** Independent full-canvas overlay, not a transform on the small grid
  * cell -- centers itself the same way regardless of where the compact
  * tile happens to sit, avoiding any scale/translate-origin math entirely. */
@@ -95,28 +117,6 @@ function StationSpotlight() {
   const withinStation = Math.max(0, frame - STATIONS_START - rawIndex * perStation);
   const crossfade = interpolate(withinStation, [0, 8], [0, 1], { extrapolateRight: "clamp" });
   const scale = interpolate(visible, [0, 1], [0.85, 1]);
-
-  // Each station renders as one complete card (photo + glyph + label
-  // together), crossfading the whole unit as one -- not just the photo
-  // with the label switching early, which would caption one station's
-  // photo with a different station's name mid-transition.
-  function Card({ index, opacity }: { index: number; opacity: number }) {
-    const station = PREVIEW_STATIONS[index];
-    const visuals = getStationVisuals(station.name, index);
-    return (
-      <div className="absolute inset-0" style={{ opacity }}>
-        <Img src={station.photoUrl} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/5 to-transparent" />
-        <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-ink/50">
-          <StationGlyph color="var(--color-parchment)" />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 p-4">
-          <p className="font-mono text-xs uppercase tracking-wide text-parchment/70">{visuals.department}</p>
-          <p className="font-display text-xl leading-tight text-parchment">{station.name}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AbsoluteFill className="items-center justify-center" style={{ opacity: visible }}>
