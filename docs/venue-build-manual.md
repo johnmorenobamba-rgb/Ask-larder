@@ -170,7 +170,34 @@ select u.name from app_users u left join staff_roles r on r.id = u.staff_role_id
 - There is no automatic parity report. Section 5 is the manual version. A script that runs section 5 plus the Ask Larder test set and
   prints a pass or fail per section 3 line is the natural next build.
 
-## 7. Keeping this manual true
+## 7. Hosting region and the dashboard speed check
+
+Every staff and owner screen makes several Supabase requests while it renders, so the distance between the app's servers and the
+database decides how fast it feels. Two rules, both set in November 2026 (results in `docs/perf/results-2026-11.md`):
+
+- **Vercel functions stay in `syd1`**, next to Supabase larder-dev in `ap-southeast-2` (Sydney). This is `"regions": ["syd1"]` in
+  `vercel.json`. Without it Vercel runs functions in `iad1` (Washington) and every request crosses the Pacific: the staff home took
+  7 s instead of under 0.5 s. If the database ever moves, or a new Supabase project is used for a venue, move the region with it.
+  Check a deployment with the Vercel deployment details (`regions`) or the `x-vercel-id` response header (`syd1::syd1::...`).
+- **The dashboard speed check passes before a deploy that touches the staff app or the owner dashboard**, and after any change to
+  the region, the session lookup (`src/lib/auth/session.ts`) or the protected layouts:
+
+  ```
+  PLAYWRIGHT_BASE_URL=https://asklarder.com.au npx playwright test tests/e2e/perf.spec.ts
+  ```
+
+  It signs in a throwaway staff member and manager on `coachmans-arms-wizard` (removed afterwards), loads staff home, staff modules,
+  the owner dashboard and the owner compliance overview, taps three menu items per role, and fails if any median is over 750 ms
+  (`PERF_REPORT_ONLY=1` reports without failing). `tests/e2e/prod-smoke.spec.ts` is the matching post deploy check for Ask Larder,
+  Resend and the cron route.
+- To see where a slow page spends its time, run the app with `PERF_TIMING=1` (the `larder-dev-perf` and `larder-prod-local`
+  entries in `.claude/launch.json`): each layout and page logs its awaited steps and every Supabase request. Never set
+  `PERF_TIMING` in Vercel.
+
+Migrations added on 9 Nov 2026 that every environment needs: `20261109000000_outstanding_acknowledgements_fn.sql` (the staff
+layout calls it on every request), `20261109010000_index_foreign_keys.sql`.
+
+## 8. Keeping this manual true
 
 Whenever a feature adds something a venue needs (a table, a setting, a mechanism, a migration), do two things in the same pass: make
 sure the wizard or this manual captures it, and add its line to section 3. This is the "wizard stays adjacent" rule from CLAUDE.md

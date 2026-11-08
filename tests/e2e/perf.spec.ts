@@ -12,15 +12,16 @@ import { DEMO_VENUE_SLUG as VENUE_SLUG, demoRoleId, demoVenueId, makeDemoAccount
 // Run against a deployment, never the dev server (dev compiles on demand, so its numbers mean nothing):
 //   PLAYWRIGHT_BASE_URL=https://asklarder.com.au npx playwright test tests/e2e/perf.spec.ts
 // Optional: PERF_LABEL=baseline names the saved results file (perf-results/perf-<label>.json, kept out of test-results
-// because Playwright empties that folder on every run), PERF_RUNS=5 changes the sample count, PERF_ENFORCE=1 fails the
-// run when any median is over budget (report only by default).
+// because Playwright empties that folder on every run), PERF_RUNS=5 changes the sample count. The run FAILS when any
+// median is over the 750 ms budget (since Phase 5, 9 Nov 2026); PERF_REPORT_ONLY=1 prints the table without failing.
+// Region rule and when to run it: docs/venue-build-manual.md section 7.
 //
 // Accounts: a throwaway Kitchen Hand (back of house frontline, so the home page loads its heaviest tile set) and a
 // throwaway manager, both created in the demo venue for this run and deleted afterwards (helpers/demoSession.ts).
 
 const BUDGET_MS = 750;
 const RUNS = Number(process.env.PERF_RUNS ?? 3);
-const ENFORCE = process.env.PERF_ENFORCE === "1";
+const ENFORCE = process.env.PERF_REPORT_ONLY !== "1";
 const LABEL = process.env.PERF_LABEL ?? "run";
 
 type Row = { role: string; kind: "load" | "nav"; name: string; coldMs: number | null; medianMs: number; samples: number[]; ttfbMs: number | null };
@@ -54,6 +55,10 @@ async function timeNav(page: Page, linkName: string | RegExp, heading: RegExp) {
   await page.getByRole("button", { name: "Open menu" }).click();
   const link = page.getByRole("link", typeof linkName === "string" ? { name: linkName, exact: true } : { name: linkName }).filter({ visible: true }).first();
   await link.waitFor({ state: "visible" });
+  // The drawer slides in over 240ms. A trial click waits until the link has stopped moving (Playwright actionability)
+  // without clicking, so the timer starts where a person would tap, not partway through the slide. Before 9 Nov 2026
+  // the slide was inside every nav number (about 200ms of each one in the baseline and Phases 1 and 2).
+  await link.click({ trial: true });
   const t0 = Date.now();
   await link.click();
   await waitForHeading(page, heading);
