@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 const HOURS = Array.from({ length: 13 }, (_, h) => h);
 const label = (h: number) => (h === 0 ? "Midnight" : h === 12 ? "12 noon" : `${h}am`);
 
 // The hour a new trading day starts. A closing form made before it counts for the day that just ended.
 export function TradingDayControl({ initialHour }: { initialHour: number }) {
-  const router = useRouter();
   const [hour, setHour] = useState(initialHour);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -25,8 +23,8 @@ export function TradingDayControl({ initialHour }: { initialHour: number }) {
         setHour(before);
         setMessage(typeof data.error === "string" ? data.error : "Couldn't save that. Try again.");
       } else {
+        // The hour is already shown from local state and nothing else on this page depends on it, so no page refresh.
         setMessage("Saved.");
-        router.refresh();
       }
     } catch {
       setHour(before);

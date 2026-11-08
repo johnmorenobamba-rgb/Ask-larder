@@ -41,7 +41,7 @@ export default async function OwnerFormsPage({ params }: { params: Promise<{ ven
           </p>
         )}
         <TradingDayControl initialHour={cutoffHour ?? DEFAULT_CUTOFF_HOUR} />
-        <FormActivationList groups={groups} />
+        <FormActivationList groups={groups} refreshAfterSave={false} />
       </div>
     </main>
   );

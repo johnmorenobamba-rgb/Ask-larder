@@ -4,14 +4,29 @@
     {
       "name": "larder-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "larder-dev-perf",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set PERF_TIMING=1&& npm run dev -- --port 3100"],
+      "runtimeArgs": [
+        "/c",
+        "set PERF_TIMING=1&& npm run dev -- --port 3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "larder-prod-local",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set PERF_TIMING=1&& npx next start -p 3100"
+      ],
       "port": 3100
     }
   ]

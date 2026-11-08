@@ -24,9 +24,17 @@ export type ActivationItem = {
 export function FormActivationList({
   groups,
   headingLevel = 2,
+  refreshAfterSave = true,
 }: {
   groups: { heading: string; items: ActivationItem[] }[];
   headingLevel?: 2 | 3;
+  /**
+   * Re-render the server page after a toggle. The owner Compliance forms page passes false: after a save the switch
+   * state and its reason line ("Switched on/off by the owner", activationReason) are already known here, and nothing
+   * else on that page depends on them, so a refresh would only re-run the whole layout for nothing. The onboarding
+   * wizard step keeps it.
+   */
+  refreshAfterSave?: boolean;
 }) {
   const Heading = headingLevel === 3 ? "h3" : "h2";
   const router = useRouter();
@@ -48,7 +56,7 @@ export function FormActivationList({
         setError(typeof data.error === "string" ? data.error : "Couldn't save that. Try again.");
       } else {
         setState((s) => ({ ...s, [item.id]: next }));
-        router.refresh();
+        if (refreshAfterSave) router.refresh();
       }
     } catch {
       setError("Couldn't reach the server. Try again.");
@@ -71,6 +79,8 @@ export function FormActivationList({
           <ul className="space-y-3">
             {g.items.map((item) => {
               const on = state[item.id] ?? item.on;
+              // Same wording as activationReason() once the owner has an explicit choice on record.
+              const reason = state[item.id] === undefined ? item.reason : state[item.id] ? "Switched on by the owner" : "Switched off by the owner";
               return (
                 <li key={item.id} className={`flex flex-wrap items-start justify-between gap-4 rounded-2xl border-2 px-4 py-4 ${on ? "border-bay-green" : "border-clay-brown/50"}`}>
                   <div className="min-w-0 flex-1 space-y-1">
@@ -81,7 +91,7 @@ export function FormActivationList({
                       {item.cadenceLabel.replace(/.$/, "")}. Filled by {item.audience}.{item.defaultList ? " Default list, review before use." : ""}
                     </p>
                     <p className="font-sans text-sm text-ink/70">{item.tagNote}</p>
-                    <p className="font-sans text-sm text-ink/70">{item.reason}</p>
+                    <p className="font-sans text-sm text-ink/70">{reason}</p>
                   </div>
                   <button
                     type="button"
