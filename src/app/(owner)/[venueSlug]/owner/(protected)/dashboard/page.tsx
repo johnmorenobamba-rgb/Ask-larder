@@ -41,6 +41,7 @@ export default async function OwnerDashboardPage({
     { data: escalationRows, error: escalationRowsError },
     weeklyDigest,
     { data: suggestionRows, error: suggestionRowsError },
+    b2,
   ] = await t.step("promiseAll", Promise.all([
       getNeedsAttention(supabase, venueId),
       supabase.from("modules").select("id").eq("status", "live"),
@@ -77,6 +78,8 @@ export default async function OwnerDashboardPage({
         .select("id, signal_type, headline, created_at")
         .eq("venue_id", venueId)
         .eq("status", "pending"),
+      // Temperature log (B2): an open out of range flag is a real "needs attention" item (used below).
+      loadB2Overview(supabase, venueId),
     ]));
   logQueryError(`[${venueSlug}] dashboard liveModules`, liveModulesError);
   logQueryError(`[${venueSlug}] dashboard staffList`, staffListError);
@@ -118,7 +121,6 @@ export default async function OwnerDashboardPage({
   // read as Saffron (same urgency tier as "expiring soon"), not Red.
   // Temperature log (B2): an open out of range flag is a real "needs attention" item, so the
   // hero card never says "nothing needs attention" next to a unit that is out of range.
-  const b2 = await t.step("b2Overview", loadB2Overview(supabase, venueId));
   t.end();
   const openTemperatureUnits = b2.statuses.filter((s) => s.openFlag).map((s) => s.unit.name);
 

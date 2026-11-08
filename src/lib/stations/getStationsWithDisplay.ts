@@ -3,7 +3,7 @@ import { stationScanUrl } from "@/lib/site";
 import QRCode from "qrcode";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
-import { getPhotoLibraryUrl } from "@/lib/owner/photoLibraryUrl";
+import { getPhotoLibraryUrls } from "@/lib/owner/photoLibraryUrl";
 
 export type StationDisplay = {
   id: string;
@@ -33,19 +33,15 @@ export async function getStationsWithDisplay(
   venueId: string,
   venueSlug: string,
 ): Promise<StationDisplay[]> {
-  const { data: stations } = await supabase
-    .from("stations")
-    .select("id, name, qr_code_slug")
-    .eq("venue_id", venueId)
-    .order("created_at");
-
-
-  const stationIds = (stations ?? []).map((s) => s.id);
-  const { data: stationPhotos } =
-    stationIds.length > 0
-      ? await supabase.from("photo_library").select("station_id, storage_path").eq("tag", "station").in("station_id", stationIds)
-      : { data: [] as { station_id: string | null; storage_path: string }[] };
+  // Stations and the venue's station-tagged photos in one round (the photos are looked up by venue rather than by the
+  // station list, so they no longer wait for it), then every photo URL signed in one batch call.
+  const [{ data: stations }, { data: stationPhotos }] = await Promise.all([
+    supabase.from("stations").select("id, name, qr_code_slug").eq("venue_id", venueId).order("created_at"),
+    supabase.from("photo_library").select("station_id, storage_path").eq("venue_id", venueId).eq("tag", "station").not("station_id", "is", null),
+  ]);
   const stationPhotoByStationId = new Map((stationPhotos ?? []).map((p) => [p.station_id, p.storage_path]));
+  const paths = (stations ?? []).map((s) => stationPhotoByStationId.get(s.id)).filter((p): p is string => !!p);
+  const signed = await getPhotoLibraryUrls(paths);
 
   return Promise.all(
     (stations ?? []).map(async (s) => {
@@ -55,7 +51,7 @@ export async function getStationsWithDisplay(
         name: s.name,
         qrCodeSlug: s.qr_code_slug,
         qrDataUrl: await QRCode.toDataURL(stationScanUrl(venueSlug, s.qr_code_slug)),
-        photoUrl: taggedPath ? ((await getPhotoLibraryUrl(taggedPath)) ?? STOCK_STATION_PHOTO) : STOCK_STATION_PHOTO,
+        photoUrl: (taggedPath && signed.get(taggedPath)) || STOCK_STATION_PHOTO,
       };
     }),
   );
